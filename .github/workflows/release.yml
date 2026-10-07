@@ -3,15 +3,26 @@ name: Release
 on:
   push:
     tags: ['v*']
+  # Manual (re)run for an existing tag: Actions → Release → Run workflow
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Existing tag to release, e.g. v0.1.0'
+        required: true
 
 permissions:
   contents: write
+
+env:
+  TAG: ${{ inputs.tag || github.ref_name }}
 
 jobs:
   release:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: refs/tags/${{ env.TAG }}
 
       - uses: actions/setup-dotnet@v4
         with:
@@ -21,8 +32,8 @@ jobs:
         id: version
         shell: pwsh
         run: |
-          $version = '${{ github.ref_name }}'.TrimStart('v')
-          if ($version -notmatch '^(\d+)\.(\d+)\.(\d+)') { throw "Tag '${{ github.ref_name }}' is not like v1.2.3" }
+          $version = '${{ env.TAG }}'.TrimStart('v')
+          if ($version -notmatch '^(\d+)\.(\d+)\.(\d+)') { throw "Tag '${{ env.TAG }}' is not like v1.2.3" }
           "version=$version" >> $env:GITHUB_OUTPUT
           "numeric=$($Matches[1]).$($Matches[2]).$($Matches[3]).0" >> $env:GITHUB_OUTPUT
           "prerelease=$($version.Contains('-').ToString().ToLower())" >> $env:GITHUB_OUTPUT
@@ -49,6 +60,7 @@ jobs:
       - name: Create GitHub release
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ env.TAG }}
           name: Claude Usage Pet ${{ steps.version.outputs.version }}
           prerelease: ${{ steps.version.outputs.prerelease }}
           generate_release_notes: true
