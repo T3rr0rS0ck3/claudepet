@@ -1,81 +1,183 @@
 # Claude Usage Pet
 
-Ein kleines Windows-Desktop-Pet, das deinen Claude-Verbrauch (5-Stunden-Session und Wochenlimit)
-über die `statusLine`-Schnittstelle von Claude Code beobachtet und darauf reagiert.
+**A tiny pixel-art desktop pet for Windows that keeps an eye on your Claude usage limits — and gets visibly nervous when you're about to run out.**
 
-## Bauen & Starten
+[![Release](https://github.com/T3rr0rS0ck3/claudepet/actions/workflows/release.yml/badge.svg)](https://github.com/T3rr0rS0ck3/claudepet/actions/workflows/release.yml)
+![Platform](https://img.shields.io/badge/platform-Windows%2010%20%7C%2011-0078D4)
+![License](https://img.shields.io/badge/license-MIT-green)
 
-Voraussetzung: .NET 8 Desktop Runtime (zum Bauen ein .NET SDK ≥ 8).
+🇩🇪 [Deutsche Version](README.de.md)
+
+![The pet in different moods: happy after a reset, thinking, panicking, sleeping](docs/moods.png)
+
+Claude Pro and Max plans have a rolling **5-hour session limit** and a **weekly limit**. Claude Usage Pet sits on your
+desktop and shows how much of both you've used — at a glance, without opening anything. The more you use, the more
+its mood changes: relaxed → thoughtful → nervous → panicking → asleep until the limit resets.
+
+> The app's interface is currently in German. Bubble texts can be changed to any language (see [Configuration](#configuration)).
+
+## Features
+
+- 🟠 **Desktop pet** — transparent, borderless, draggable, optionally always on top
+- 📊 **Usage overlay** — click the pet to see session and weekly usage, reset times and a forecast
+- 🎭 **7 moods** with their own animations, based on the higher of the two usage values
+- 💬 **Speech bubbles** when thresholds are crossed, e.g. *"90 %! 😰"* — not constantly chattering
+- 🔔 **Windows notifications** at configurable session and weekly warning thresholds
+- 📈 **Forecast** — "at the current pace you'll hit the limit in 1h 42m"
+- 🧺 **Tray icon** that reflects the current mood, plus autostart with Windows
+- ⚙️ **Configurable** thresholds, texts, size, update interval and more
+- 🔒 **Local only** — no network access, no login, no tokens; it only reads what Claude Code already hands to its status line
+
+<p align="center"><img src="docs/overlay.png" alt="Usage overlay showing session 80 %, week 70 %, reset times and a forecast" width="390"></p>
+
+## Requirements
+
+- Windows 10 or 11 (x64)
+- [Claude Code](https://code.claude.com) (the CLI), signed in with a **Claude Pro or Max** subscription
+  (Claude Code only receives rate-limit data for these plans)
+
+No .NET installation needed — the installer is self-contained.
+
+## Installation
+
+1. Download **`ClaudePet-Setup-x.y.z.exe`** from the [latest release](https://github.com/T3rr0rS0ck3/claudepet/releases/latest).
+2. Run it. No admin rights required (installs to `%LOCALAPPDATA%\Programs\ClaudePet`).
+3. Keep **"Connect to Claude Code"** checked. This adds the pet as Claude Code's `statusLine` (only if you don't have one yet).
+4. Send any message in Claude Code — after the first response the pet knows your usage.
+
+Prefer no installer? Grab the `portable.zip` from the release, extract it anywhere and start `ClaudePet.exe`.
+Then right-click the pet → *Claude Code verbinden…* (connect).
+
+> **Windows SmartScreen** may warn about an unknown publisher because the installer isn't code-signed.
+> Click *More info → Run anyway*.
+
+## Using the pet
+
+| Action | Result |
+|---|---|
+| Left-click the pet | Open / close the usage overlay |
+| Drag the pet | Move it (position is remembered) |
+| Right-click the pet | Menu: usage, say hello, always on top, minimize to tray, connect Claude Code, settings, quit |
+| Left-click the tray icon | Open the usage overlay |
+| Start `ClaudePet.exe` again | Brings the running pet back and opens the overlay |
+
+### Moods
+
+The mood follows the **higher** of session and weekly usage. All thresholds are configurable.
+
+| Usage | Mood | What the pet does |
+|---:|---|---|
+| 0–49 % | 🟢 relaxed | breathes, blinks, waves now and then |
+| 50–69 % | 🟢 normal | looks around |
+| 70–84 % | 🟡 attentive | thinks hard (thought dots) |
+| 85–89 % | 🟠 nervous | sweats, fidgets |
+| 90–94 % | 🔴 worried | big eyes, trembling |
+| 95–99 % | 🔴 panic | turns red, arms up, flashing "!" |
+| 100 % | 😴 limit reached | sleeps until the reset |
+
+While Claude Code is actively sending data, a calm pet "types" along. After a reset it cheers.
+
+## How it works
+
+```text
+Claude Code ── status line JSON (stdin) ──▶ ClaudePetBridge.exe ──▶ %LOCALAPPDATA%\ClaudePet\usage.json
+                                                   │                                  ▲
+                                                   │                                  │ polls
+                                                   └── prints the status line   ClaudePet.exe (the pet)
+```
+
+Claude Code runs its configured [status line command](https://code.claude.com/docs/en/statusline) after each response
+and passes session data — including `rate_limits.five_hour` and `rate_limits.seven_day` — as JSON on stdin.
+`ClaudePetBridge.exe` is that command: it stores the values locally and prints a compact status line back into Claude Code:
+
+```text
+[Opus] Session 73% (↻ 2h 14m) · Woche 61%
+```
+
+The pet app runs independently and keeps working when no Claude Code terminal is open; values whose reset time
+has passed are treated as 0 %. Nothing is scraped from claude.ai and no credentials are read.
+
+## Configuration
+
+Most options are available via right-click → **Einstellungen…** (settings): size, always on top, animations, autostart,
+update interval, warning thresholds, mood thresholds, speech bubbles, notifications and your name.
+
+Everything lives in `%LOCALAPPDATA%\ClaudePet\settings.json`, and manual edits are picked up live.
+Speech bubble texts are under `Texts`. Each event can have several variants; one is picked at random:
+
+```json
+"Texts": {
+  "Worried":   ["{percent} %! 😰"],
+  "Panic":     ["{NAME}. ALMOST EMPTY."],
+  "Exhausted": ["Okay... sleeping until the reset."],
+  "Reset":     ["Fresh quota! Let's go!"]
+}
+```
+
+Events: `Greeting`, `NoData`, `Normal`, `Attentive`, `Nervous`, `Worried`, `Panic`, `Exhausted`, `Reset`, `Poke`.
+Placeholders: `{name}`, `{NAME}` (upper case), `{percent}` (the higher value), `{session}`, `{week}`.
+
+## Troubleshooting
+
+**The pet says it's waiting for data.**
+Check that the pet is connected (right-click → settings shows the status), then send a message in Claude Code.
+Rate-limit data only arrives after the first response of a session and only for Pro/Max plans.
+
+**I already had a custom status line.**
+The installer never overwrites it. Connecting from the app asks first and saves a backup as
+`~/.claude/settings.json.claudepet-backup`. Only one status line command can be active.
+
+**Something seems off.**
+Look at `%LOCALAPPDATA%\ClaudePet\log.txt`. `usage.json` there shows the last values received from Claude Code.
+
+## Uninstall
+
+Uninstall *Claude Usage Pet* via Windows Settings → Apps. This also removes the status line entry from Claude Code and
+the autostart entry. Your settings stay in `%LOCALAPPDATA%\ClaudePet` — delete that folder for a clean slate.
+
+## Building from source
+
+Requires the .NET 8 SDK (or newer).
 
 ```powershell
-.\build.ps1                       # -> dist\ClaudePet\ClaudePet.exe + ClaudePetBridge.exe
+git clone https://github.com/T3rr0rS0ck3/claudepet.git
+cd claudepet
+.\build.ps1                        # framework-dependent build → dist\ClaudePet
+.\build.ps1 -SelfContained -Version 1.2.3
 .\dist\ClaudePet\ClaudePet.exe
 ```
 
-Dann **Rechtsklick auf das Pet → „Claude Code verbinden…“**. Dabei wird in `~/.claude/settings.json`
-(bzw. `%CLAUDE_CONFIG_DIR%`) folgender Eintrag gesetzt; eine Sicherung landet als `settings.json.claudepet-backup` daneben:
+Set `CLAUDEPET_DATA_DIR` to point the app and bridge at a different data folder, e.g. for testing with fake `usage.json` files.
 
-```json
-"statusLine": { "type": "command", "command": "E:/…/dist/ClaudePet/ClaudePetBridge.exe", "padding": 0 }
-```
+### Releases
 
-Die Werte erscheinen nach der nächsten Antwort in Claude Code. Nur Pro/Max-Abos liefern `rate_limits`.
+Pushing a tag like `v1.2.3` runs the [release workflow](.github/workflows/release.yml). It builds a self-contained
+version, packs the Inno Setup installer and a portable zip, and publishes a GitHub release. Tags with a suffix
+(`v1.2.3-beta`) become pre-releases. Existing tags can be rebuilt via *Actions → Release → Run workflow*.
 
-## Funktionsweise
-
-```text
-Claude Code ──stdin JSON──▶ ClaudePetBridge.exe ──▶ %LOCALAPPDATA%\ClaudePet\usage.json ◀── ClaudePet.exe (pollt)
-                                    │                         history.jsonl (für Prognose)
-                                    └──stdout──▶ Statuszeile in Claude Code: "[Opus] Session 73% (↻ 2h 14m) · Woche 61%"
-```
-
-- **Bridge** (`src/ClaudePet.Bridge`): liest `rate_limits.five_hour` / `seven_day`, schreibt atomar nach
-  `usage.json` und hängt Änderungen an `history.jsonl` an. Fehlt ein Fenster, bleibt der letzte Wert
-  erhalten; Fenster mit abgelaufenem `resets_at` zählt die App als 0 %. Die Bridge stürzt nie ab und gibt immer eine Zeile aus.
-- **App** (`src/ClaudePet`, WPF): Pet, Usage-Overlay, Sprechblasen, Tray-Icon, Windows-Benachrichtigungen,
-  Einstellungen. Läuft unabhängig davon, ob gerade ein Claude-Code-Terminal offen ist.
-
-## Bedienung
-
-| Aktion | Wirkung |
-|---|---|
-| Linksklick aufs Pet | Usage-Overlay öffnen/schließen |
-| Ziehen | Pet verschieben (Position wird gespeichert) |
-| Rechtsklick aufs Pet | Menü (Usage, Vordergrund, in Tray minimieren, Claude Code verbinden, Einstellungen, Beenden) |
-| Linksklick aufs Tray-Icon | Usage-Overlay |
-| `ClaudePet.exe` erneut starten | holt das laufende Pet nach vorne und öffnet das Overlay |
-
-## Zustände
-
-Maßgeblich ist der höhere Wert aus Session und Woche (Grenzen in den Einstellungen änderbar):
-
-| Verbrauch | Zustand | Animation |
-|---:|---|---|
-| 0–49 % | entspannt | atmet, blinzelt, winkt ab und zu |
-| 50–69 % | normal | schaut sich um |
-| 70–84 % | aufmerksam | nachdenklich, Denkpunkte |
-| 85–89 % | nervös | Schweißtropfen, zappelt |
-| 90–94 % | besorgt | große Augen, zittert |
-| 95–99 % | Panik | rot, Arme hoch, „!“ |
-| 100 % | schläft bis zum Reset | Zzz |
-
-Solange Claude Code gerade Daten liefert (letzte 20 s) und der Zustand höchstens „aufmerksam“ ist, „tippt“ das Pet.
-Nach einem Reset jubelt es kurz.
-
-## Konfiguration
-
-`%LOCALAPPDATA%\ClaudePet\settings.json`. Die meisten Werte lassen sich über *Einstellungen…* ändern.
-Sprechblasentexte stehen unter `Texts` (mehrere Varianten pro Ereignis, zufällig gewählt; Platzhalter
-`{name}`, `{NAME}`, `{percent}`, `{session}`, `{week}`). Handänderungen an der Datei werden live übernommen.
-
-Zum Testen ohne echte Daten kann der Datenordner per `CLAUDEPET_DATA_DIR` umgebogen werden.
-
-## Projektstruktur
+### Project structure
 
 ```text
-src/Shared/UsageData.cs        Datenmodell + Dateizugriff (von Bridge und App gemeinsam genutzt)
-src/ClaudePet.Bridge/          statusLine-Befehl
-src/ClaudePet/Core/            Settings, Zustandslogik, Prognose, Autostart, Claude-Code-Setup
-src/ClaudePet/Pet/             Pixel-Sprite (prozedural), Animationen, Pet-Fenster
-src/ClaudePet/Views/           Usage-Overlay, Einstellungen
+src/Shared/            Data model and file access shared by app and bridge
+src/ClaudePet.Bridge/  The status line command
+src/ClaudePet/Core/    Settings, mood logic, forecast, autostart, Claude Code setup
+src/ClaudePet/Pet/     Procedural pixel sprite, animations, pet window
+src/ClaudePet/Views/   Usage overlay and settings window
+installer/             Inno Setup script
 ```
+
+## Roadmap
+
+- English UI / language switch
+- Per-model limits (e.g. Opus / Sonnet) once the data is reliably available
+- Usage history and statistics
+- More characters, skins and sound effects
+
+## Disclaimer
+
+This is an unofficial fan project and is not affiliated with or endorsed by Anthropic.
+The pixel character is an original drawing inspired by the Claude mascot. "Claude" is a trademark of Anthropic.
+
+## License
+
+[MIT](LICENSE) © Robin Wessel
