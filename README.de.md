@@ -153,6 +153,11 @@ Ein Tag wie `v1.2.3` startet den [Release-Workflow](.github/workflows/release.ym
 erstellt den Inno-Setup-Installer und eine portable ZIP und veröffentlicht ein GitHub-Release. Tags mit Suffix
 (`v1.2.3-beta`) werden Pre-Releases. Bestehende Tags lassen sich über *Actions → Release → Run workflow* neu bauen.
 
+Signiert wird über SignPath, sobald die Repository-Variable `SIGNPATH_ORGANIZATION_ID` und das Secret
+`SIGNPATH_API_TOKEN` gesetzt sind (optional: `SIGNPATH_PROJECT_SLUG`, Standard `claudepet`, und
+`SIGNPATH_SIGNING_POLICY_SLUG`, Standard `release-signing`). Welche Dateien signiert werden, steht in
+[`.signpath/artifact-configuration.xml`](.signpath/artifact-configuration.xml). Ohne diese Einstellungen entstehen unsignierte Releases.
+
 ### Projektstruktur
 
 ```text
@@ -170,6 +175,22 @@ installer/             Inno-Setup-Skript
 - Limits pro Modell (z. B. Opus / Sonnet), sobald die Daten zuverlässig verfügbar sind
 - Verbrauchshistorie und Statistik
 - Weitere Charaktere, Skins und Soundeffekte
+
+## Code signing policy
+
+Free code signing provided by [SignPath.io](https://about.signpath.io), certificate by [SignPath Foundation](https://signpath.org).
+
+- Signiert werden nur Release-Builds, die der [Release-Workflow](.github/workflows/release.yml) auf GitHub-gehosteten
+  Runnern aus dem Quellcode dieses Repositorys baut.
+- Jede Signieranfrage wird manuell freigegeben.
+
+| Rolle | Mitglieder |
+|---|---|
+| Committer und Reviewer | [T3rr0rS0ck3](https://github.com/T3rr0rS0ck3) |
+| Freigabe (Approver) | [T3rr0rS0ck3](https://github.com/T3rr0rS0ck3) |
+
+**Datenschutz:** Dieses Programm überträgt keine Informationen an andere vernetzte Systeme, außer der Nutzer verlangt dies
+ausdrücklich. Es liest nur die Statuszeilen-Daten, die Claude Code lokal übergibt, und speichert sie in `%LOCALAPPDATA%\ClaudePet`.
 
 ## Hinweis
 
