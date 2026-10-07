@@ -18,10 +18,6 @@ AppVersion={#AppVersion}
 AppVerName={#AppName} {#AppVersion}
 AppPublisher=Robin Wessel
 VersionInfoVersion={#NumericVersion}
-VersionInfoProductName={#AppName}
-VersionInfoProductVersion={#AppVersion}
-VersionInfoCompany=Robin Wessel
-VersionInfoDescription={#AppName} Setup
 ; Per-user install, no admin rights required. Keep the path stable: Claude Code's
 ; statusLine points at ClaudePetBridge.exe inside this folder.
 PrivilegesRequired=lowest
