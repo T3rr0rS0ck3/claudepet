@@ -1,0 +1,62 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Determine version
+        id: version
+        shell: pwsh
+        run: |
+          $version = '${{ github.ref_name }}'.TrimStart('v')
+          if ($version -notmatch '^(\d+)\.(\d+)\.(\d+)') { throw "Tag '${{ github.ref_name }}' is not like v1.2.3" }
+          "version=$version" >> $env:GITHUB_OUTPUT
+          "numeric=$($Matches[1]).$($Matches[2]).$($Matches[3]).0" >> $env:GITHUB_OUTPUT
+          "prerelease=$($version.Contains('-').ToString().ToLower())" >> $env:GITHUB_OUTPUT
+
+      - name: Build (self-contained)
+        shell: pwsh
+        run: ./build.ps1 -Version ${{ steps.version.outputs.version }} -SelfContained
+
+      - name: Portable zip
+        shell: pwsh
+        run: Compress-Archive -Path dist/ClaudePet/* -DestinationPath dist/ClaudePet-${{ steps.version.outputs.version }}-portable.zip
+
+      - name: Build installer
+        shell: pwsh
+        run: |
+          $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+          if (-not (Test-Path $iscc)) {
+            choco install innosetup -y --no-progress
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          }
+          & $iscc /DAppVersion=${{ steps.version.outputs.version }} /DNumericVersion=${{ steps.version.outputs.numeric }} installer/ClaudePet.iss
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: Claude Usage Pet ${{ steps.version.outputs.version }}
+          prerelease: ${{ steps.version.outputs.prerelease }}
+          generate_release_notes: true
+          body: |
+            **Installation:** `ClaudePet-Setup-${{ steps.version.outputs.version }}.exe` herunterladen und ausführen (keine Admin-Rechte, kein .NET nötig).
+            Im Setup kann Claude Pet direkt als statusLine in Claude Code eingetragen werden.
+
+            Alternativ: `ClaudePet-${{ steps.version.outputs.version }}-portable.zip` entpacken und `ClaudePet.exe` starten.
+          files: |
+            dist/ClaudePet-Setup-${{ steps.version.outputs.version }}.exe
+            dist/ClaudePet-${{ steps.version.outputs.version }}-portable.zip
