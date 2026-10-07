@@ -12,6 +12,7 @@ on:
 
 permissions:
   contents: write
+  actions: read   # SignPath fetches the unsigned artifact from this run
 
 env:
   TAG: ${{ inputs.tag || github.ref_name }}
@@ -19,6 +20,8 @@ env:
 jobs:
   release:
     runs-on: windows-latest
+    # Signing waits for a manual approval in SignPath
+    timeout-minutes: 300
     steps:
       - uses: actions/checkout@v4
         with:
@@ -42,10 +45,6 @@ jobs:
         shell: pwsh
         run: ./build.ps1 -Version ${{ steps.version.outputs.version }} -SelfContained
 
-      - name: Portable zip
-        shell: pwsh
-        run: Compress-Archive -Path dist/ClaudePet/* -DestinationPath dist/ClaudePet-${{ steps.version.outputs.version }}-portable.zip
-
       - name: Build installer
         shell: pwsh
         run: |
@@ -57,6 +56,49 @@ jobs:
           & $iscc /DAppVersion=${{ steps.version.outputs.version }} /DNumericVersion=${{ steps.version.outputs.numeric }} installer/ClaudePet.iss
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
+      # ---- Code signing via SignPath Foundation (skipped until the repository variables are set) ----
+      # One signing request per release: the setup EXE plus the app EXEs/DLLs of the portable version.
+      # What gets signed is defined in .signpath/artifact-configuration.xml (stored in SignPath).
+
+      - name: Upload unsigned files
+        id: upload-unsigned
+        if: vars.SIGNPATH_ORGANIZATION_ID != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: unsigned
+          path: |
+            dist/ClaudePet-Setup-${{ steps.version.outputs.version }}.exe
+            dist/ClaudePet/
+
+      - name: Sign with SignPath
+        if: vars.SIGNPATH_ORGANIZATION_ID != ''
+        uses: signpath/github-action-submit-signing-request@v3
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
+          project-slug: ${{ vars.SIGNPATH_PROJECT_SLUG || 'claudepet' }}
+          signing-policy-slug: ${{ vars.SIGNPATH_SIGNING_POLICY_SLUG || 'release-signing' }}
+          github-artifact-id: ${{ steps.upload-unsigned.outputs.artifact-id }}
+          wait-for-completion: true
+          wait-for-completion-timeout-in-seconds: 17000
+          output-artifact-directory: dist-signed
+
+      - name: Use signed files
+        if: vars.SIGNPATH_ORGANIZATION_ID != ''
+        shell: pwsh
+        run: |
+          Copy-Item dist-signed/* dist/ -Recurse -Force
+          Get-AuthenticodeSignature dist/ClaudePet-Setup-*.exe, dist/ClaudePet/ClaudePet.exe, dist/ClaudePet/ClaudePetBridge.exe |
+            Format-Table Status, @{ n = 'Signer'; e = { $_.SignerCertificate.Subject } }, Path -AutoSize
+          $unsigned = Get-AuthenticodeSignature dist/ClaudePet-Setup-*.exe | Where-Object Status -ne 'Valid'
+          if ($unsigned) { throw 'Setup is not validly signed' }
+
+      # ---- Package & publish ----
+
+      - name: Portable zip
+        shell: pwsh
+        run: Compress-Archive -Path dist/ClaudePet/* -DestinationPath dist/ClaudePet-${{ steps.version.outputs.version }}-portable.zip
+
       - name: Create GitHub release
         uses: softprops/action-gh-release@v2
         with:
@@ -65,10 +107,13 @@ jobs:
           prerelease: ${{ steps.version.outputs.prerelease }}
           generate_release_notes: true
           body: |
-            **Installation:** `ClaudePet-Setup-${{ steps.version.outputs.version }}.exe` herunterladen und ausführen (keine Admin-Rechte, kein .NET nötig).
-            Im Setup kann Claude Pet direkt als statusLine in Claude Code eingetragen werden.
+            **Installation:** download and run `ClaudePet-Setup-${{ steps.version.outputs.version }}.exe` (no admin rights, no .NET required).
+            The setup can register Claude Pet as Claude Code's status line right away.
+            Portable: extract `ClaudePet-${{ steps.version.outputs.version }}-portable.zip` and start `ClaudePet.exe`.
 
-            Alternativ: `ClaudePet-${{ steps.version.outputs.version }}-portable.zip` entpacken und `ClaudePet.exe` starten.
+            **Installation (DE):** `ClaudePet-Setup-${{ steps.version.outputs.version }}.exe` herunterladen und ausführen (keine Admin-Rechte, kein .NET nötig).
+
+            [Code signing policy](https://github.com/${{ github.repository }}#code-signing-policy)
           files: |
             dist/ClaudePet-Setup-${{ steps.version.outputs.version }}.exe
             dist/ClaudePet-${{ steps.version.outputs.version }}-portable.zip
