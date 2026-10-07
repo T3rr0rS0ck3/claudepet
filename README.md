@@ -155,11 +155,6 @@ Pushing a tag like `v1.2.3` runs the [release workflow](.github/workflows/releas
 version, packs the Inno Setup installer and a portable zip, and publishes a GitHub release. Tags with a suffix
 (`v1.2.3-beta`) become pre-releases. Existing tags can be rebuilt via *Actions → Release → Run workflow*.
 
-Signing through SignPath runs once the repository variable `SIGNPATH_ORGANIZATION_ID` and the secret
-`SIGNPATH_API_TOKEN` are set (optional: `SIGNPATH_PROJECT_SLUG`, default `claudepet`, and
-`SIGNPATH_SIGNING_POLICY_SLUG`, default `release-signing`). The files to sign are defined in
-[`.signpath/artifact-configuration.xml`](.signpath/artifact-configuration.xml). Without these settings, releases are built unsigned.
-
 ### Project structure
 
 ```text
@@ -177,22 +172,6 @@ installer/             Inno Setup script
 - Per-model limits (e.g. Opus / Sonnet) once the data is reliably available
 - Usage history and statistics
 - More characters, skins and sound effects
-
-## Code signing policy
-
-Free code signing provided by [SignPath.io](https://about.signpath.io), certificate by [SignPath Foundation](https://signpath.org).
-
-- Only release builds produced by the [release workflow](.github/workflows/release.yml) on GitHub-hosted runners
-  from the source code in this repository are signed.
-- Every signing request is approved manually.
-
-| Role | Members |
-|---|---|
-| Committers and reviewers | [T3rr0rS0ck3](https://github.com/T3rr0rS0ck3) |
-| Approvers | [T3rr0rS0ck3](https://github.com/T3rr0rS0ck3) |
-
-**Privacy:** This program will not transfer any information to other networked systems unless specifically requested
-by the user. It only reads the status line data that Claude Code passes to it locally and stores it in `%LOCALAPPDATA%\ClaudePet`.
 
 ## Disclaimer
 
