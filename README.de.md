@@ -114,7 +114,7 @@ Datenschutz und Sicherheit → Mikrofon). Claude Code hat keinen Startparameter 
 Diktat in allen Claude-Code-Sitzungen aktiv, solange die Option an ist. *Sprachchat anbieten* wieder ausschalten
 blendet den Menüeintrag aus und setzt `voice.enabled` zurück auf `false`.
 Hältst du in einem Terminal mit Claude Code (bei eingeschaltetem Diktat) die Leertaste gedrückt, bleibt das Pet stehen
-und hört zu, mit Schallwellen neben dem Kopf. Claude Code meldet das Diktat nicht selbst, deshalb richtet sich das Pet
+und spricht in ein Mikrofon, über dem Schallwellen aufsteigen. Claude Code meldet das Diktat nicht selbst, deshalb richtet sich das Pet
 nach der gehaltenen Leertaste.
 
 ### Stimmungen

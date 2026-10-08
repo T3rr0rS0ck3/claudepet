@@ -113,8 +113,8 @@ project list. In the console, **hold Space** and speak. Requirements: a claude.a
 and microphone access for the console (Windows Settings → Privacy & security → Microphone). Claude Code has no
 command-line flag for voice mode, so dictation is enabled for all Claude Code sessions while the option is on.
 Switching *Offer voice chat* off again hides the menu entry and sets `voice.enabled` back to `false`.
-While you hold Space in a focused terminal running Claude Code (with dictation on), the pet stops and listens, with
-sound waves next to its head. Claude Code does not report dictation itself, so the pet goes by the held Space key.
+While you hold Space in a focused terminal running Claude Code (with dictation on), the pet stops and talks into a
+microphone, with sound waves rising above it. Claude Code does not report dictation itself, so the pet goes by the held Space key.
 
 ### Moods
 

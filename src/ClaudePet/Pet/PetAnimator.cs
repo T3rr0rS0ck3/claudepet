@@ -47,15 +47,16 @@ public static class PetAnimator
         Motion motion = Motion.Idle, int direction = 1, bool listening = false)
     {
         var frame = MoodFrame(mood, working, cheering, t);
-        // Dictating to Claude Code: stands still and listens, looking towards the sound waves
+        // Dictating to Claude Code: stands still and talks into the microphone in its hand, sound waves rising
         if (listening && motion is Motion.Idle or Motion.Walk or Motion.Run)
         {
             bool blink = t % 36 == 0;
+            var mouth = (t / 2 % 5) switch { 0 or 3 => Mouth.Open, 2 => Mouth.None, _ => Mouth.Small };
             var waves = (t / 3 % 4) switch { 1 => Mark.Listen1, 2 => Mark.Listen2, 3 => Mark.Listen3, _ => Mark.None };
             return frame with
             {
-                Eyes = frame.Eyes == Eyes.Closed ? Eyes.Closed : blink ? Eyes.Blink : Eyes.LookRight,
-                Mouth = Mouth.None, Arms = Arms.Down, Legs = 0, Shake = 0,
+                Eyes = frame.Eyes == Eyes.Closed ? Eyes.Closed : blink ? Eyes.Blink : t / 24 % 3 == 2 ? Eyes.Happy : Eyes.LookRight,
+                Mouth = mouth, Arms = Arms.Mic, Legs = 0, Shake = 0,
                 Bob = (int)(t / 6 % 2), Mark = waves,
             };
         }
