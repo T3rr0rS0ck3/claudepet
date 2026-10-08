@@ -67,9 +67,12 @@ public partial class App : Application
         _settingsWrite = File.GetLastWriteTimeUtc(DataPaths.SettingsFile);
         if (Settings.StartWithWindows != Autostart.IsEnabled()) Autostart.Set(Settings.StartWithWindows);
 
+        Sprite.SetBodyColor(ParsePetColor());
         _pet = new PetWindow();
         _pet.ApplySettings(Settings, initial: true);
         _pet.Clicked += OnPetClicked;
+        _pet.DoubleClicked += ShowProjectMenu;
+        _pet.GhostDropped += OnGhostDropped;
         _pet.Moved += SavePosition;
         _pet.PetImage.ContextMenu = BuildContextMenu();
         _pet.Show();
@@ -212,7 +215,7 @@ public partial class App : Application
         ShowNotification("Claude Usage Pet", text);
     }
 
-    private void Say(string key)
+    private void Say(string key, string? folder = null)
     {
         if (!Settings.SpeechBubbles) return;
         if (!Settings.Texts.TryGetValue(key, out var variants) || variants.Count == 0) return;
@@ -221,6 +224,7 @@ public partial class App : Application
         string text = variants[_random.Next(variants.Count)]
             .Replace("{NAME}", name.ToUpperInvariant())
             .Replace("{name}", name)
+            .Replace("{folder}", folder ?? "")
             .Replace("{percent}", PercentText(_state.Max))
             .Replace("{session}", PercentText(_state.Session))
             .Replace("{week}", PercentText(_state.Week))
@@ -265,10 +269,10 @@ public partial class App : Application
         _overlay.ShowNear(anchor, _pet);
     }
 
-    private void OnPetClicked()
+    private void OnPetClicked(DateTime releasedAt)
     {
         // The click that deactivated (and closed) the overlay should not reopen it.
-        if (_overlay == null && DateTime.Now - _overlayClosedAt < TimeSpan.FromMilliseconds(600)) return;
+        if (_overlay == null && releasedAt - _overlayClosedAt < TimeSpan.FromMilliseconds(600)) return;
         if (_overlay != null) _overlay.Close();
         else ShowUsage();
     }
@@ -314,22 +318,169 @@ public partial class App : Application
 
     public void ApplySettings(bool save)
     {
-        if (save)
-        {
-            try
-            {
-                Settings.Save();
-                _settingsWrite = File.GetLastWriteTimeUtc(DataPaths.SettingsFile);
-            }
-            catch (IOException ex)
-            {
-                Log.Write("Einstellungen konnten nicht gespeichert werden: " + ex.Message);
-            }
-        }
+        if (save) SaveSettings();
+        Sprite.SetBodyColor(ParsePetColor());
+        SyncClaudeMascot();
         _pet.ApplySettings(Settings);
         _monitor.SetInterval(Settings.PollIntervalSeconds);
         if (Settings.StartWithWindows != Autostart.IsEnabled()) Autostart.Set(Settings.StartWithWindows);
         Evaluate(initial: true);
+    }
+
+    /// <summary>Keeps Claude Code's theme in line with <see cref="AppSettings.ClaudeMascotColor"/>.</summary>
+    private void SyncClaudeMascot()
+    {
+        try
+        {
+            if (Settings.ClaudeMascotColor)
+            {
+                if (!Settings.ClaudeThemeSwitched)
+                {
+                    string? current = ClaudeCodeSetup.CurrentTheme();
+                    Settings.ClaudeThemeBefore = current == "custom:" + ClaudeCodeSetup.ThemeSlug ? null : current;
+                }
+                ClaudeCodeSetup.WritePetTheme(Settings.PetColor, Settings.ClaudeThemeBefore);
+                if (!Settings.ClaudeThemeSwitched)
+                {
+                    // Only switch once: if the user picks another theme in Claude Code later, that choice stays.
+                    ClaudeCodeSetup.SelectPetTheme();
+                    Settings.ClaudeThemeSwitched = true;
+                    SaveSettings();
+                }
+            }
+            else if (Settings.ClaudeThemeSwitched)
+            {
+                if (ClaudeCodeSetup.IsPetThemeSelected()) ClaudeCodeSetup.SelectTheme(Settings.ClaudeThemeBefore);
+                ClaudeCodeSetup.DeletePetTheme();
+                Settings.ClaudeThemeSwitched = false;
+                Settings.ClaudeThemeBefore = null;
+                SaveSettings();
+            }
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidDataException
+                                       or System.Text.Json.JsonException)
+        {
+            Log.Write("Claude-Code-Theme konnte nicht geschrieben werden: " + ex);
+            ShowNotification("Claude Pet", "Claude-Code-Theme konnte nicht geschrieben werden: " + ex.Message);
+        }
+    }
+
+    private uint ParsePetColor() =>
+        Sprite.TryParseColor(Settings.PetColor, out uint color) ? color : Sprite.DefaultBodyColor;
+
+    private void SaveSettings()
+    {
+        try
+        {
+            Settings.Save();
+            _settingsWrite = File.GetLastWriteTimeUtc(DataPaths.SettingsFile);
+        }
+        catch (IOException ex)
+        {
+            Log.Write("Einstellungen konnten nicht gespeichert werden: " + ex.Message);
+        }
+    }
+
+    // ---------------------------------------------------------------- opening Claude Code
+
+    public void ShowProjectMenu() => ShowProjectMenu(voice: false);
+
+    private void ShowProjectMenu(bool voice)
+    {
+        // First use: nothing to offer yet, so ask for the repo folder right away.
+        if (Settings.ReposPath == null && Settings.RecentProjects.Count == 0 && !ChooseReposFolder()) return;
+
+        var menu = ProjectMenu.Build(Settings, folder => LaunchClaude(folder, voice), () => ChooseAndLaunch(voice), () =>
+        {
+            if (ChooseReposFolder()) ShowProjectMenu(voice);
+        });
+        if (_pet.IsVisible)
+        {
+            menu.PlacementTarget = _pet.PetImage;
+            menu.Placement = System.Windows.Controls.Primitives.PlacementMode.Top;
+        }
+        menu.IsOpen = true;
+    }
+
+    /// <summary>
+    /// Claude Code has no flag to start in voice mode, so voice dictation is switched on in its
+    /// settings and the user is told how to talk (hold Space).
+    /// </summary>
+    public void StartVoiceChat()
+    {
+        if (!Settings.VoiceChat) return;
+        if (!ClaudeCodeSetup.IsVoiceEnabled())
+        {
+            var answer = MessageBox.Show(
+                "Für den Sprachchat wird das Sprachdiktat von Claude Code eingeschaltet " +
+                $"(voice.enabled in {ClaudeCodeSetup.SettingsPath}, eine Sicherung wird angelegt).\n\n" +
+                "Voraussetzungen: Anmeldung mit einem claude.ai-Konto und Mikrofonzugriff für die Konsole " +
+                "(Windows-Einstellungen → Datenschutz → Mikrofon).\n\nEinschalten?",
+                "Claude Pet", MessageBoxButton.YesNo, MessageBoxImage.Question);
+            if (answer != MessageBoxResult.Yes) return;
+            try
+            {
+                ClaudeCodeSetup.SetVoiceEnabled(true);
+            }
+            catch (Exception ex)
+            {
+                Log.Write("Sprachdiktat konnte nicht eingeschaltet werden: " + ex);
+                MessageBox.Show("Fehler beim Schreiben der Claude-Code-Einstellungen:\n" + ex.Message, "Claude Pet",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+        }
+        ShowProjectMenu(voice: true);
+    }
+
+    public void LaunchClaude(string folder) => LaunchClaude(folder, voice: false);
+
+    private void LaunchClaude(string folder, bool voice)
+    {
+        try
+        {
+            ClaudeLauncher.Launch(Settings, folder);
+        }
+        catch (DirectoryNotFoundException)
+        {
+            Settings.RecentProjects.Remove(folder);
+            SaveSettings();
+            Say("NoFolder");
+            return;
+        }
+        catch (Exception ex) when (ex is FileNotFoundException or InvalidOperationException)
+        {
+            Log.Write("Claude konnte nicht gestartet werden: " + ex.Message);
+            MessageBox.Show(ex.Message, "Claude Pet", MessageBoxButton.OK, MessageBoxImage.Error);
+            return;
+        }
+        SaveSettings();
+        _pet.Cheer(TimeSpan.FromSeconds(2));
+        Say(voice ? "Voice" : "Launch", ClaudeLauncher.FolderName(folder));
+    }
+
+    private void OnGhostDropped(string? folder, bool overShell)
+    {
+        if (folder != null) LaunchClaude(folder);
+        else if (overShell) Say("NoFolder");   // e.g. "This PC"; anywhere else the drop is just a cancel
+    }
+
+    private void ChooseAndLaunch(bool voice)
+    {
+        var dialog = new Microsoft.Win32.OpenFolderDialog { Title = "In welchem Ordner soll Claude starten?" };
+        if (Settings.ReposPath != null) dialog.InitialDirectory = Settings.ReposPath;
+        if (dialog.ShowDialog() == true) LaunchClaude(dialog.FolderName, voice);
+    }
+
+    /// <summary>Asks for the folder containing all projects. Returns false if cancelled.</summary>
+    private bool ChooseReposFolder()
+    {
+        var dialog = new Microsoft.Win32.OpenFolderDialog { Title = "Ordner mit deinen Projekten wählen" };
+        if (Settings.ReposPath != null) dialog.InitialDirectory = Settings.ReposPath;
+        if (dialog.ShowDialog() != true) return false;
+        Settings.ReposPath = dialog.FolderName;
+        SaveSettings();
+        return true;
     }
 
     private void SavePosition()
@@ -402,6 +553,8 @@ public partial class App : Application
         }
 
         Item("Usage anzeigen", ShowUsage);
+        Item("Claude öffnen…", ShowProjectMenu);
+        var voice = Item("Sprachchat starten…", StartVoiceChat);
         Item("Hallo sagen", () =>
         {
             _pet.Cheer(TimeSpan.FromSeconds(2));
@@ -423,6 +576,7 @@ public partial class App : Application
         {
             onTop.IsChecked = Settings.AlwaysOnTop;
             walk.IsChecked = Settings.WalkAround;
+            voice.Visibility = Settings.VoiceChat ? Visibility.Visible : Visibility.Collapsed;
         };
         return menu;
     }

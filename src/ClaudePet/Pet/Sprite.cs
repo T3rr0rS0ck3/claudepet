@@ -8,7 +8,7 @@ public enum Eyes { Normal, Blink, Closed, Happy, LookLeft, LookRight, LookUp, Lo
 public enum Mouth { None, Smile, Small, Wavy, Open }
 public enum Arms { Down, Up, Wave, TypeLeft, TypeRight }
 public enum Mark { None, Dots1, Dots2, Dots3, Exclaim, Zzz1, Zzz2, Zzz3 }
-public enum Tint { Normal, Hot, Pale }
+public enum Tint { Normal, Hot, Pale, Ghost }
 
 /// <summary>Everything that describes one rendered frame of the pet.</summary>
 public readonly record struct SpriteFrame(
@@ -39,7 +39,34 @@ public static class Sprite
     private const uint MarkColor = 0xFF8C90B8;
     private const uint AlertColor = 0xFFE5484D;
 
+    /// <summary>Claude orange, the default body color.</summary>
+    public const uint DefaultBodyColor = 0xFFD97757;
+
     private static readonly Dictionary<SpriteFrame, BitmapSource> Cache = new();
+    private static uint _bodyColor;
+    private static (uint Body, uint Shade) _normal, _hot, _pale;
+
+    static Sprite() => SetBodyColor(DefaultBodyColor);
+
+    /// <summary>Incremented whenever the body color changes, so other caches (tray icons) can refresh.</summary>
+    public static int Version { get; private set; }
+
+    /// <summary>Sets the pet's body color (ARGB); shade and the hot/pale mood tints are derived from it.</summary>
+    public static void SetBodyColor(uint argb)
+    {
+        argb |= 0xFF000000;
+        if (argb == _bodyColor) return;
+        _bodyColor = argb;
+        var (h, s, l) = ToHsl(argb);
+        // Offsets measured from the original hand-picked orange palette.
+        (uint, uint) Pair(double hue, double sat, double light) =>
+            (FromHsl(hue, sat, light), FromHsl(hue, sat * 0.76, light - 0.114));
+        _normal = Pair(h, s, l);
+        _hot = Pair(h - 3, Math.Min(1, s + 0.14), l - 0.025);
+        _pale = Pair(h + 2, s * 0.67, Math.Min(0.9, l + 0.037));
+        Cache.Clear();
+        Version++;
+    }
 
     public static BitmapSource Render(SpriteFrame frame)
     {
@@ -62,9 +89,10 @@ public static class Sprite
 
         (uint body, uint shade) = f.Tint switch
         {
-            Tint.Hot => (0xFFE65F3Cu, 0xFFC0472Bu),
-            Tint.Pale => (0xFFC8917Bu, 0xFFA8735Fu),
-            _ => (0xFFD97757u, 0xFFB65E40u),
+            Tint.Hot => _hot,
+            Tint.Pale => _pale,
+            Tint.Ghost => (0xFFE4ECF8u, 0xFFB3C2DBu),
+            _ => _normal,
         };
 
         int bx = 2 + f.Shake;   // left edge incl. arms
@@ -218,5 +246,49 @@ public static class Sprite
             g.DrawImage(source, new System.Drawing.Rectangle(0, (32 - h) / 2, 32, h));
         }
         return System.Drawing.Icon.FromHandle(target.GetHicon());
+    }
+
+    // ---------------------------------------------------------------- colors
+
+    /// <summary>Parses "#RRGGBB" (or "RRGGBB") into an opaque ARGB value.</summary>
+    public static bool TryParseColor(string? text, out uint argb)
+    {
+        argb = 0;
+        string hex = text?.Trim().TrimStart('#') ?? "";
+        if (hex.Length != 6 || !uint.TryParse(hex, System.Globalization.NumberStyles.HexNumber, null, out uint rgb)) return false;
+        argb = 0xFF000000 | rgb;
+        return true;
+    }
+
+    public static string ToHex(uint argb) => $"#{argb & 0xFFFFFF:X6}";
+
+    private static (double H, double S, double L) ToHsl(uint argb)
+    {
+        double r = (argb >> 16 & 0xFF) / 255.0, g = (argb >> 8 & 0xFF) / 255.0, b = (argb & 0xFF) / 255.0;
+        double max = Math.Max(r, Math.Max(g, b)), min = Math.Min(r, Math.Min(g, b));
+        double l = (max + min) / 2, d = max - min;
+        if (d == 0) return (0, 0, l);
+        double s = d / (1 - Math.Abs(2 * l - 1));
+        double h = max == r ? (g - b) / d % 6 : max == g ? (b - r) / d + 2 : (r - g) / d + 4;
+        return (h * 60, s, l);
+    }
+
+    private static uint FromHsl(double h, double s, double l)
+    {
+        h = (h % 360 + 360) % 360;
+        s = Math.Clamp(s, 0, 1);
+        l = Math.Clamp(l, 0, 1);
+        double c = (1 - Math.Abs(2 * l - 1)) * s, x = c * (1 - Math.Abs(h / 60 % 2 - 1)), m = l - c / 2;
+        (double r, double g, double b) = (int)(h / 60) switch
+        {
+            0 => (c, x, 0d),
+            1 => (x, c, 0d),
+            2 => (0d, c, x),
+            3 => (0d, x, c),
+            4 => (x, 0d, c),
+            _ => (c, 0d, x),
+        };
+        uint Byte(double v) => (uint)Math.Round(Math.Clamp(v + m, 0, 1) * 255);
+        return 0xFF000000 | Byte(r) << 16 | Byte(g) << 8 | Byte(b);
     }
 }
