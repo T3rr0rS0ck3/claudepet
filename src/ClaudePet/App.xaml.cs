@@ -67,6 +67,7 @@ public partial class App : Application
         _settingsWrite = File.GetLastWriteTimeUtc(DataPaths.SettingsFile);
         if (Settings.StartWithWindows != Autostart.IsEnabled()) Autostart.Set(Settings.StartWithWindows);
 
+        Sprite.SetBodyColor(ParsePetColor());
         _pet = new PetWindow();
         _pet.ApplySettings(Settings, initial: true);
         _pet.Clicked += OnPetClicked;
@@ -318,11 +319,54 @@ public partial class App : Application
     public void ApplySettings(bool save)
     {
         if (save) SaveSettings();
+        Sprite.SetBodyColor(ParsePetColor());
+        SyncClaudeMascot();
         _pet.ApplySettings(Settings);
         _monitor.SetInterval(Settings.PollIntervalSeconds);
         if (Settings.StartWithWindows != Autostart.IsEnabled()) Autostart.Set(Settings.StartWithWindows);
         Evaluate(initial: true);
     }
+
+    /// <summary>Keeps Claude Code's theme in line with <see cref="AppSettings.ClaudeMascotColor"/>.</summary>
+    private void SyncClaudeMascot()
+    {
+        try
+        {
+            if (Settings.ClaudeMascotColor)
+            {
+                if (!Settings.ClaudeThemeSwitched)
+                {
+                    string? current = ClaudeCodeSetup.CurrentTheme();
+                    Settings.ClaudeThemeBefore = current == "custom:" + ClaudeCodeSetup.ThemeSlug ? null : current;
+                }
+                ClaudeCodeSetup.WritePetTheme(Settings.PetColor, Settings.ClaudeThemeBefore);
+                if (!Settings.ClaudeThemeSwitched)
+                {
+                    // Only switch once: if the user picks another theme in Claude Code later, that choice stays.
+                    ClaudeCodeSetup.SelectPetTheme();
+                    Settings.ClaudeThemeSwitched = true;
+                    SaveSettings();
+                }
+            }
+            else if (Settings.ClaudeThemeSwitched)
+            {
+                if (ClaudeCodeSetup.IsPetThemeSelected()) ClaudeCodeSetup.SelectTheme(Settings.ClaudeThemeBefore);
+                ClaudeCodeSetup.DeletePetTheme();
+                Settings.ClaudeThemeSwitched = false;
+                Settings.ClaudeThemeBefore = null;
+                SaveSettings();
+            }
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidDataException
+                                       or System.Text.Json.JsonException)
+        {
+            Log.Write("Claude-Code-Theme konnte nicht geschrieben werden: " + ex);
+            ShowNotification("Claude Pet", "Claude-Code-Theme konnte nicht geschrieben werden: " + ex.Message);
+        }
+    }
+
+    private uint ParsePetColor() =>
+        Sprite.TryParseColor(Settings.PetColor, out uint color) ? color : Sprite.DefaultBodyColor;
 
     private void SaveSettings()
     {

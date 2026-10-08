@@ -13,6 +13,7 @@ public sealed class TrayIcon : IDisposable
     private readonly Forms.ToolStripMenuItem _walkAround;
     private readonly Dictionary<PetMood, System.Drawing.Icon> _icons = new();
     private PetMood? _mood;
+    private int _spriteVersion = Sprite.Version;
 
     public TrayIcon(App app)
     {
@@ -52,6 +53,17 @@ public sealed class TrayIcon : IDisposable
 
     public void Update(PetMood mood, string tooltip)
     {
+        if (_spriteVersion != Sprite.Version)
+        {
+            // The pet's color changed: redraw the icons.
+            _spriteVersion = Sprite.Version;
+            var old = _icons.Values.ToList();
+            _icons.Clear();
+            _mood = null;
+            Update(mood, tooltip);
+            foreach (var icon in old) icon.Dispose();
+            return;
+        }
         if (_mood != mood)
         {
             _mood = mood;

@@ -3,6 +3,7 @@ using System.Text;
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using ClaudePet.Pet;
 using ClaudePet.Shared;
 
 namespace ClaudePet.Core;
@@ -21,6 +22,8 @@ public enum TerminalKind { Auto, WindowsTerminal, Cmd, PowerShell }
 
 public sealed class AppSettings
 {
+    public const string DefaultPetColor = "#D97757";
+
     // Pet
     public double PetScale { get; set; } = 5;
     public double? PositionX { get; set; }
@@ -30,6 +33,13 @@ public sealed class AppSettings
     /// <summary>Walk around on the taskbar and on top of open windows.</summary>
     public bool WalkAround { get; set; } = true;
     public bool StartWithWindows { get; set; }
+    /// <summary>Body color as "#RRGGBB"; shade and mood tints are derived from it.</summary>
+    public string PetColor { get; set; } = DefaultPetColor;
+    /// <summary>Colors Claude Code's start-up mascot like the pet (via a custom Claude Code theme).</summary>
+    public bool ClaudeMascotColor { get; set; }
+    /// <summary>Whether ClaudePet switched Claude Code to its theme, and which theme was selected before.</summary>
+    public bool ClaudeThemeSwitched { get; set; }
+    public string? ClaudeThemeBefore { get; set; }
 
     // Usage
     public int PollIntervalSeconds { get; set; } = 2;
@@ -118,6 +128,7 @@ public sealed class AppSettings
         Texts ??= [];
         RecentProjects ??= [];
         if (string.IsNullOrWhiteSpace(ReposPath)) ReposPath = null;
+        PetColor = Sprite.TryParseColor(PetColor, out uint color) ? Sprite.ToHex(color) : DefaultPetColor;
         foreach (var (key, value) in DefaultTexts())
         {
             if (!Texts.TryGetValue(key, out var list) || list == null || list.Count == 0)

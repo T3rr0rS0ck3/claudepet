@@ -76,6 +76,24 @@
                     <TextBlock Grid.Column="2" Text="{Binding Value, ElementName=ScaleSlider, StringFormat={}{0}x}"
                                VerticalAlignment="Center" HorizontalAlignment="Right" />
                 </Grid>
+                <Grid Style="{StaticResource Row}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="150" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="80" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="Farbe" VerticalAlignment="Center" />
+                    <Border x:Name="ColorPreview" Grid.Column="1" Width="24" Height="22" Margin="0,0,6,0"
+                            BorderBrush="#80000000" BorderThickness="1" CornerRadius="2" />
+                    <TextBox x:Name="ColorBox" Grid.Column="2" MaxLength="7" TextChanged="ColorBox_TextChanged" />
+                    <StackPanel Grid.Column="3" Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button Content="Wählen…" Padding="10,2" Click="PickColor_Click" />
+                        <Button Content="Standard" Padding="10,2" Margin="6,0,0,0" Click="DefaultColor_Click" />
+                    </StackPanel>
+                </Grid>
+                <CheckBox x:Name="ClaudeMascotBox" Content="Claude-Maskottchen im Terminal in Pet-Farbe"
+                          ToolTip="Legt ein eigenes Claude-Code-Theme an (themes\claudepet.json) und wählt es aus. Beim Ausschalten wird das vorherige Theme wiederhergestellt." />
                 <CheckBox x:Name="AlwaysOnTopBox" Content="Immer im Vordergrund" />
                 <CheckBox x:Name="AnimationsBox" Content="Animationen" />
                 <CheckBox x:Name="WalkAroundBox" Content="Auf dem Desktop herumlaufen"
