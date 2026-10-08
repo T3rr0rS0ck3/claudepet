@@ -85,6 +85,12 @@ public static class PetAnimator
                 Arms = t / 3 % 2 == 0 ? Arms.Up : Arms.Wave, Legs = (int)(t / 3 % 2) + 1,
                 Bob = 0, Shake = 0, Mark = Mark.None,
             },
+            // Squashed flat after a long fall; the window does the squashing.
+            Motion.Splat => frame with
+            {
+                Eyes = Eyes.Closed, Mouth = Mouth.Wavy, Arms = Arms.Wave, Legs = 0,
+                Bob = 0, Shake = 0, Mark = Mark.None,
+            },
             Motion.Jump => frame with
             {
                 Eyes = Eyes.Happy, Mouth = Mouth.Smile, Arms = Arms.Up, Legs = 0,

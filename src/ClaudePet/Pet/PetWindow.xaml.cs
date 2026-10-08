@@ -418,7 +418,7 @@ public partial class PetWindow : Window
         // Hold still under the mouse so clicks and double-clicks land on the pet; a fall or jump still finishes.
         bool aiming = PetImage.IsMouseOver || EmoteBar.IsMouseOver || _emote != null
                       || _pressPoint != null || _clickTimer.IsEnabled;
-        if (aiming && !_needsPlace && _walker.Motion is not (Motion.Fall or Motion.Jump))
+        if (aiming && !_needsPlace && _walker.Motion is not (Motion.Fall or Motion.Jump or Motion.Splat))
         {
             if (_pose.Motion is Motion.Walk or Motion.Run)
             {
@@ -458,9 +458,38 @@ public partial class PetWindow : Window
         var pose = (_walker.Motion, _walker.Direction);
         if (pose != _pose)
         {
+            if (pose.Motion == Motion.Splat) Squash();
             _pose = pose;
             Render();
         }
+    }
+
+    /// <summary>Squashes the pet flat onto the ground after a long fall and lets it spring back into shape.</summary>
+    private void Squash()
+    {
+        // Spread out as far as the window allows; it is only a little wider than the pet at large sizes.
+        double wide = Math.Min(1.45, ActualWidth / PetImage.Width);
+        var squash = new ScaleTransform();
+        PetImage.RenderTransformOrigin = new Point(0.5, 1); // the feet stay on the ground
+        PetImage.RenderTransform = squash;
+        squash.BeginAnimation(ScaleTransform.ScaleXProperty, SquashCurve(wide));
+        squash.BeginAnimation(ScaleTransform.ScaleYProperty, SquashCurve(0.35));
+    }
+
+    /// <summary>Hits <paramref name="flat"/> on impact, stays there a moment, then wobbles back to 1.</summary>
+    private static DoubleAnimationUsingKeyFrames SquashCurve(double flat)
+    {
+        double seconds = PetWalker.SplatSeconds;
+        return new DoubleAnimationUsingKeyFrames
+        {
+            KeyFrames =
+            {
+                new LinearDoubleKeyFrame(flat, KeyTime.FromTimeSpan(TimeSpan.FromSeconds(0.06))),
+                new LinearDoubleKeyFrame(flat, KeyTime.FromTimeSpan(TimeSpan.FromSeconds(seconds * 0.4))),
+                new EasingDoubleKeyFrame(1, KeyTime.FromTimeSpan(TimeSpan.FromSeconds(seconds)),
+                    new ElasticEase { EasingMode = EasingMode.EaseOut, Oscillations = 2, Springiness = 4 }),
+            },
+        };
     }
 
     private void ClampToScreen()
@@ -575,6 +604,7 @@ public partial class PetWindow : Window
         _moveOffset = new POINT { X = cursor.X - rect.Left, Y = cursor.Y - rect.Top };
         _dragging = true;
         PetImage.CaptureMouse();
+        PetImage.RenderTransform = Transform.Identity; // picked up while squashed flat
         _pose = (Motion.Carried, _pose.Direction);
         Render();
     }
