@@ -60,11 +60,11 @@
                     <Button x:Name="ConnectButton" Content="Claude Code verbinden" Padding="10,3" Click="Connect_Click" />
                     <Button x:Name="DisconnectButton" Content="Trennen" Padding="10,3" Margin="8,0,0,0" Click="Disconnect_Click" />
                 </StackPanel>
-                <CheckBox x:Name="SessionMarksBox" Content="„?“ bei Fragen und „!“ wenn Claude fertig ist am Pet anzeigen" Margin="0,8,0,4"
+                <CheckBox x:Name="SessionMarksBox" Content="„?“ bei Fragen und Sprechblase wenn Claude fertig ist" Margin="0,8,0,4"
                           ToolTip="Trägt Hooks in die Claude-Code-Einstellungen ein (nur wenn verbunden). Ausschalten entfernt sie wieder." />
                 <CheckBox x:Name="SessionPetsBox" Content="Baby-Pet für jede Claude-Session"
                           IsEnabled="{Binding IsChecked, ElementName=SessionMarksBox}"
-                          ToolTip="Ein kleines Pet pro laufender Session folgt dem Pet und zeigt deren ? oder !." />
+                          ToolTip="Ein kleines Pet pro laufender Session folgt dem Pet und zeigt deren „?“." />
             </StackPanel>
         </GroupBox>
 

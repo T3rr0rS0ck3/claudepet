@@ -10,7 +10,7 @@ namespace ClaudePet.Pet;
 
 /// <summary>
 /// A small pet for one Claude Code session. It trots after the big pet and shows that session's
-/// "?" (question waiting) or "!" (done); the tooltip names the folder.
+/// "?" while a question waits; the tooltip names the folder and its state.
 /// </summary>
 public sealed class BabyPetWindow : Window
 {
@@ -90,12 +90,7 @@ public sealed class BabyPetWindow : Window
 
     public void Render(PetMood mood, long t)
     {
-        var mark = _session.State switch
-        {
-            SessionStates.Question => Mark.Question,
-            SessionStates.Done => Mark.Done,
-            _ => Mark.None,
-        };
+        var mark = _session.State == SessionStates.Question ? Mark.Question : Mark.None;
         bool working = _session.State == SessionStates.Working;
         var frame = PetAnimator.Frame(mood, working && _motion == Motion.Idle, false, t, _motion, _direction);
         _image.Source = Sprite.Render(frame with { Mark = mark });

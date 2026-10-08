@@ -188,17 +188,12 @@ public partial class PetWindow : Window
     // ---------------------------------------------------------------- Claude Code sessions
 
     /// <summary>
-    /// Shows "?" / "!" for the most urgent session and, if enabled, a baby pet per session that
+    /// Shows "?" while a session waits for an answer and, if enabled, a baby pet per session that
     /// trots after the pet.
     /// </summary>
     public void SetSessions(IReadOnlyList<SessionView> sessions, string? overall, bool marks, bool babies)
     {
-        var mark = !marks ? Mark.None : overall switch
-        {
-            SessionStates.Question => Mark.Question,
-            SessionStates.Done => Mark.Done,
-            _ => Mark.None,
-        };
+        var mark = marks && overall == SessionStates.Question ? Mark.Question : Mark.None;
         if (mark != _sessionMark)
         {
             _sessionMark = mark;
