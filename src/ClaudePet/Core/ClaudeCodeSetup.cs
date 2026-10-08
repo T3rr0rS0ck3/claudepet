@@ -67,7 +67,8 @@ public static class ClaudeCodeSetup
         return command == null ? SetupStatus.NotConfigured : SetupStatus.OtherStatusLine;
     }
 
-    public static void Install()
+    /// <summary>Registers the statusLine and, with <paramref name="hooks"/>, the ?/! session hooks.</summary>
+    public static void Install(bool hooks = true)
     {
         var root = Load() ?? new JsonObject();
         Backup();
@@ -77,17 +78,121 @@ public static class ClaudeCodeSetup
             ["command"] = BridgeCommand,
             ["padding"] = 0,
         };
+        RemoveHooks(root);
+        if (hooks) AddHooks(root);
         Save(root);
     }
 
     public static void Uninstall()
     {
         var root = Load();
-        if (root == null || GetStatus() != SetupStatus.Connected) return;
+        if (root == null) return;
+        bool connected = GetStatus() == SetupStatus.Connected;
+        if (!connected && !HasAnyHook()) return;
         Backup();
-        root.Remove("statusLine");
+        if (connected) root.Remove("statusLine");
+        RemoveHooks(root);
         Save(root);
     }
+
+    // ---------------------------------------------------------------- session hooks (? and ! on the pet)
+
+    /// <summary>
+    /// Hook events the bridge listens to, with a tool matcher where needed. Kept to rare events:
+    /// every hook call starts the bridge, and per-tool hooks would slow Claude down.
+    /// </summary>
+    private static readonly (string Event, string? Matcher)[] HookEvents =
+    [
+        ("SessionStart", null), ("UserPromptSubmit", null), ("Stop", null), ("PermissionRequest", null),
+        ("Notification", null), ("PreToolUse", "AskUserQuestion"), ("PostToolUse", "AskUserQuestion"),
+        ("SessionEnd", null),
+    ];
+
+    public static string HookCommand => BridgeCommand + " --hook";
+
+    /// <summary>All of the pet's hooks are registered, pointing at this app's bridge.</summary>
+    public static bool HooksInstalled()
+    {
+        try
+        {
+            return Load()?["hooks"] is JsonObject hooks && HookEvents.All(h => hooks[h.Event] is JsonArray groups && groups.Any(IsCurrent));
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Adds or removes only the pet's own hooks; other hooks are left alone. Hooks pointing at
+    /// another copy of the bridge (e.g. after switching between installed and self-built app) are
+    /// replaced. Never registers hooks for a missing bridge, they would fail in every session.
+    /// </summary>
+    public static void SetHooks(bool enabled)
+    {
+        if (enabled ? HooksInstalled() || !File.Exists(BridgePath) : !HasAnyHook()) return;
+        var root = Load() ?? new JsonObject();
+        Backup();
+        RemoveHooks(root);
+        if (enabled) AddHooks(root);
+        Save(root);
+    }
+
+    private static void AddHooks(JsonObject root)
+    {
+        if (root["hooks"] is not JsonObject hooks) root["hooks"] = hooks = new JsonObject();
+        foreach (var (name, matcher) in HookEvents)
+        {
+            if (hooks[name] is not JsonArray groups) hooks[name] = groups = new JsonArray();
+            var group = new JsonObject();
+            if (matcher != null) group["matcher"] = matcher;
+            group["hooks"] = new JsonArray(new JsonObject
+            {
+                ["type"] = "command",
+                ["command"] = HookCommand,
+                ["timeout"] = 10,
+            });
+            groups.Add(group);
+        }
+    }
+
+    private static void RemoveHooks(JsonObject root)
+    {
+        if (root["hooks"] is not JsonObject hooks) return;
+        foreach (var (name, value) in hooks.ToList())
+        {
+            if (value is not JsonArray groups) continue;
+            foreach (var group in groups.OfType<JsonObject>().ToList())
+            {
+                if (group["hooks"] is not JsonArray list) continue;
+                foreach (var hook in list.Where(IsOurHook).ToList()) list.Remove(hook);
+                if (list.Count == 0) groups.Remove(group);
+            }
+            if (groups.Count == 0) hooks.Remove(name);
+        }
+        if (hooks.Count == 0) root.Remove("hooks");
+    }
+
+    private static bool HasAnyHook()
+    {
+        try
+        {
+            return Load()?["hooks"] is JsonObject hooks
+                   && hooks.Any(h => h.Value is JsonArray groups && groups.Any(g => g?["hooks"] is JsonArray list && list.Any(IsOurHook)));
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    private static bool IsCurrent(JsonNode? group) =>
+        group?["hooks"] is JsonArray list && list.Any(h => IsOurHook(h)
+            && h?["command"]?.GetValue<string>() == HookCommand);
+
+    private static bool IsOurHook(JsonNode? hook) =>
+        hook?["command"] is JsonValue command && command.TryGetValue(out string? text)
+        && text.Contains("ClaudePetBridge", StringComparison.OrdinalIgnoreCase);
 
     /// <summary>Whether Claude Code's voice dictation (<c>voice.enabled</c>) is switched on.</summary>
     public static bool IsVoiceEnabled()

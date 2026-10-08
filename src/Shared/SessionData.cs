@@ -1,0 +1,92 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using System.Threading;
+
+namespace ClaudePet.Shared;
+
+/// <summary>What a Claude Code session is doing, as far as its hooks tell.</summary>
+public static class SessionStates
+{
+    /// <summary>Started, waiting for the first prompt.</summary>
+    public const string Idle = "idle";
+    public const string Working = "working";
+    /// <summary>Claude asks something or waits for a permission.</summary>
+    public const string Question = "question";
+    /// <summary>Claude finished its turn.</summary>
+    public const string Done = "done";
+}
+
+/// <summary>One Claude Code session, written by the bridge's hook mode and read by the app.</summary>
+public sealed class SessionInfo
+{
+    [JsonPropertyName("cwd")] public string? Cwd { get; set; }
+    [JsonPropertyName("state")] public string State { get; set; } = SessionStates.Working;
+    /// <summary>Unix epoch seconds of the last hook call.</summary>
+    [JsonPropertyName("updated_at")] public long UpdatedAt { get; set; }
+    /// <summary>
+    /// Claude Code's conversation log and its size when the state was set. No hook reports an
+    /// answered permission prompt, so a question counts as answered once the log grows again.
+    /// </summary>
+    [JsonPropertyName("transcript")] public string? Transcript { get; set; }
+    [JsonPropertyName("transcript_length")] public long TranscriptLength { get; set; }
+
+    [JsonIgnore] public string Folder => Cwd is { Length: > 0 } cwd ? Path.GetFileName(cwd.TrimEnd('\\', '/')) : "Claude";
+}
+
+/// <summary>sessions.json: session id → state. Several sessions write it, so changes are serialized.</summary>
+public static class SessionStore
+{
+    /// <summary>Sessions without a hook call for this long are dropped (closed terminal without SessionEnd).</summary>
+    public static readonly TimeSpan MaxAge = TimeSpan.FromHours(12);
+
+    private const string MutexName = "ClaudePet.Sessions.v1";
+
+    private static readonly JsonSerializerOptions Options = new() { WriteIndented = true };
+
+    public static Dictionary<string, SessionInfo> Read()
+    {
+        try
+        {
+            if (!File.Exists(DataPaths.SessionsFile)) return new();
+            return JsonSerializer.Deserialize<Dictionary<string, SessionInfo>>(
+                File.ReadAllText(DataPaths.SessionsFile, Encoding.UTF8), Options) ?? new();
+        }
+        catch (Exception ex) when (ex is IOException or JsonException or UnauthorizedAccessException)
+        {
+            return new();
+        }
+    }
+
+    /// <summary>Applies <paramref name="change"/> to the stored sessions under a machine-wide lock.</summary>
+    public static void Update(Action<Dictionary<string, SessionInfo>> change)
+    {
+        using var mutex = new Mutex(false, MutexName);
+        bool owned = false;
+        try
+        {
+            try { owned = mutex.WaitOne(TimeSpan.FromSeconds(2)); }
+            catch (AbandonedMutexException) { owned = true; }
+            if (!owned) return; // never block Claude Code
+
+            var sessions = Read();
+            change(sessions);
+            long cutoff = DateTimeOffset.UtcNow.Add(-MaxAge).ToUnixTimeSeconds();
+            foreach (var id in sessions.Where(s => s.Value.UpdatedAt < cutoff).Select(s => s.Key).ToList())
+                sessions.Remove(id);
+
+            Directory.CreateDirectory(DataPaths.DataDir);
+            string temp = DataPaths.SessionsFile + ".tmp";
+            File.WriteAllText(temp, JsonSerializer.Serialize(sessions, Options), new UTF8Encoding(false));
+            File.Move(temp, DataPaths.SessionsFile, overwrite: true);
+        }
+        finally
+        {
+            if (owned) mutex.ReleaseMutex();
+        }
+    }
+}

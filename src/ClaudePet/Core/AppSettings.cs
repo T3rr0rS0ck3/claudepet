@@ -32,6 +32,10 @@ public sealed class AppSettings
     public bool Animations { get; set; } = true;
     /// <summary>Walk around on the taskbar and on top of open windows.</summary>
     public bool WalkAround { get; set; } = true;
+    /// <summary>"?" when a Claude Code session asks something, "!" when it is done (via Claude Code hooks).</summary>
+    public bool SessionMarks { get; set; } = true;
+    /// <summary>A small pet per running Claude Code session, showing that session's ?/!.</summary>
+    public bool SessionPets { get; set; }
     public bool StartWithWindows { get; set; }
     /// <summary>Body color as "#RRGGBB"; shade and mood tints are derived from it.</summary>
     public string PetColor { get; set; } = DefaultPetColor;
@@ -89,6 +93,8 @@ public sealed class AppSettings
         ["Launch"] = ["Viel Spaß in {folder}!", "Auf geht's: {folder}"],
         ["NoFolder"] = ["Da ist kein Ordner, den ich öffnen kann…"],
         ["Voice"] = ["Halte die Leertaste gedrückt und sprich mit Claude 🎤"],
+        ["Question"] = ["{folder}: Claude hat eine Frage.", "Psst, {folder} wartet auf dich."],
+        ["Done"] = ["{folder} ist fertig!", "Fertig in {folder}."],
     };
 
     public static AppSettings Load()

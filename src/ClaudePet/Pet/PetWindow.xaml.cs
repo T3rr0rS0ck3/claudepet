@@ -8,6 +8,7 @@ using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Threading;
 using ClaudePet.Core;
+using ClaudePet.Shared;
 
 namespace ClaudePet.Pet;
 
@@ -51,6 +52,12 @@ public partial class PetWindow : Window
     private bool _needsPlace = true;
     private bool _petOnTop;
     private bool _listening;
+    private Mark _sessionMark = Mark.None;
+    private readonly Dictionary<string, BabyPetWindow> _babies = new();
+    private readonly DispatcherTimer _babyTimer = new() { Interval = TimeSpan.FromMilliseconds(1000.0 / 30) };
+    private readonly Stopwatch _babyClock = Stopwatch.StartNew();
+    private TimeSpan _lastBabyTick;
+    private bool _topmost = true;
     private (Motion Motion, int Direction) _pose = (Motion.Idle, 1);
     private Eyes? _lookAt;
 
@@ -69,9 +76,11 @@ public partial class PetWindow : Window
     public PetWindow()
     {
         InitializeComponent();
-        _animationTimer.Tick += (_, _) => { _tick++; Render(); };
+        _animationTimer.Tick += (_, _) => { _tick++; Render(); RenderBabies(); };
         _bubbleTimer.Tick += (_, _) => HideBubble();
         _walkTimer.Tick += (_, _) => Walk();
+        _babyTimer.Tick += (_, _) => FollowWithBabies();
+        Closed += (_, _) => { foreach (var baby in _babies.Values) baby.Close(); };
         _ghostTimer.Tick += (_, _) => UpdateGhost();
         _clickTimer.Tick += (_, _) =>
         {
@@ -83,7 +92,12 @@ public partial class PetWindow : Window
 
     public void ApplySettings(AppSettings settings, bool initial = false)
     {
-        Topmost = settings.AlwaysOnTop;
+        Topmost = _topmost = settings.AlwaysOnTop;
+        foreach (var baby in _babies.Values)
+        {
+            baby.Topmost = _topmost;
+            baby.SetScale(settings.PetScale);
+        }
         _animations = settings.Animations;
         _ghostDrag = settings.GhostDrag;
         _scale = settings.PetScale;
@@ -171,6 +185,91 @@ public partial class PetWindow : Window
         Bubble.BeginAnimation(OpacityProperty, fade);
     }
 
+    // ---------------------------------------------------------------- Claude Code sessions
+
+    /// <summary>
+    /// Shows "?" / "!" for the most urgent session and, if enabled, a baby pet per session that
+    /// trots after the pet.
+    /// </summary>
+    public void SetSessions(IReadOnlyList<SessionView> sessions, string? overall, bool marks, bool babies)
+    {
+        var mark = !marks ? Mark.None : overall switch
+        {
+            SessionStates.Question => Mark.Question,
+            SessionStates.Done => Mark.Done,
+            _ => Mark.None,
+        };
+        if (mark != _sessionMark)
+        {
+            _sessionMark = mark;
+            Render();
+        }
+
+        var wanted = marks && babies ? sessions : [];
+        foreach (var id in _babies.Keys.Where(id => wanted.All(s => s.Id != id)).ToList())
+        {
+            _babies[id].Close();
+            _babies.Remove(id);
+        }
+        foreach (var session in wanted)
+        {
+            if (_babies.TryGetValue(session.Id, out var baby))
+            {
+                baby.SetSession(session);
+                continue;
+            }
+            _babies[session.Id] = baby = new BabyPetWindow(session, _scale, _topmost);
+            if (IsVisible) baby.Show();
+        }
+
+        if (_babies.Count > 0 && !_babyTimer.IsEnabled)
+        {
+            _lastBabyTick = _babyClock.Elapsed;
+            _babyTimer.Start();
+        }
+        else if (_babies.Count == 0)
+        {
+            _babyTimer.Stop();
+        }
+        RenderBabies();
+    }
+
+    /// <summary>Babies line up behind the pet, on the same ground, and catch up when it moves.</summary>
+    private void FollowWithBabies()
+    {
+        var now = _babyClock.Elapsed;
+        double dt = Math.Clamp((now - _lastBabyTick).TotalSeconds, 0, 0.1);
+        _lastBabyTick = now;
+
+        foreach (var baby in _babies.Values)
+        {
+            if (IsVisible && !baby.IsVisible) baby.Show();
+            else if (!IsVisible && baby.IsVisible) baby.Hide();
+        }
+        var hwnd = new WindowInteropHelper(this).Handle;
+        if (!IsVisible || hwnd == IntPtr.Zero || !GetWindowRect(hwnd, out var rect)) return;
+
+        var dpi = VisualTreeHelper.GetDpi(this);
+        double petWidth = PetImage.Width * dpi.DpiScaleX, petHeight = PetImage.Height * dpi.DpiScaleY;
+        double feetX = (rect.Left + rect.Right) / 2.0;
+        double feetY = _petOnTop ? rect.Top + petHeight : rect.Bottom;
+        double babyWidth = petWidth * BabyPetWindow.SizeFactor;
+        int behind = -_pose.Direction;
+        int i = 0;
+        foreach (var baby in _babies.Values)
+        {
+            double x = feetX + behind * (petWidth * 0.45 + babyWidth * (0.6 + i * 0.95));
+            baby.Follow(x, feetY, dt);
+            i++;
+        }
+    }
+
+    private void RenderBabies()
+    {
+        long t = _animations ? _tick : 1;
+        foreach (var baby in _babies.Values) baby.Render(_mood, t);
+    }
+
     /// <summary>The user is dictating to Claude Code: stand still and listen.</summary>
     public void SetListening(bool listening)
     {
@@ -202,6 +301,7 @@ public partial class PetWindow : Window
         long t = _animations ? _tick : 1;
         var frame = PetAnimator.Frame(_mood, _working, cheering, t, _pose.Motion, _pose.Direction, _listening);
         if (_lookAt is { } eyes) frame = frame with { Eyes = eyes };
+        if (_sessionMark != Mark.None) frame = frame with { Mark = _sessionMark };
         PetImage.Source = Sprite.Render(frame);
     }
 
