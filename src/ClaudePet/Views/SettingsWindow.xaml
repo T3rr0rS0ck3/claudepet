@@ -210,6 +210,20 @@
             </StackPanel>
         </GroupBox>
 
+        <GroupBox Header="UPDATES">
+            <StackPanel>
+                <TextBlock x:Name="VersionText" TextWrapping="Wrap" />
+                <CheckBox x:Name="UpdatesBox" Content="Automatisch nach Updates suchen" Margin="0,6,0,4"
+                          ToolTip="Fragt beim Start und einmal am Tag bei GitHub nach einer neuen Version." />
+                <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
+                    <Button x:Name="CheckUpdateButton" Content="Jetzt suchen" Padding="10,3" Click="CheckUpdate_Click" />
+                    <Button x:Name="InstallUpdateButton" Padding="10,3" Margin="8,0,0,0" Visibility="Collapsed"
+                            Click="InstallUpdate_Click" />
+                </StackPanel>
+                <TextBlock x:Name="UpdateStatusText" TextWrapping="Wrap" Margin="0,6,0,0" Visibility="Collapsed" />
+            </StackPanel>
+        </GroupBox>
+
     </StackPanel>
     </ScrollViewer>
     </DockPanel>

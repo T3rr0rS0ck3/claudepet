@@ -63,6 +63,14 @@ Name: "{autodesktop}\{#AppName}"; Filename: "{app}\{#AppExe}"; Tasks: desktopico
 [Run]
 Filename: "{app}\{#AppExe}"; Parameters: "--connect-claude-code"; Tasks: connect; Flags: runhidden waituntilterminated
 Filename: "{app}\{#AppExe}"; Description: "{cm:LaunchApp}"; Flags: nowait postinstall skipifsilent
+; In-app update: the pet runs this setup silently with /RESTARTAPP=1 and quits, so start it again.
+Filename: "{app}\{#AppExe}"; Flags: nowait; Check: ShouldRestartApp
+
+[Code]
+function ShouldRestartApp: Boolean;
+begin
+  Result := ExpandConstant('{param:RESTARTAPP|0}') = '1';
+end;
 
 [UninstallRun]
 Filename: "{sys}\taskkill.exe"; Parameters: "/F /IM {#AppExe}"; Flags: runhidden; RunOnceId: "StopPet"

@@ -34,6 +34,11 @@ public partial class SettingsWindow : Window
         WalkAroundBox.IsChecked = settings.WalkAround;
         CrossMonitorsBox.IsChecked = settings.CrossMonitors;
         EmotesBox.IsChecked = settings.Emotes;
+        UpdatesBox.IsChecked = settings.CheckForUpdates;
+        VersionText.Text = "Installierte Version: " + Updater.Format(Updater.CurrentVersion)
+            + (Updater.IsDevBuild ? " (selbst gebaut, keine Updates)" : Updater.IsInstalled ? "" : " (portabel)");
+        CheckUpdateButton.IsEnabled = !Updater.IsDevBuild;
+        ShowUpdate(app.AvailableUpdate);
         SessionMarksBox.IsChecked = settings.SessionMarks;
         SessionPetsBox.IsChecked = settings.SessionPets;
         AutostartBox.IsChecked = settings.StartWithWindows;
@@ -149,6 +154,38 @@ public partial class SettingsWindow : Window
         Process.Start(new ProcessStartInfo(DataPaths.SettingsFile) { UseShellExecute = true });
     }
 
+    private async void CheckUpdate_Click(object sender, RoutedEventArgs e)
+    {
+        CheckUpdateButton.IsEnabled = false;
+        UpdateStatusText.Text = "Suche…";
+        UpdateStatusText.Visibility = Visibility.Visible;
+        try
+        {
+            var update = await _app.CheckForUpdateAsync(silent: false);
+            ShowUpdate(update);
+            if (update == null) UpdateStatusText.Text = "✔ Du hast die neueste Version.";
+        }
+        catch (Exception ex)
+        {
+            UpdateStatusText.Text = "Suche fehlgeschlagen: " + ex.Message;
+        }
+        finally
+        {
+            CheckUpdateButton.IsEnabled = true;
+        }
+    }
+
+    private void ShowUpdate(UpdateInfo? update)
+    {
+        InstallUpdateButton.Visibility = update != null ? Visibility.Visible : Visibility.Collapsed;
+        if (update == null) return;
+        InstallUpdateButton.Content = Updater.IsInstalled ? "Installieren" : "Herunterladen";
+        UpdateStatusText.Text = $"Version {update.VersionText} ist verfügbar.";
+        UpdateStatusText.Visibility = Visibility.Visible;
+    }
+
+    private void InstallUpdate_Click(object sender, RoutedEventArgs e) => _app.InstallUpdate(this);
+
     private void TestNotification_Click(object sender, RoutedEventArgs e) =>
         _app.ShowNotification("Claude Usage Pet", "So sehen Warnungen aus. 🟠");
 
@@ -193,6 +230,7 @@ public partial class SettingsWindow : Window
             _settings.WalkAround = WalkAroundBox.IsChecked == true;
             _settings.CrossMonitors = CrossMonitorsBox.IsChecked == true;
             _settings.Emotes = EmotesBox.IsChecked == true;
+            _settings.CheckForUpdates = UpdatesBox.IsChecked == true;
             _settings.SessionMarks = SessionMarksBox.IsChecked == true;
             _settings.SessionPets = SessionPetsBox.IsChecked == true;
             _settings.StartWithWindows = AutostartBox.IsChecked == true;

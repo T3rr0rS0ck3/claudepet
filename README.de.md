@@ -59,6 +59,13 @@ Danach Rechtsklick aufs Pet → *Claude Code verbinden…*
 > **Windows SmartScreen** warnt eventuell vor einem unbekannten Herausgeber, weil der Installer nicht signiert ist.
 > *Weitere Informationen → Trotzdem ausführen*.
 
+### Updates
+
+Das Pet sucht beim Start und einmal am Tag nach einem neuen Release. Gibt es eins, sagt es Bescheid, und im
+Rechtsklick-Menü erscheint **Update auf x.y.z installieren…**: Ein Klick lädt das Setup, prüft es gegen die
+`SHA256SUMS.txt` des Releases, installiert still und startet das Pet neu. Portable Kopien bekommen nur einen Link
+zur Release-Seite. In den Einstellungen (*Updates*) lässt sich die Suche abschalten oder von Hand starten.
+
 ## Bedienung
 
 | Aktion | Wirkung |
@@ -159,7 +166,7 @@ Hooks wieder. Sprechblasentexte: `Question`, `Done` (mit `{folder}`).
 ## Konfiguration
 
 Die meisten Optionen gibt es unter Rechtsklick → **Einstellungen…**: Repo-Ordner, Konsole, Geist ziehen, Sprachchat,
-Größe, Farbe, Vordergrund, Animationen, Herumlaufen, Monitorwechsel, Emotes, Autostart, Aktualisierungsintervall, Warn- und Zustandsschwellen, Sprechblasen,
+Größe, Farbe, Vordergrund, Animationen, Herumlaufen, Monitorwechsel, Emotes, Autostart, Update-Suche, Aktualisierungsintervall, Warn- und Zustandsschwellen, Sprechblasen,
 Benachrichtigungen und dein Name.
 
 Alles liegt in `%LOCALAPPDATA%\ClaudePet\settings.json`. Handänderungen werden sofort übernommen.
