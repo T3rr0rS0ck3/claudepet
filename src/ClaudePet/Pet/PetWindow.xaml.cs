@@ -25,6 +25,9 @@ public partial class PetWindow : Window
     private readonly PetWalker _walker = new();
     private readonly DesktopSurfaces _surfaces = new();
     private TimeSpan _lastScan;
+    // A single click waits for the double-click time, so a double-click does not also flash the overlay.
+    private readonly DispatcherTimer _clickTimer = new() { Interval = TimeSpan.FromMilliseconds(GetDoubleClickTime()) };
+    private DateTime _clickedAt;
 
     private long _tick = 1;
     private PetMood _mood = PetMood.Unknown;
@@ -39,8 +42,10 @@ public partial class PetWindow : Window
     private bool _needsPlace = true;
     private (Motion Motion, int Direction) _pose = (Motion.Idle, 1);
 
-    /// <summary>Left click without dragging.</summary>
-    public event Action? Clicked;
+    /// <summary>Left click without dragging; carries the time the button was released.</summary>
+    public event Action<DateTime>? Clicked;
+    /// <summary>Left double-click.</summary>
+    public event Action? DoubleClicked;
     /// <summary>The pet was dragged to a new position.</summary>
     public event Action? Moved;
 
@@ -50,6 +55,11 @@ public partial class PetWindow : Window
         _animationTimer.Tick += (_, _) => { _tick++; Render(); };
         _bubbleTimer.Tick += (_, _) => HideBubble();
         _walkTimer.Tick += (_, _) => Walk();
+        _clickTimer.Tick += (_, _) =>
+        {
+            _clickTimer.Stop();
+            Clicked?.Invoke(_clickedAt);
+        };
         SourceInitialized += (_, _) => HideFromAltTab();
     }
 
@@ -218,6 +228,14 @@ public partial class PetWindow : Window
 
     private void Pet_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
+        if (e.ClickCount == 2)
+        {
+            _clickTimer.Stop();
+            _pressPoint = null;
+            e.Handled = true;
+            DoubleClicked?.Invoke();
+            return;
+        }
         _pressPoint = e.GetPosition(this);
         PetImage.CaptureMouse();
         e.Handled = true;
@@ -244,7 +262,8 @@ public partial class PetWindow : Window
         PetImage.ReleaseMouseCapture();
         if (_pressPoint == null) return;
         _pressPoint = null;
-        Clicked?.Invoke();
+        _clickedAt = DateTime.Now;
+        _clickTimer.Start();
     }
 
     private void Bubble_MouseLeftButtonUp(object sender, MouseButtonEventArgs e) => HideBubble();
@@ -260,6 +279,7 @@ public partial class PetWindow : Window
     private const int WS_EX_TOOLWINDOW = 0x00000080;
     private const int WS_EX_APPWINDOW = 0x00040000;
 
+    [DllImport("user32.dll")] private static extern uint GetDoubleClickTime();
     [DllImport("user32.dll")] private static extern int GetWindowLong(IntPtr hWnd, int nIndex);
     [DllImport("user32.dll")] private static extern int SetWindowLong(IntPtr hWnd, int nIndex, int dwNewLong);
 
