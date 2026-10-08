@@ -124,6 +124,7 @@ public sealed class AppSettings
         // Relayed from Claude Code: Claude is the one asking or done, the pet only passes it on.
         ["Question"] = ["{folder}: Claude has a question.", "Psst, Claude is waiting for you in {folder}."],
         ["Done"] = ["{folder}: Claude is done!", "Claude is done in {folder}."],
+        ["NoWindow"] = ["I can't find the window of {folder}…"],
         ["Feed"] = ["Mmm, yummy! 🍪", "Cookies are the best token food.", "*munch munch*"],
         ["Pat"] = ["Aww, that's nice ❤", "More of that!", "You're the best, {name}."],
         ["Play"] = ["Catch! ⚽", "Again, again!", "I'm a pro juggler."],
@@ -150,6 +151,7 @@ public sealed class AppSettings
         // Relayed from Claude Code: Claude is the one asking or done, the pet only passes it on.
         ["Question"] = ["{folder}: Claude hat eine Frage.", "Psst, Claude wartet in {folder} auf dich."],
         ["Done"] = ["{folder}: Claude ist fertig!", "Claude ist fertig in {folder}."],
+        ["NoWindow"] = ["Ich finde das Fenster von {folder} nicht…"],
         ["Feed"] = ["Mmmh, lecker! 🍪", "Kekse sind das beste Token-Futter.", "*mampf mampf*"],
         ["Pat"] = ["Hach, das ist schön ❤", "Mehr davon!", "Du bist der Beste, {name}."],
         ["Play"] = ["Fang! ⚽", "Nochmal, nochmal!", "Ich bin ein Profi-Jongleur."],
