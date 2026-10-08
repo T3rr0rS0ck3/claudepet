@@ -7,7 +7,7 @@ namespace ClaudePet.Pet;
 public enum Eyes { Normal, Blink, Closed, Happy, LookLeft, LookRight, LookUp, LookDown, Wide, Big }
 public enum Mouth { None, Smile, Small, Wavy, Open }
 public enum Arms { Down, Up, Wave, TypeLeft, TypeRight }
-public enum Mark { None, Dots1, Dots2, Dots3, Exclaim, Zzz1, Zzz2, Zzz3 }
+public enum Mark { None, Dots1, Dots2, Dots3, Exclaim, Zzz1, Zzz2, Zzz3, Listen1, Listen2, Listen3 }
 public enum Tint { Normal, Hot, Pale, Ghost }
 
 /// <summary>Everything that describes one rendered frame of the pet.</summary>
@@ -221,6 +221,21 @@ public static class Sprite
             case Mark.Zzz1: Z(c0 + 11, 0); break;
             case Mark.Zzz2: Z(c0 + 13, 0); break;
             case Mark.Zzz3: break;
+            // Sound waves next to the head, growing outwards: the pet is listening
+            case Mark.Listen1 or Mark.Listen2 or Mark.Listen3:
+                int waves = f.Mark - Mark.Listen1 + 1;
+                Arc(c0 + 11, 1, 3);
+                if (waves >= 2) Arc(c0 + 13, 0, 5);
+                if (waves >= 3) Arc(c0 + 16, 0, 5);
+                break;
+        }
+
+        // ")" shaped arc, h pixels tall
+        void Arc(int x, int top, int h)
+        {
+            Set(x, top, MarkColor);
+            for (int y = top + 1; y < top + h - 1; y++) Set(x + 1, y, MarkColor);
+            Set(x, top + h - 1, MarkColor);
         }
 
         return px;

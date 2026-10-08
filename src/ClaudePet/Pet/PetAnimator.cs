@@ -8,9 +8,21 @@ public static class PetAnimator
     public const int TicksPerSecond = 8;
 
     public static SpriteFrame Frame(PetMood mood, bool working, bool cheering, long t,
-        Motion motion = Motion.Idle, int direction = 1)
+        Motion motion = Motion.Idle, int direction = 1, bool listening = false)
     {
         var frame = MoodFrame(mood, working, cheering, t);
+        // Dictating to Claude Code: stands still and listens, looking towards the sound waves
+        if (listening && motion is Motion.Idle or Motion.Walk or Motion.Run)
+        {
+            bool blink = t % 36 == 0;
+            var waves = (t / 3 % 4) switch { 1 => Mark.Listen1, 2 => Mark.Listen2, 3 => Mark.Listen3, _ => Mark.None };
+            return frame with
+            {
+                Eyes = frame.Eyes == Eyes.Closed ? Eyes.Closed : blink ? Eyes.Blink : Eyes.LookRight,
+                Mouth = Mouth.None, Arms = Arms.Down, Legs = 0, Shake = 0,
+                Bob = (int)(t / 6 % 2), Mark = waves,
+            };
+        }
         return motion switch
         {
             Motion.Walk or Motion.Run => Walking(frame, motion == Motion.Run, direction, t),

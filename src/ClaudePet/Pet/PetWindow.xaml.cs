@@ -50,6 +50,7 @@ public partial class PetWindow : Window
     private bool _paused;
     private bool _needsPlace = true;
     private bool _petOnTop;
+    private bool _listening;
     private (Motion Motion, int Direction) _pose = (Motion.Idle, 1);
     private Eyes? _lookAt;
 
@@ -170,6 +171,14 @@ public partial class PetWindow : Window
         Bubble.BeginAnimation(OpacityProperty, fade);
     }
 
+    /// <summary>The user is dictating to Claude Code: stand still and listen.</summary>
+    public void SetListening(bool listening)
+    {
+        if (listening == _listening) return;
+        _listening = listening;
+        Render();
+    }
+
     /// <summary>Stops walking around while e.g. the usage overlay is attached to the pet.</summary>
     public void PauseWalking(bool paused)
     {
@@ -191,7 +200,7 @@ public partial class PetWindow : Window
     {
         bool cheering = DateTime.Now < _cheerUntil;
         long t = _animations ? _tick : 1;
-        var frame = PetAnimator.Frame(_mood, _working, cheering, t, _pose.Motion, _pose.Direction);
+        var frame = PetAnimator.Frame(_mood, _working, cheering, t, _pose.Motion, _pose.Direction, _listening);
         if (_lookAt is { } eyes) frame = frame with { Eyes = eyes };
         PetImage.Source = Sprite.Render(frame);
     }
@@ -242,7 +251,7 @@ public partial class PetWindow : Window
             _needsPlace = false;
         }
 
-        bool canWalk = !_surfaces.IsFullscreen(_walker.X, _walker.Y);
+        bool canWalk = !_listening && !_surfaces.IsFullscreen(_walker.X, _walker.Y);
         _walker.Step(dt, _surfaces, _mood, canWalk, petWidth, petHeight);
 
         // Climbing, hanging and falling from the top: pet at the top of the window, so the
@@ -287,24 +296,109 @@ public partial class PetWindow : Window
         e.Handled = true;
     }
 
+    // Left drag: ghost onto an Explorer window (or move the pet if the ghost is switched off).
+    // Right drag: move the pet. A plain left click opens the overlay, a right click the menu.
     private void Pet_MouseMove(object sender, MouseEventArgs e)
     {
+        if (_moveOffset != null)
+        {
+            MoveWithCursor();
+            return;
+        }
         if (_rightPressPoint is { } rightStart && e.RightButton == MouseButtonState.Pressed)
         {
-            var moved = e.GetPosition(this) - rightStart;
-            if (Math.Abs(moved.X) >= 4 || Math.Abs(moved.Y) >= 4) StartGhostDrag();
+            if (Moved4(e.GetPosition(this) - rightStart)) StartMove();
             return;
         }
         if (_pressPoint is not { } start || e.LeftButton != MouseButtonState.Pressed) return;
-        var delta = e.GetPosition(this) - start;
-        if (Math.Abs(delta.X) < 4 && Math.Abs(delta.Y) < 4) return;
+        if (!Moved4(e.GetPosition(this) - start)) return;
 
         _pressPoint = null;
+        if (_ghostDrag) StartGhostDrag();
+        else StartMove();
+    }
+
+    private static bool Moved4(Vector delta) => Math.Abs(delta.X) >= 4 || Math.Abs(delta.Y) >= 4;
+
+    private void Pet_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+    {
+        if (_ghost != null)
+        {
+            EndGhostDrag(drop: true);
+            return;
+        }
+        if (_moveOffset != null)
+        {
+            EndMove();
+            return;
+        }
         PetImage.ReleaseMouseCapture();
+        if (_pressPoint == null) return;
+        _pressPoint = null;
+        _clickedAt = DateTime.Now;
+        _clickTimer.Start();
+    }
+
+    private void Pet_MouseRightButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        _suppressContextMenu = false;
+        _rightPressPoint = e.GetPosition(this);
+    }
+
+    private void Pet_MouseRightButtonUp(object sender, MouseButtonEventArgs e)
+    {
+        _rightPressPoint = null;
+        if (_moveOffset != null) EndMove();
+    }
+
+    private void Pet_LostMouseCapture(object sender, MouseEventArgs e)
+    {
+        // e.g. Alt+Tab or a system dialog while dragging
+        if (_ghost != null) EndGhostDrag(drop: false);
+        else if (_moveOffset != null) EndMove();
+    }
+
+    private void Pet_ContextMenuOpening(object sender, ContextMenuEventArgs e)
+    {
+        // The right button release that ends a drag must not open the menu.
+        if (!_suppressContextMenu) return;
+        _suppressContextMenu = false;
+        e.Handled = true;
+    }
+
+    // ---------------------------------------------------------------- moving the pet
+
+    /// <summary>Cursor position relative to the window's top left while the pet is carried (physical pixels).</summary>
+    private POINT? _moveOffset;
+
+    private void StartMove()
+    {
+        var hwnd = new WindowInteropHelper(this).Handle;
+        GetCursorPos(out var cursor);
+        if (!GetWindowRect(hwnd, out var rect)) return;
+        _rightPressPoint = null;
+        _suppressContextMenu = true;
+        _clickTimer.Stop();
+        _moveOffset = new POINT { X = cursor.X - rect.Left, Y = cursor.Y - rect.Top };
         _dragging = true;
+        PetImage.CaptureMouse();
         _pose = (Motion.Carried, _pose.Direction);
         Render();
-        try { DragMove(); } catch (InvalidOperationException) { }
+    }
+
+    private void MoveWithCursor()
+    {
+        if (_moveOffset is not { } offset) return;
+        GetCursorPos(out var cursor);
+        SetWindowPos(new WindowInteropHelper(this).Handle, IntPtr.Zero, cursor.X - offset.X, cursor.Y - offset.Y, 0, 0,
+            SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
+    }
+
+    private void EndMove()
+    {
+        if (_moveOffset == null) return;
+        _moveOffset = null;          // before releasing capture: LostMouseCapture must not end it twice
+        PetImage.ReleaseMouseCapture();
         _dragging = false;
         if (!_walking) _pose = (Motion.Idle, _pose.Direction);
         Render();
@@ -313,47 +407,11 @@ public partial class PetWindow : Window
         Moved?.Invoke();
     }
 
-    private void Pet_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
-    {
-        PetImage.ReleaseMouseCapture();
-        if (_pressPoint == null) return;
-        _pressPoint = null;
-        _clickedAt = DateTime.Now;
-        _clickTimer.Start();
-    }
-
     // ---------------------------------------------------------------- ghost drag
-
-    private void Pet_MouseRightButtonDown(object sender, MouseButtonEventArgs e)
-    {
-        _suppressContextMenu = false;
-        _rightPressPoint = _ghostDrag ? e.GetPosition(this) : null;
-    }
-
-    private void Pet_MouseRightButtonUp(object sender, MouseButtonEventArgs e)
-    {
-        _rightPressPoint = null;
-        if (_ghost != null) EndGhostDrag(drop: true);
-    }
-
-    private void Pet_LostMouseCapture(object sender, MouseEventArgs e)
-    {
-        // e.g. Alt+Tab or a system dialog while dragging
-        if (_ghost != null) EndGhostDrag(drop: false);
-    }
-
-    private void Pet_ContextMenuOpening(object sender, ContextMenuEventArgs e)
-    {
-        // The right button release that ends a ghost drag must not open the menu.
-        if (!_suppressContextMenu) return;
-        _suppressContextMenu = false;
-        e.Handled = true;
-    }
 
     private void StartGhostDrag()
     {
         _rightPressPoint = null;
-        _suppressContextMenu = true;
         _clickTimer.Stop();
 
         _ghost = new GhostWindow(_scale) { Left = -10000, Top = -10000 };
