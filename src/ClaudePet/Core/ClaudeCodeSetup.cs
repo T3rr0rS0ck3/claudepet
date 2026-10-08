@@ -323,7 +323,7 @@ public static class ClaudeCodeSetup
         if (!File.Exists(SettingsPath)) return null;
         string text = File.ReadAllText(SettingsPath);
         if (string.IsNullOrWhiteSpace(text)) return null;
-        return JsonNode.Parse(text, documentOptions: ReadOptions) as JsonObject ?? throw new InvalidDataException("settings.json ist kein JSON-Objekt.");
+        return JsonNode.Parse(text, documentOptions: ReadOptions) as JsonObject ?? throw new InvalidDataException(Strings.NotJsonObject);
     }
 
     private static void Backup()

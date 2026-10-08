@@ -32,14 +32,14 @@ public partial class UsageOverlay : Window
         if (snapshot?.FiveHour is { } session)
         {
             SessionReset.Text = state.SessionExpired
-                ? "Zurückgesetzt – warte auf neue Daten"
-                : $"Reset in {Format.Duration(session.ResetsAtTime - now)} · {Format.Clock(session.ResetsAtTime)} Uhr";
+                ? Strings.ResetWaiting
+                : Strings.SessionResetIn(Format.Duration(session.ResetsAtTime - now), Format.Clock(session.ResetsAtTime));
             SetForecast(SessionForecast, settings.ShowForecast && !state.SessionExpired, history, true, session, now,
-                eta => $"Limit in {Format.Duration(eta - now)}");
+                eta => Strings.LimitIn(Format.Duration(eta - now)));
         }
         else
         {
-            SessionReset.Text = "Keine Daten";
+            SessionReset.Text = Strings.NoData;
             SessionForecast.Visibility = Visibility.Collapsed;
         }
 
@@ -48,25 +48,25 @@ public partial class UsageOverlay : Window
         if (snapshot?.SevenDay is { } week)
         {
             WeekReset.Text = state.WeekExpired
-                ? "Zurückgesetzt – warte auf neue Daten"
-                : $"Reset: {Format.DayTime(week.ResetsAtTime, now)}";
+                ? Strings.ResetWaiting
+                : Strings.WeekResetAt(Format.DayTime(week.ResetsAtTime, now));
             SetForecast(WeekForecast, settings.ShowForecast && !state.WeekExpired, history, false, week, now,
-                eta => $"Limit {Format.DayTime(eta, now)}");
+                eta => Strings.LimitAt(Format.DayTime(eta, now)));
         }
         else
         {
-            WeekReset.Text = "Keine Daten";
+            WeekReset.Text = Strings.NoData;
             WeekForecast.Visibility = Visibility.Collapsed;
         }
 
-        StateText.Text = UsageState.MoodLabel(state.Mood);
+        StateText.Text = Strings.MoodLabel(state.Mood);
         StateDot.Fill = state.Max is { } max ? Palette.ForPercent(max, t) : Palette.Neutral;
 
         if (snapshot != null)
         {
             var age = now - snapshot.UpdatedAtTime;
-            string ago = age < TimeSpan.FromMinutes(1) ? "gerade eben" : $"vor {Format.Duration(age)}";
-            UpdatedText.Text = $"Aktualisiert {ago}" + (snapshot.Model != null ? $" · {snapshot.Model}" : "");
+            UpdatedText.Text = (age < TimeSpan.FromMinutes(1) ? Strings.UpdatedJustNow : Strings.UpdatedAgo(Format.Duration(age)))
+                               + (snapshot.Model != null ? $" · {snapshot.Model}" : "");
         }
         else
         {
@@ -75,13 +75,10 @@ public partial class UsageOverlay : Window
 
         string? hint = setup switch
         {
-            SetupStatus.NotConfigured or SetupStatus.OtherStatusLine =>
-                "Claude Code ist noch nicht verbunden. Rechtsklick auf das Pet → „Claude Code verbinden“.",
-            SetupStatus.BridgeMissing => "ClaudePetBridge.exe fehlt neben ClaudePet.exe.",
-            _ when snapshot == null =>
-                "Verbunden. Die Werte erscheinen nach der ersten Antwort in Claude Code (nur Pro/Max).",
-            _ when now - snapshot.UpdatedAtTime > TimeSpan.FromHours(5) =>
-                "Daten sind älter als 5 Stunden – öffne Claude Code, um sie zu aktualisieren.",
+            SetupStatus.NotConfigured or SetupStatus.OtherStatusLine => Strings.HintNotConnected,
+            SetupStatus.BridgeMissing => Strings.HintBridgeMissing,
+            _ when snapshot == null => Strings.HintFirstReply,
+            _ when now - snapshot.UpdatedAtTime > TimeSpan.FromHours(5) => Strings.HintStale,
             _ => null,
         };
         HintText.Text = hint ?? "";
@@ -121,7 +118,7 @@ public partial class UsageOverlay : Window
         var brush = percent is { } value ? Palette.ForPercent(value, t) : Palette.Neutral;
         for (int i = 0; i < bar.Children.Count; i++)
             ((Rectangle)bar.Children[i]).Fill = i < filled ? brush : EmptySegment;
-        label.Text = percent is { } v ? $"{Format.Percent(v)} %" : "– %";
+        label.Text = Strings.Percent(percent is { } v ? Format.Percent(v) : "–");
     }
 
     private static void SetForecast(TextBlock target, bool enabled, IReadOnlyList<HistorySample> history,
@@ -134,9 +131,7 @@ public partial class UsageOverlay : Window
             return;
         }
         target.Visibility = Visibility.Visible;
-        target.Text = eta < window.ResetsAtTime
-            ? "Prognose: " + describe(eta.Value)
-            : "Prognose: reicht bis zum Reset";
+        target.Text = eta < window.ResetsAtTime ? Strings.Forecast(describe(eta.Value)) : Strings.ForecastLasts;
     }
 
     private bool _closing;

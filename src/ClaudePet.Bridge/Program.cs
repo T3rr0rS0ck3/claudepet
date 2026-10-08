@@ -88,7 +88,25 @@ static string Run()
 
     return previous != null
         ? Format(previous, model, now)
-        : (model != null ? $"[{model}] " : "") + "Claudius: warte auf Usage-Daten";
+        : (model != null ? $"[{model}] " : "") + (German() ? "Claudius: warte auf Usage-Daten" : "Claudius: waiting for usage data");
+}
+
+// The app's UI language; English unless settings.json says German (saved before the choice existed: German too).
+static bool German()
+{
+    try
+    {
+        if (!File.Exists(DataPaths.SettingsFile)) return false;
+        using var doc = JsonDocument.Parse(File.ReadAllText(DataPaths.SettingsFile),
+            new JsonDocumentOptions { AllowTrailingCommas = true, CommentHandling = JsonCommentHandling.Skip });
+        return !doc.RootElement.TryGetProperty("Language", out var language)
+               || language.ValueKind != JsonValueKind.String
+               || language.GetString() == "de";
+    }
+    catch (Exception ex) when (ex is IOException or JsonException or UnauthorizedAccessException)
+    {
+        return false;
+    }
 }
 
 static void RunHook()
@@ -181,7 +199,7 @@ static string Format(UsageSnapshot s, string? model, DateTimeOffset now)
 {
     var parts = new List<string>();
     if (s.FiveHour != null) parts.Add(FormatWindow("Session", s.FiveHour, now, showReset: true));
-    if (s.SevenDay != null) parts.Add(FormatWindow("Woche", s.SevenDay, now, showReset: false));
+    if (s.SevenDay != null) parts.Add(FormatWindow(German() ? "Woche" : "Week", s.SevenDay, now, showReset: false));
     return (model != null ? $"[{model}] " : "") + string.Join(" · ", parts);
 }
 

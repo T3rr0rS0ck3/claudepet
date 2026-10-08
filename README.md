@@ -15,7 +15,8 @@ Claude Pro and Max plans have a rolling **5-hour session limit** and a **weekly 
 opening anything. The more you use, the more its mood changes: relaxed → thoughtful → nervous → panicking → asleep
 until the limit resets.
 
-> The app's interface is currently in German. Bubble texts can be changed to any language (see [Configuration](#configuration)).
+> The interface is available in English and German (settings → *Language*). Bubble texts can be changed to any
+> language (see [Configuration](#configuration)).
 
 ## Features
 
@@ -61,7 +62,7 @@ Until it is listed, or if you prefer GitHub:
 4. Send any message in Claude Code — after the first response the pet knows your usage.
 
 Prefer no installer? Grab the `portable.zip` from the release, extract it anywhere and start `ClaudePet.exe`.
-Then right-click the pet → *Claude Code verbinden…* (connect).
+Then right-click the pet → *Connect Claude Code…*.
 
 > **Windows SmartScreen** may warn about an unknown publisher because the installer isn't code-signed.
 > Click *More info → Run anyway*.
@@ -69,7 +70,7 @@ Then right-click the pet → *Claude Code verbinden…* (connect).
 ### Updates
 
 The pet looks for a new release on start and once a day. When there is one, it tells you and the right-click
-menu shows **Update auf x.y.z installieren…** (install update): one click downloads the setup, checks it against
+menu shows **Install update to x.y.z…**: one click downloads the setup, checks it against
 the release's `SHA256SUMS.txt`, installs it silently and restarts the pet. Portable copies only get a link to the
 release page. You can switch the check off or run it by hand in the settings (*Updates*).
 
@@ -89,8 +90,8 @@ release page. You can switch the check off or run it by hand in the settings (*U
 ## Opening Claude Code
 
 The pet can open Claude Code (`claude`) in a folder of your choice. Where it opens is set in the settings
-(*Claude öffnen in*): *Automatic* (Windows Terminal if installed, otherwise Command Prompt), Windows Terminal,
-Command Prompt, PowerShell or *Claude Desktop (Code-Tab)*. The Desktop option runs `claude --desktop` in the folder,
+(*Open Claude in*): *Automatic* (Windows Terminal if installed, otherwise Command Prompt), Windows Terminal,
+Command Prompt, PowerShell or *Claude Desktop (Code tab)*. The Desktop option runs `claude --desktop` in the folder,
 which needs the Claude Desktop app and a recent Claude Code (`claude update`).
 
 **Ghost drag.** Hold the **left** mouse button on the pet and drag. A translucent ghost of the pet follows the cursor
@@ -99,19 +100,19 @@ it there and Claude Code opens in that folder (with Windows 11 tabs: the active 
 Releasing anywhere else, or pressing `Esc`, cancels. Folders without a file system path (e.g. *This PC*) get a short
 "no folder here" bubble. Can be switched off in the settings.
 
-**Project list.** Double-click the pet (or right-click → *Claude öffnen…*, also in the tray menu). The list shows your
+**Project list.** Double-click the pet (or right-click → *Open Claude…*, also in the tray menu). The list shows your
 recently opened projects first, then all subfolders of your **repo folder** (hidden folders and folders starting with
-`.` are skipped). *Anderen Ordner wählen…* opens any folder, *Repo-Ordner festlegen…* changes the repo folder. On first
+`.` are skipped). *Choose another folder…* opens any folder, *Set repo folder…* changes the repo folder. On first
 use the pet asks for the repo folder right away. A single click now waits for the double-click time before opening
 the usage overlay.
 
-**Voice chat.** Off by default; switch on *Sprachchat anbieten* in the settings to get the menu entry
-*Sprachchat starten…*. It uses Claude Code's [voice dictation](https://code.claude.com/docs/en/voice-dictation):
+**Voice chat.** Off by default; switch on *Offer voice chat* in the settings to get the menu entry
+*Start voice chat…*. It uses Claude Code's [voice dictation](https://code.claude.com/docs/en/voice-dictation):
 on first use the pet asks to set `voice.enabled` in `~/.claude/settings.json` (a backup is saved), then shows the
 project list. In the console, **hold Space** and speak. Requirements: a claude.ai login in Claude Code (not an API key)
 and microphone access for the console (Windows Settings → Privacy & security → Microphone). Claude Code has no
 command-line flag for voice mode, so dictation is enabled for all Claude Code sessions while the option is on.
-Switching *Sprachchat anbieten* off again hides the menu entry and sets `voice.enabled` back to `false`.
+Switching *Offer voice chat* off again hides the menu entry and sets `voice.enabled` back to `false`.
 While you hold Space in a focused terminal running Claude Code (with dictation on), the pet stops and listens, with
 sound waves next to its head. Claude Code does not report dictation itself, so the pet goes by the held Space key.
 
@@ -145,7 +146,7 @@ and passes session data — including `rate_limits.five_hour` and `rate_limits.s
 `ClaudePetBridge.exe` is that command: it stores the values locally and prints a compact status line back into Claude Code:
 
 ```text
-[Opus] Session 73% (↻ 2h 14m) · Woche 61%
+[Opus] Session 73% (↻ 2h 14m) · Week 61%
 ```
 
 The pet app runs independently and keeps working when no Claude Code terminal is open; values whose reset time
@@ -157,15 +158,15 @@ Once Claude Code is connected, the pet also registers a few [hooks](https://code
 `~/.claude/settings.json` (a backup is saved; your own hooks are kept). Then:
 
 - **"?"** (yellow) appears when a session asks for a permission, uses *AskUserQuestion* or needs input, with a bubble
-  like *"my-project: Claude hat eine Frage."*
-- When a session finished its turn, a bubble like *"my-project ist fertig!"* pops up; no mark stays on the pet.
+  like *"my-project: Claude has a question."*
+- When a session finished its turn, a bubble like *"my-project: Claude is done!"* pops up; no mark stays on the pet.
 - With several sessions the "?" stays as long as any of them waits for an answer.
-- *Baby-Pet für jede Claude-Session* (settings): a small pet per running session follows the pet and shows that
+- *A baby pet for each Claude session* (settings): a small pet per running session follows the pet and shows that
   session's "?"; its tooltip names the folder and whether the session works, waits or is done.
 
 Only rare events are hooked (prompt sent, turn finished, permission/question, session start/end), so Claude is not
 slowed down. No hook reports an answered permission prompt; the "?" goes away once the session's conversation log
-grows again. Switching *„?“ bei Fragen …* off in the settings removes the hooks again. Bubble texts: `Question`,
+grows again. Switching *“?” on questions …* off in the settings removes the hooks again. Bubble texts: `Question`,
 `Done` (with `{folder}`).
 
 ### Claude Desktop
@@ -178,16 +179,17 @@ Desktop app as well. The normal Desktop chat offers no hooks and is not supporte
 
 ## Configuration
 
-Most options are available via right-click → **Einstellungen…** (settings): repo folder, console, ghost drag,
+Most options are available via right-click → **Settings…**: language, repo folder, console, ghost drag,
 voice chat, size, pet color, always on top, animations, walking around, crossing monitors, emotes, autostart, update checks, update interval, warning thresholds, mood thresholds,
 speech bubbles, notifications and your name.
 
 Everything lives in `%LOCALAPPDATA%\ClaudePet\settings.json`, and manual edits are picked up live.
-Speech bubble texts are under `Texts`. Each event can have several variants; one is picked at random:
+`Language` is `en` or `de`. Speech bubble texts are under `Texts`; switching the language in the settings resets them
+to that language's defaults. Each event can have several variants; one is picked at random:
 
 ```json
 "Texts": {
-  "Worried":   ["{percent} %! 😰"],
+  "Worried":   ["{percent}%! 😰"],
   "Panic":     ["{NAME}. ALMOST EMPTY."],
   "Exhausted": ["Okay... sleeping until the reset."],
   "Reset":     ["Fresh quota! Let's go!"]
@@ -284,7 +286,6 @@ installer/             Inno Setup script
 
 ## Roadmap
 
-- English UI / language switch
 - Per-model limits (e.g. Opus / Sonnet) once the data is reliably available
 - Usage history and statistics
 - More characters, skins and sound effects

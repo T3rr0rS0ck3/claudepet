@@ -1,7 +1,8 @@
 <Window x:Class="ClaudePet.Views.SettingsWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Claudius – Einstellungen"
+        xmlns:core="clr-namespace:ClaudePet.Core"
+        Title="{x:Static core:Strings.SettingsTitle}"
         Width="520" SizeToContent="Height"
         ResizeMode="NoResize"
         WindowStartupLocation="CenterScreen"
@@ -34,18 +35,18 @@
     <DockPanel>
         <Grid DockPanel.Dock="Top" Margin="18,12,18,10" Background="Transparent" Cursor="SizeAll"
               MouseLeftButtonDown="Title_MouseLeftButtonDown">
-            <TextBlock Text="EINSTELLUNGEN" Foreground="{DynamicResource AccentBrush}" FontWeight="Bold" FontSize="14"
+            <TextBlock Text="{x:Static core:Strings.SettingsHeading}" Foreground="{DynamicResource AccentBrush}" FontWeight="Bold" FontSize="14"
                        FontFamily="Consolas" HorizontalAlignment="Center" />
             <TextBlock Text="✕" Foreground="#77736B" FontSize="12" Cursor="Hand" HorizontalAlignment="Right"
-                       VerticalAlignment="Center" MouseLeftButtonUp="Close_Click" ToolTip="Schließen" />
+                       VerticalAlignment="Center" MouseLeftButtonUp="Close_Click" ToolTip="{x:Static core:Strings.Close}" />
         </Grid>
 
         <StackPanel DockPanel.Dock="Bottom" Margin="18,6,18,16">
             <TextBlock x:Name="ErrorText" Foreground="#E5484D" TextWrapping="Wrap" Visibility="Collapsed" Margin="0,0,0,8" />
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                <Button Content="Speichern" Width="100" Padding="0,5" IsDefault="True" Click="Save_Click"
+                <Button Content="{x:Static core:Strings.Save}" Width="100" Padding="0,5" IsDefault="True" Click="Save_Click"
                         Style="{StaticResource PrimaryButton}" />
-                <Button Content="Abbrechen" Width="100" Padding="0,5" Margin="8,0,0,0" IsCancel="True" Click="Cancel_Click" />
+                <Button Content="{x:Static core:Strings.Cancel}" Width="100" Padding="0,5" Margin="8,0,0,0" IsCancel="True" Click="Cancel_Click" />
             </StackPanel>
         </StackPanel>
 
@@ -53,22 +54,34 @@
 
     <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="18,0,8,0" Padding="0,0,10,0">
     <StackPanel Margin="0,4,0,0">
+        <GroupBox Header="{x:Static core:Strings.GroupGeneral}">
+            <Grid Style="{StaticResource Row}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="150" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="{x:Static core:Strings.Language}" VerticalAlignment="Center" />
+                <!-- Each language in its own name, so it can be found in either -->
+                <ComboBox x:Name="LanguageBox" Grid.Column="1" />
+            </Grid>
+        </GroupBox>
+
         <GroupBox Header="CLAUDE CODE">
             <StackPanel>
                 <TextBlock x:Name="SetupStatusText" TextWrapping="Wrap" />
                 <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
-                    <Button x:Name="ConnectButton" Content="Claude Code verbinden" Padding="10,3" Click="Connect_Click" />
-                    <Button x:Name="DisconnectButton" Content="Trennen" Padding="10,3" Margin="8,0,0,0" Click="Disconnect_Click" />
+                    <Button x:Name="ConnectButton" Content="{x:Static core:Strings.ConnectButton}" Padding="10,3" Click="Connect_Click" />
+                    <Button x:Name="DisconnectButton" Content="{x:Static core:Strings.Disconnect}" Padding="10,3" Margin="8,0,0,0" Click="Disconnect_Click" />
                 </StackPanel>
-                <CheckBox x:Name="SessionMarksBox" Content="„?“ bei Fragen und Sprechblase wenn Claude fertig ist" Margin="0,8,0,4"
-                          ToolTip="Trägt Hooks in die Claude-Code-Einstellungen ein (nur wenn verbunden). Ausschalten entfernt sie wieder." />
-                <CheckBox x:Name="SessionPetsBox" Content="Baby-Pet für jede Claude-Session"
+                <CheckBox x:Name="SessionMarksBox" Content="{x:Static core:Strings.SessionMarks}" Margin="0,8,0,4"
+                          ToolTip="{x:Static core:Strings.SessionMarksTip}" />
+                <CheckBox x:Name="SessionPetsBox" Content="{x:Static core:Strings.SessionPets}"
                           IsEnabled="{Binding IsChecked, ElementName=SessionMarksBox}"
-                          ToolTip="Ein kleines Pet pro laufender Session folgt dem Pet und zeigt deren „?“." />
+                          ToolTip="{x:Static core:Strings.SessionPetsTip}" />
             </StackPanel>
         </GroupBox>
 
-        <GroupBox Header="CLAUDE STARTEN">
+        <GroupBox Header="{x:Static core:Strings.GroupLaunch}">
             <StackPanel>
                 <Grid Style="{StaticResource Row}">
                     <Grid.ColumnDefinitions>
@@ -76,9 +89,9 @@
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
-                    <TextBlock Text="Repo-Ordner" VerticalAlignment="Center"
-                               ToolTip="Ordner, in dem alle Projekte liegen" />
-                    <TextBox x:Name="ReposPathBox" Grid.Column="1" ToolTip="Ordner, in dem alle Projekte liegen" />
+                    <TextBlock Text="{x:Static core:Strings.ReposFolder}" VerticalAlignment="Center"
+                               ToolTip="{x:Static core:Strings.ReposFolderTip}" />
+                    <TextBox x:Name="ReposPathBox" Grid.Column="1" ToolTip="{x:Static core:Strings.ReposFolderTip}" />
                     <Button Grid.Column="2" Content="…" Width="32" Padding="0" Margin="6,0,0,0" Click="BrowseRepos_Click" />
                 </Grid>
                 <Grid Style="{StaticResource Row}">
@@ -86,12 +99,12 @@
                         <ColumnDefinition Width="150" />
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
-                    <TextBlock Text="Claude öffnen in" VerticalAlignment="Center" />
+                    <TextBlock Text="{x:Static core:Strings.OpenClaudeIn}" VerticalAlignment="Center" />
                     <ComboBox x:Name="TerminalBox" Grid.Column="1" />
                 </Grid>
-                <CheckBox x:Name="GhostDragBox" Content="Pet mit linker Maustaste auf Explorer ziehen öffnet Claude dort" />
-                <CheckBox x:Name="VoiceBox" Content="Sprachchat anbieten (Menüeintrag „Sprachchat starten…“)"
-                          ToolTip="Nutzt das Sprachdiktat von Claude Code. Benötigt ein claude.ai-Konto und ein Mikrofon. Ausschalten schaltet auch das Diktat in Claude Code wieder ab." />
+                <CheckBox x:Name="GhostDragBox" Content="{x:Static core:Strings.GhostDrag}" />
+                <CheckBox x:Name="VoiceBox" Content="{x:Static core:Strings.VoiceOffer}"
+                          ToolTip="{x:Static core:Strings.VoiceOfferTip}" />
                 <TextBlock x:Name="ClaudeStatusText" Style="{StaticResource Hint}" />
             </StackPanel>
         </GroupBox>
@@ -104,7 +117,7 @@
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="40" />
                     </Grid.ColumnDefinitions>
-                    <TextBlock Text="Größe" VerticalAlignment="Center" />
+                    <TextBlock Text="{x:Static core:Strings.Size}" VerticalAlignment="Center" />
                     <Slider x:Name="ScaleSlider" Grid.Column="1" Minimum="2" Maximum="12" TickFrequency="1"
                             IsSnapToTickEnabled="True" VerticalAlignment="Center" />
                     <TextBlock Grid.Column="2" Text="{Binding Value, ElementName=ScaleSlider, StringFormat={}{0}x}"
@@ -117,29 +130,29 @@
                         <ColumnDefinition Width="80" />
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
-                    <TextBlock Text="Farbe" VerticalAlignment="Center" />
+                    <TextBlock Text="{x:Static core:Strings.Color}" VerticalAlignment="Center" />
                     <Border x:Name="ColorPreview" Grid.Column="1" Width="24" Height="22" Margin="0,0,6,0"
                             BorderBrush="#4A4844" BorderThickness="1" CornerRadius="4" />
                     <TextBox x:Name="ColorBox" Grid.Column="2" MaxLength="7" TextChanged="ColorBox_TextChanged" />
                     <StackPanel Grid.Column="3" Orientation="Horizontal" HorizontalAlignment="Right">
-                        <Button Content="Wählen…" Padding="10,2" Click="PickColor_Click" />
-                        <Button Content="Standard" Padding="10,2" Margin="6,0,0,0" Click="DefaultColor_Click" />
+                        <Button Content="{x:Static core:Strings.PickColor}" Padding="10,2" Click="PickColor_Click" />
+                        <Button Content="{x:Static core:Strings.DefaultColor}" Padding="10,2" Margin="6,0,0,0" Click="DefaultColor_Click" />
                     </StackPanel>
                 </Grid>
-                <CheckBox x:Name="ClaudeMascotBox" Content="Claude-Maskottchen im Terminal in Pet-Farbe"
-                          ToolTip="Legt ein eigenes Claude-Code-Theme an (themes\claudepet.json) und wählt es aus. Beim Ausschalten wird das vorherige Theme wiederhergestellt." />
-                <CheckBox x:Name="AlwaysOnTopBox" Content="Immer im Vordergrund" />
-                <CheckBox x:Name="AnimationsBox" Content="Animationen" />
-                <CheckBox x:Name="WalkAroundBox" Content="Auf dem Desktop herumlaufen"
+                <CheckBox x:Name="ClaudeMascotBox" Content="{x:Static core:Strings.MascotColor}"
+                          ToolTip="{x:Static core:Strings.MascotColorTip}" />
+                <CheckBox x:Name="AlwaysOnTopBox" Content="{x:Static core:Strings.AlwaysOnTop}" />
+                <CheckBox x:Name="AnimationsBox" Content="{x:Static core:Strings.Animations}" />
+                <CheckBox x:Name="WalkAroundBox" Content="{x:Static core:Strings.WalkAroundDesktop}"
                           IsEnabled="{Binding IsChecked, ElementName=AnimationsBox}" />
-                <CheckBox x:Name="CrossMonitorsBox" Content="Zwischen Monitoren wechseln"
-                          ToolTip="Läuft oder hüpft dort zum Nachbarmonitor, wo sich die Monitore laut Windows-Anordnung berühren."
+                <CheckBox x:Name="CrossMonitorsBox" Content="{x:Static core:Strings.CrossMonitors}"
+                          ToolTip="{x:Static core:Strings.CrossMonitorsTip}"
                           IsEnabled="{Binding IsChecked, ElementName=WalkAroundBox}" />
-                <CheckBox x:Name="EmotesBox" Content="Emotes beim Drüberfahren (Füttern, Streicheln, …)" />
-                <CheckBox x:Name="AutostartBox" Content="Mit Windows starten" />
+                <CheckBox x:Name="EmotesBox" Content="{x:Static core:Strings.Emotes}" />
+                <CheckBox x:Name="AutostartBox" Content="{x:Static core:Strings.StartWithWindows}" />
                 <StackPanel x:Name="AutostartBlockedPanel" Orientation="Horizontal" Margin="22,0,0,4" Visibility="Collapsed">
-                    <TextBlock Text="In Windows ausgeschaltet –" VerticalAlignment="Center" Margin="0,0,6,0" />
-                    <Button Content="Autostart-Einstellungen öffnen" Padding="10,2" Click="StartupSettings_Click" />
+                    <TextBlock Text="{x:Static core:Strings.AutostartBlocked}" VerticalAlignment="Center" Margin="0,0,6,0" />
+                    <Button Content="{x:Static core:Strings.OpenStartupSettings}" Padding="10,2" Click="StartupSettings_Click" />
                 </StackPanel>
             </StackPanel>
         </GroupBox>
@@ -151,7 +164,7 @@
                         <ColumnDefinition Width="210" />
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
-                    <TextBlock Text="Aktualisierungsintervall (s)" VerticalAlignment="Center" />
+                    <TextBlock Text="{x:Static core:Strings.IntervalLabel}" VerticalAlignment="Center" />
                     <TextBox x:Name="IntervalBox" Grid.Column="1" />
                 </Grid>
                 <Grid Style="{StaticResource Row}">
@@ -159,7 +172,7 @@
                         <ColumnDefinition Width="210" />
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
-                    <TextBlock Text="Session-Warnschwellen (%)" VerticalAlignment="Center" />
+                    <TextBlock Text="{x:Static core:Strings.SessionWarnLabel}" VerticalAlignment="Center" />
                     <TextBox x:Name="SessionWarnBox" Grid.Column="1" />
                 </Grid>
                 <Grid Style="{StaticResource Row}">
@@ -167,7 +180,7 @@
                         <ColumnDefinition Width="210" />
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
-                    <TextBlock Text="Wochen-Warnschwellen (%)" VerticalAlignment="Center" />
+                    <TextBlock Text="{x:Static core:Strings.WeekWarnLabel}" VerticalAlignment="Center" />
                     <TextBox x:Name="WeekWarnBox" Grid.Column="1" />
                 </Grid>
                 <Grid Style="{StaticResource Row}">
@@ -175,26 +188,26 @@
                         <ColumnDefinition Width="210" />
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
-                    <TextBlock Text="Zustandsgrenzen (%)" VerticalAlignment="Center"
-                               ToolTip="normal, aufmerksam, nervös, besorgt, Panik, schlafen" />
+                    <TextBlock Text="{x:Static core:Strings.MoodLabelText}" VerticalAlignment="Center"
+                               ToolTip="{x:Static core:Strings.MoodOrder}" />
                     <TextBox x:Name="MoodThresholdsBox" Grid.Column="1"
-                             ToolTip="normal, aufmerksam, nervös, besorgt, Panik, schlafen" />
+                             ToolTip="{x:Static core:Strings.MoodOrder}" />
                 </Grid>
-                <TextBlock Text="Reihenfolge: normal, aufmerksam, nervös, besorgt, Panik, schlafen"
+                <TextBlock Text="{x:Static core:Strings.MoodOrderHint}"
                            Style="{StaticResource Hint}" Margin="0,0,0,4" />
-                <CheckBox x:Name="ForecastBox" Content="Prognose anzeigen" />
+                <CheckBox x:Name="ForecastBox" Content="{x:Static core:Strings.ShowForecast}" />
             </StackPanel>
         </GroupBox>
 
-        <GroupBox Header="SPRECHBLASEN &amp; BENACHRICHTIGUNGEN">
+        <GroupBox Header="{x:Static core:Strings.GroupBubbles}">
             <StackPanel>
-                <CheckBox x:Name="BubblesBox" Content="Sprechblasen anzeigen" />
+                <CheckBox x:Name="BubblesBox" Content="{x:Static core:Strings.ShowBubbles}" />
                 <Grid Style="{StaticResource Row}">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="210" />
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
-                    <TextBlock Text="Anzeigedauer (s)" VerticalAlignment="Center" />
+                    <TextBlock Text="{x:Static core:Strings.BubbleDuration}" VerticalAlignment="Center" />
                     <TextBox x:Name="BubbleDurationBox" Grid.Column="1" />
                 </Grid>
                 <Grid Style="{StaticResource Row}">
@@ -202,14 +215,14 @@
                         <ColumnDefinition Width="210" />
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
-                    <TextBlock Text="Dein Name" VerticalAlignment="Center" />
+                    <TextBlock Text="{x:Static core:Strings.YourName}" VerticalAlignment="Center" />
                     <TextBox x:Name="NameBox" Grid.Column="1" />
                 </Grid>
-                <CheckBox x:Name="NotificationsBox" Content="Windows-Benachrichtigungen" />
+                <CheckBox x:Name="NotificationsBox" Content="{x:Static core:Strings.WindowsNotifications}" />
                 <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
-                    <Button Content="Texte bearbeiten…" Padding="10,3" Click="EditTexts_Click"
-                            ToolTip="Öffnet settings.json; Änderungen werden automatisch übernommen." />
-                    <Button Content="Test-Benachrichtigung" Padding="10,3" Margin="8,0,0,0" Click="TestNotification_Click" />
+                    <Button Content="{x:Static core:Strings.EditTexts}" Padding="10,3" Click="EditTexts_Click"
+                            ToolTip="{x:Static core:Strings.EditTextsTip}" />
+                    <Button Content="{x:Static core:Strings.TestNotification}" Padding="10,3" Margin="8,0,0,0" Click="TestNotification_Click" />
                 </StackPanel>
             </StackPanel>
         </GroupBox>
@@ -217,10 +230,10 @@
         <GroupBox Header="UPDATES">
             <StackPanel>
                 <TextBlock x:Name="VersionText" TextWrapping="Wrap" />
-                <CheckBox x:Name="UpdatesBox" Content="Automatisch nach Updates suchen" Margin="0,6,0,4"
-                          ToolTip="Fragt beim Start und einmal am Tag bei GitHub nach einer neuen Version." />
+                <CheckBox x:Name="UpdatesBox" Content="{x:Static core:Strings.AutoUpdates}" Margin="0,6,0,4"
+                          ToolTip="{x:Static core:Strings.AutoUpdatesTip}" />
                 <StackPanel x:Name="UpdateButtons" Orientation="Horizontal" Margin="0,2,0,0">
-                    <Button x:Name="CheckUpdateButton" Content="Jetzt suchen" Padding="10,3" Click="CheckUpdate_Click" />
+                    <Button x:Name="CheckUpdateButton" Content="{x:Static core:Strings.CheckNow}" Padding="10,3" Click="CheckUpdate_Click" />
                     <Button x:Name="InstallUpdateButton" Padding="10,3" Margin="8,0,0,0" Visibility="Collapsed"
                             Click="InstallUpdate_Click" />
                 </StackPanel>

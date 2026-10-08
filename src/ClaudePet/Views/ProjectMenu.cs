@@ -23,7 +23,7 @@ public static class ProjectMenu
         var recent = settings.RecentProjects.Where(Directory.Exists).ToList();
         if (recent.Count > 0)
         {
-            Heading("Zuletzt geöffnet");
+            Heading(Strings.RecentlyOpened);
             foreach (string folder in recent) Add(Escape(ClaudeLauncher.FolderName(folder)), () => open(folder), folder);
         }
 
@@ -36,8 +36,8 @@ public static class ProjectMenu
         }
 
         if (menu.Items.Count > 0) menu.Items.Add(new Separator());
-        Add("Anderen Ordner wählen…", chooseOther);
-        Add("Repo-Ordner festlegen…", chooseRepos, settings.ReposPath);
+        Add(Strings.ChooseOtherFolder, chooseOther);
+        Add(Strings.SetReposFolder, chooseRepos, settings.ReposPath);
         return menu;
     }
 
