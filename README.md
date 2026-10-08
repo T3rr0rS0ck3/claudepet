@@ -50,6 +50,9 @@ No .NET installation needed — the installer is self-contained.
 
 ## Installation
 
+The pet is coming to the **Microsoft Store** as *Claudius - Claude Usage App* (signed by Microsoft, updated by the Store).
+Until it is listed, or if you prefer GitHub:
+
 1. Download **`ClaudePet-Setup-x.y.z.exe`** from the [latest release](https://github.com/T3rr0rS0ck3/claudepet/releases/latest).
 2. Run it. No admin rights required (installs to `%LOCALAPPDATA%\Programs\ClaudePet`).
 3. Keep **"Connect to Claude Code"** checked. This adds the pet as Claude Code's `statusLine` (only if you don't have one yet).
@@ -226,6 +229,9 @@ Look at `%LOCALAPPDATA%\ClaudePet\log.txt`. `usage.json` there shows the last va
 Uninstall *Claude Usage Pet* via Windows Settings → Apps. This also removes the status line entry from Claude Code and
 the autostart entry. Your settings stay in `%LOCALAPPDATA%\ClaudePet` — delete that folder for a clean slate.
 
+**Store version:** Store apps can't run anything on uninstall, so first open the pet's settings and click *Trennen*
+(disconnect). Otherwise Claude Code keeps calling the removed bridge.
+
 ## Building from source
 
 Requires the .NET 8 SDK (or newer).
@@ -245,6 +251,11 @@ Set `CLAUDEPET_DATA_DIR` to point the app and bridge at a different data folder,
 Pushing a tag like `v1.2.3` runs the [release workflow](.github/workflows/release.yml). It builds a self-contained
 version, packs the Inno Setup installer and a portable zip, and publishes a GitHub release. Tags with a suffix
 (`v1.2.3-beta`) become pre-releases. Existing tags can be rebuilt via *Actions → Release → Run workflow*.
+
+For the **Microsoft Store**, the workflow also builds an unsigned `ClaudePet-1.2.3.msix` ([packaging/](packaging/)) and
+attaches it to the run as an artifact. Upload it in Partner Center; the Store signs it. To try the package locally
+(Developer Mode on): `.\build.ps1 -SelfContained -Version 1.2.3; .\packaging\build-msix.ps1 -Version 1.2.3 -Register`.
+Privacy policy for the listing: [PRIVACY.md](PRIVACY.md).
 
 ### Project structure
 

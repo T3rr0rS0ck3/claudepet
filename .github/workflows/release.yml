@@ -65,6 +65,22 @@ jobs:
             ForEach-Object { "$((Get-FileHash $_ -Algorithm SHA256).Hash.ToLower())  $($_.Name)" } |
             Set-Content dist/SHA256SUMS.txt -Encoding ascii
 
+      # Unsigned MSIX for the Microsoft Store (the Store signs it); uploaded by hand in Partner Center,
+      # so it is a workflow artifact rather than a release asset nobody could install.
+      - name: Store package
+        if: steps.version.outputs.prerelease == 'false'
+        shell: pwsh
+        run: ./packaging/build-msix.ps1 -Version ${{ steps.version.outputs.version }}
+
+      - name: Upload Store package
+        if: steps.version.outputs.prerelease == 'false'
+        uses: actions/upload-artifact@v7
+        with:
+          # Unzipped: the download is the .msix itself, ready for Partner Center.
+          path: dist/ClaudePet-${{ steps.version.outputs.version }}.msix
+          archive: false
+          if-no-files-found: error
+
       - name: Create GitHub release
         uses: softprops/action-gh-release@v3
         with:
