@@ -56,6 +56,7 @@ public partial class PetWindow : Window
     private bool _petOnTop;
     private bool _listening;
     private Mark _sessionMark = Mark.None;
+    private IReadOnlyList<SessionView> _sessions = [];
     private readonly Dictionary<string, BabyPetWindow> _babies = new();
     private readonly DispatcherTimer _babyTimer = new() { Interval = TimeSpan.FromMilliseconds(1000.0 / 30) };
     private readonly Stopwatch _babyClock = Stopwatch.StartNew();
@@ -78,6 +79,8 @@ public partial class PetWindow : Window
     /// or the desktop at all.
     /// </summary>
     public event Action<string?, bool>? GhostDropped;
+    /// <summary>The "?" or a baby pet was clicked: bring that session's window to the front.</summary>
+    public event Action<SessionView>? SessionClicked;
     /// <summary>The pet was dragged to a new position.</summary>
     public event Action? Moved;
     /// <summary>One of the emote buttons was clicked; the pet already reacts to it.</summary>
@@ -224,6 +227,7 @@ public partial class PetWindow : Window
     /// </summary>
     public void SetSessions(IReadOnlyList<SessionView> sessions, string? overall, bool marks, bool babies)
     {
+        _sessions = sessions;
         var mark = marks && overall == SessionStates.Question ? Mark.Question : Mark.None;
         if (mark != _sessionMark)
         {
@@ -245,6 +249,7 @@ public partial class PetWindow : Window
                 continue;
             }
             _babies[session.Id] = baby = new BabyPetWindow(session, _scale, _topmost);
+            baby.Clicked += s => SessionClicked?.Invoke(s);
             if (IsVisible) baby.Show();
         }
 
@@ -547,6 +552,17 @@ public partial class PetWindow : Window
         else StartMove();
     }
 
+    /// <summary>The session that asked last if <paramref name="point"/> (on the pet image) is above the head, where the "?" is.</summary>
+    private SessionView? QuestionAt(Point point)
+    {
+        if (_sessionMark != Mark.Question || _emote != null) return null;
+        if (point.Y >= PetImage.ActualHeight * QuestionRows / Sprite.Height) return null;
+        return _sessions.LastOrDefault(s => s.State == SessionStates.Question);
+    }
+
+    /// <summary>Sprite rows above the head, where the "?" is drawn.</summary>
+    private const int QuestionRows = 5;
+
     private static bool Moved4(Vector delta) => Math.Abs(delta.X) >= 4 || Math.Abs(delta.Y) >= 4;
 
     private void Pet_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
@@ -564,6 +580,13 @@ public partial class PetWindow : Window
         PetImage.ReleaseMouseCapture();
         if (_pressPoint == null) return;
         _pressPoint = null;
+        // A click on the "?" goes to the session asking, right away: Windows lets the window come to the
+        // front only while the click is the last input.
+        if (QuestionAt(e.GetPosition(PetImage)) is { } session)
+        {
+            SessionClicked?.Invoke(session);
+            return;
+        }
         _clickedAt = DateTime.Now;
         _clickTimer.Start();
     }

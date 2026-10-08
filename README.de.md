@@ -37,7 +37,7 @@ Panik → schläft bis zum Reset.
 - 📂 **Projektliste**: Doppelklick aufs Pet, Projekt aus deinem Repo-Ordner wählen, Claude Code startet dort
 - 🎤 **Sprachchat** (optional): öffnet Claude Code mit eingeschaltetem Sprachdiktat; das Pet hört zu, während du sprichst
 - ❓ **Session-Status**: ein gelbes „?“, wenn eine Claude-Code-Session etwas fragt, eine Sprechblase, wenn sie fertig ist;
-  optional ein Baby-Pet pro Session, das dem Pet hinterherläuft
+  optional ein Baby-Pet pro Session, das dem Pet hinterherläuft; Klick aufs „?“ oder ein Baby springt zum Fenster der Session
 - ⚙️ **Konfigurierbar**: Schwellen, Texte, Größe, Aktualisierungsintervall, Konsole und mehr
 - 🔒 **Rein lokal**: das Pet selbst greift nicht aufs Netzwerk zu, braucht keinen Login und liest keine Tokens; es liest nur, was Claude Code ohnehin an seine Statuszeile übergibt
 
@@ -165,11 +165,14 @@ Ist Claude Code verbunden, trägt das Pet zusätzlich ein paar [Hooks](https://c
 - Bei mehreren Sessions bleibt das „?“, solange irgendeine davon auf eine Antwort wartet.
 - *Baby-Pet für jede Claude-Session* (Einstellungen): ein kleines Pet pro laufender Session folgt dem Pet und zeigt
   deren „?“; der Tooltip nennt den Ordner und ob die Session arbeitet, wartet oder fertig ist.
+- **Zur Session springen**: Ein Klick aufs „?“ holt das Fenster der fragenden Session nach vorn, ein Klick auf ein Baby-Pet
+  das seiner Session: das Konsolenfenster, das Windows-Terminal-Fenster mit dem richtigen Tab oder Claude Desktop. Der
+  Hook merkt sich das Fenster beim Start der Session und wenn sie fragt; ältere Sessions werden über den Ordnernamen gesucht.
 
 Es hängen nur seltene Ereignisse dran (Prompt abgeschickt, Antwort fertig, Berechtigung/Frage, Session-Start/-Ende),
 damit Claude nicht ausgebremst wird. Kein Hook meldet eine beantwortete Berechtigungsfrage; das „?“ verschwindet, sobald
 das Gesprächsprotokoll der Session wieder wächst. *„?“ bei Fragen …* in den Einstellungen ausschalten entfernt die
-Hooks wieder. Sprechblasentexte: `Question`, `Done` (mit `{folder}`).
+Hooks wieder. Sprechblasentexte: `Question`, `Done`, `NoWindow` (mit `{folder}`).
 
 ## Konfiguration
 

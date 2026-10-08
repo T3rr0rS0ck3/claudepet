@@ -3,8 +3,8 @@ using ClaudePet.Shared;
 
 namespace ClaudePet.Core;
 
-/// <summary>A Claude Code session as the pet shows it.</summary>
-public sealed record SessionView(string Id, string Folder, string State, bool Desktop)
+/// <summary>A Claude Code session as the pet shows it; <paramref name="Info"/> is what the bridge stored.</summary>
+public sealed record SessionView(string Id, string Folder, string State, bool Desktop, SessionInfo Info)
 {
     /// <summary>The folder, marked when the session runs in the Claude Desktop app.</summary>
     public string Label => Desktop ? Folder + " (Desktop)" : Folder;
@@ -44,7 +44,7 @@ public sealed class SessionMonitor
         var sessions = _stored
             .Where(s => s.Value.UpdatedAt >= cutoff)
             .OrderBy(s => s.Value.UpdatedAt)
-            .Select(s => new SessionView(s.Key, s.Value.Folder, EffectiveState(s.Value), s.Value.IsDesktop))
+            .Select(s => new SessionView(s.Key, s.Value.Folder, EffectiveState(s.Value), s.Value.IsDesktop, s.Value))
             .ToList();
 
         var shown = sessions.ToDictionary(s => s.Id, s => s.State);
