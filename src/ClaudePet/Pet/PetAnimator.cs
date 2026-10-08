@@ -7,7 +7,48 @@ public static class PetAnimator
 {
     public const int TicksPerSecond = 8;
 
-    public static SpriteFrame Frame(PetMood mood, bool working, bool cheering, long t)
+    public static SpriteFrame Frame(PetMood mood, bool working, bool cheering, long t,
+        Motion motion = Motion.Idle, int direction = 1)
+    {
+        var frame = MoodFrame(mood, working, cheering, t);
+        return motion switch
+        {
+            Motion.Walk or Motion.Run => Walking(frame, motion == Motion.Run, direction, t),
+            Motion.Fall => frame with
+            {
+                Eyes = Eyes.Big, Mouth = Mouth.Open, Arms = Arms.Up, Legs = (int)(t % 2) + 1,
+                Bob = 0, Shake = 0, Mark = Mark.None,
+            },
+            Motion.Climb => frame with
+            {
+                Eyes = frame.Eyes == Eyes.Closed ? Eyes.Closed : Eyes.LookUp,
+                Arms = t / 2 % 2 == 0 ? Arms.Up : Arms.Wave, Legs = (int)(t / 2 % 2) + 1,
+                Bob = 0, Shake = 0,
+            },
+            Motion.Jump => frame with
+            {
+                Eyes = Eyes.Happy, Mouth = Mouth.Smile, Arms = Arms.Up, Legs = 0,
+                Bob = 0, Shake = 0, Mark = Mark.None,
+            },
+            _ => frame,
+        };
+    }
+
+    /// <summary>The mood's frame with stepping legs and eyes looking where it is going.</summary>
+    private static SpriteFrame Walking(SpriteFrame frame, bool run, int direction, long t)
+    {
+        int step = (int)(run ? t % 2 : t / 2 % 2);
+        var eyes = frame.Eyes switch
+        {
+            Eyes.Normal or Eyes.LookLeft or Eyes.LookRight or Eyes.LookUp or Eyes.LookDown =>
+                direction < 0 ? Eyes.LookLeft : Eyes.LookRight,
+            _ => frame.Eyes, // blinking, happy, wide, ...
+        };
+        var arms = frame.Arms is Arms.TypeLeft or Arms.TypeRight ? Arms.Down : frame.Arms;
+        return frame with { Eyes = eyes, Arms = arms, Legs = step + 1, Bob = step };
+    }
+
+    private static SpriteFrame MoodFrame(PetMood mood, bool working, bool cheering, long t)
     {
         bool blink = t % 36 == 0 || t % 108 == 3;
         int breathe = (int)(t / 8 % 2);

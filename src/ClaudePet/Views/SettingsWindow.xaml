@@ -50,6 +50,8 @@
                 </Grid>
                 <CheckBox x:Name="AlwaysOnTopBox" Content="Immer im Vordergrund" />
                 <CheckBox x:Name="AnimationsBox" Content="Animationen" />
+                <CheckBox x:Name="WalkAroundBox" Content="Auf dem Desktop herumlaufen"
+                          IsEnabled="{Binding IsChecked, ElementName=AnimationsBox}" />
                 <CheckBox x:Name="AutostartBox" Content="Mit Windows starten" />
             </StackPanel>
         </GroupBox>

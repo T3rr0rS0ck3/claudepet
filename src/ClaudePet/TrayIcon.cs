@@ -10,6 +10,7 @@ public sealed class TrayIcon : IDisposable
     private readonly Forms.NotifyIcon _icon = new();
     private readonly Forms.ToolStripMenuItem _petVisible;
     private readonly Forms.ToolStripMenuItem _alwaysOnTop;
+    private readonly Forms.ToolStripMenuItem _walkAround;
     private readonly Dictionary<PetMood, System.Drawing.Icon> _icons = new();
     private PetMood? _mood;
 
@@ -19,8 +20,10 @@ public sealed class TrayIcon : IDisposable
         menu.Items.Add("Usage anzeigen", null, (_, _) => app.ShowUsage());
         _petVisible = new Forms.ToolStripMenuItem("Pet anzeigen", null, (_, _) => app.TogglePetVisible());
         _alwaysOnTop = new Forms.ToolStripMenuItem("Immer im Vordergrund", null, (_, _) => app.ToggleAlwaysOnTop());
+        _walkAround = new Forms.ToolStripMenuItem("Herumlaufen", null, (_, _) => app.ToggleWalkAround());
         menu.Items.Add(_petVisible);
         menu.Items.Add(_alwaysOnTop);
+        menu.Items.Add(_walkAround);
         menu.Items.Add(new Forms.ToolStripSeparator());
         menu.Items.Add("Claude Code verbinden…", null, (_, _) => app.ConnectClaudeCode(null));
         menu.Items.Add("Einstellungen…", null, (_, _) => app.ShowSettings());
@@ -30,6 +33,7 @@ public sealed class TrayIcon : IDisposable
         {
             _petVisible.Checked = app.PetVisible;
             _alwaysOnTop.Checked = app.Settings.AlwaysOnTop;
+            _walkAround.Checked = app.Settings.WalkAround;
         };
 
         _icon.ContextMenuStrip = menu;

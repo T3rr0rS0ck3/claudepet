@@ -115,6 +115,17 @@ public partial class App : Application
 
     protected override void OnExit(ExitEventArgs e)
     {
+        // The pet may have wandered off since the last drag.
+        if (_pet != null && Settings?.WalkAround == true)
+        {
+            try
+            {
+                Settings.PositionX = _pet.Left;
+                Settings.PositionY = _pet.Top;
+                Settings.Save();
+            }
+            catch (IOException) { }
+        }
         _tray?.Dispose();
         _showEvent?.Dispose();
         _mutex?.Dispose();
@@ -236,7 +247,9 @@ public partial class App : Application
         {
             _overlay = null;
             _overlayClosedAt = DateTime.Now;
+            _pet.PauseWalking(false);
         };
+        _pet.PauseWalking(true);
         _overlay.Update(_state, _monitor.History, Settings, ClaudeCodeSetup.GetStatus(), DateTimeOffset.Now);
 
         Rect anchor;
@@ -274,6 +287,15 @@ public partial class App : Application
     public void ToggleAlwaysOnTop()
     {
         Settings.AlwaysOnTop = !Settings.AlwaysOnTop;
+        ApplySettings(save: true);
+    }
+
+    public void ToggleWalkAround()
+    {
+        Settings.WalkAround = !Settings.WalkAround;
+        // Stay where it is when it stops walking.
+        Settings.PositionX = _pet.Left;
+        Settings.PositionY = _pet.Top;
         ApplySettings(save: true);
     }
 
@@ -388,6 +410,8 @@ public partial class App : Application
         menu.Items.Add(new Separator());
         var onTop = Item("Immer im Vordergrund", ToggleAlwaysOnTop);
         onTop.IsCheckable = true;
+        var walk = Item("Herumlaufen", ToggleWalkAround);
+        walk.IsCheckable = true;
         Item("In den Tray minimieren", () => _pet.Hide());
         menu.Items.Add(new Separator());
         Item("Claude Code verbinden…", () => ConnectClaudeCode(null));
@@ -395,7 +419,11 @@ public partial class App : Application
         menu.Items.Add(new Separator());
         Item("Beenden", Quit);
 
-        menu.Opened += (_, _) => onTop.IsChecked = Settings.AlwaysOnTop;
+        menu.Opened += (_, _) =>
+        {
+            onTop.IsChecked = Settings.AlwaysOnTop;
+            walk.IsChecked = Settings.WalkAround;
+        };
         return menu;
     }
 }

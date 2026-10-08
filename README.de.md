@@ -17,6 +17,9 @@ desto mehr ändert sich seine Stimmung: entspannt → nachdenklich → nervös �
 ## Funktionen
 
 - 🟠 **Desktop-Pet**: transparent, randlos, frei verschiebbar, optional immer im Vordergrund
+- 🚶 **Läuft herum**: bummelt über die Taskleiste und die Oberkanten offener Fenster, springt auf Fenster,
+  klettert an den Bildschirmrändern hoch und fällt runter, wenn ein Fenster verschwindet; das Tempo hängt
+  von der Stimmung ab (abschaltbar)
 - 📊 **Usage-Fenster**: Klick aufs Pet zeigt Session- und Wochenverbrauch, Reset-Zeiten und Prognose
 - 🎭 **7 Stimmungen** mit eigenen Animationen, abhängig vom höheren der beiden Werte
 - 💬 **Sprechblasen** beim Überschreiten von Schwellen, z. B. *„90 %! 😰“*, ohne Dauergequatsche
@@ -54,8 +57,8 @@ Danach Rechtsklick aufs Pet → *Claude Code verbinden…*
 | Aktion | Wirkung |
 |---|---|
 | Linksklick aufs Pet | Usage-Fenster öffnen/schließen |
-| Pet ziehen | Verschieben (Position wird gespeichert) |
-| Rechtsklick aufs Pet | Menü: Usage, Hallo sagen, Vordergrund, in den Tray, Claude Code verbinden, Einstellungen, Beenden |
+| Pet ziehen | Verschieben (Position wird gespeichert); beim Herumlaufen fällt es von dort herunter |
+| Rechtsklick aufs Pet | Menü: Usage, Hallo sagen, Vordergrund, Herumlaufen, in den Tray, Claude Code verbinden, Einstellungen, Beenden |
 | Linksklick aufs Tray-Icon | Usage-Fenster öffnen |
 | `ClaudePet.exe` erneut starten | Holt das laufende Pet zurück und öffnet das Usage-Fenster |
 
@@ -97,7 +100,7 @@ vorbei ist, zählen als 0 %. Es wird nichts von claude.ai ausgelesen und es werd
 
 ## Konfiguration
 
-Die meisten Optionen gibt es unter Rechtsklick → **Einstellungen…**: Größe, Vordergrund, Animationen, Autostart,
+Die meisten Optionen gibt es unter Rechtsklick → **Einstellungen…**: Größe, Vordergrund, Animationen, Herumlaufen, Autostart,
 Aktualisierungsintervall, Warn- und Zustandsschwellen, Sprechblasen, Benachrichtigungen und dein Name.
 
 Alles liegt in `%LOCALAPPDATA%\ClaudePet\settings.json`. Handänderungen werden sofort übernommen.

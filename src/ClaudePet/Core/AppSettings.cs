@@ -24,6 +24,8 @@ public sealed class AppSettings
     public double? PositionY { get; set; }
     public bool AlwaysOnTop { get; set; } = true;
     public bool Animations { get; set; } = true;
+    /// <summary>Walk around on the taskbar and on top of open windows.</summary>
+    public bool WalkAround { get; set; } = true;
     public bool StartWithWindows { get; set; }
 
     // Usage
