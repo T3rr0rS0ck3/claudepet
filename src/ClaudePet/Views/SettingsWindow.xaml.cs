@@ -67,6 +67,7 @@ public partial class SettingsWindow : Window
         new(TerminalKind.WindowsTerminal, "Windows Terminal"),
         new(TerminalKind.Cmd, "Eingabeaufforderung (cmd)"),
         new(TerminalKind.PowerShell, "PowerShell"),
+        new(TerminalKind.Desktop, "Claude Desktop (Code-Tab)"),
     ];
 
     private void BrowseRepos_Click(object sender, RoutedEventArgs e)

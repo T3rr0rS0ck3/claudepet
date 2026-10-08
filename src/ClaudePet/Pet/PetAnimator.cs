@@ -136,6 +136,8 @@ public static class PetAnimator
 
             default: // Unknown: looking around, wondering where the data is
             {
+                // No usage data (e.g. only Desktop sessions), but a hook says Claude is busy.
+                if (working) return Working(t, blink);
                 var dots = (t / 6 % 3) switch { 0 => Mark.Dots1, 1 => Mark.Dots2, _ => Mark.Dots3 };
                 return new SpriteFrame(Open(t / 16 % 2 == 0 ? Eyes.LookLeft : Eyes.LookRight), Bob: breathe, Mark: dots);
             }
