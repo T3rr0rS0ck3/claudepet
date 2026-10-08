@@ -35,6 +35,10 @@
                RenderOptions.BitmapScalingMode="NearestNeighbor" Cursor="Hand"
                MouseLeftButtonDown="Pet_MouseLeftButtonDown"
                MouseMove="Pet_MouseMove"
-               MouseLeftButtonUp="Pet_MouseLeftButtonUp" />
+               MouseLeftButtonUp="Pet_MouseLeftButtonUp"
+               MouseRightButtonDown="Pet_MouseRightButtonDown"
+               MouseRightButtonUp="Pet_MouseRightButtonUp"
+               LostMouseCapture="Pet_LostMouseCapture"
+               ContextMenuOpening="Pet_ContextMenuOpening" />
     </Grid>
 </Window>

@@ -71,6 +71,7 @@ public partial class App : Application
         _pet.ApplySettings(Settings, initial: true);
         _pet.Clicked += OnPetClicked;
         _pet.DoubleClicked += ShowProjectMenu;
+        _pet.GhostDropped += OnGhostDropped;
         _pet.Moved += SavePosition;
         _pet.PetImage.ContextMenu = BuildContextMenu();
         _pet.Show();
@@ -355,6 +356,12 @@ public partial class App : Application
         SaveSettings();
         _pet.Cheer(TimeSpan.FromSeconds(2));
         Say("Launch", ClaudeLauncher.FolderName(folder));
+    }
+
+    private void OnGhostDropped(string? folder, bool overShell)
+    {
+        if (folder != null) LaunchClaude(folder);
+        else if (overShell) Say("NoFolder");   // e.g. "This PC"; anywhere else the drop is just a cancel
     }
 
     private void ChooseAndLaunch()

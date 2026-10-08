@@ -8,7 +8,7 @@ public enum Eyes { Normal, Blink, Closed, Happy, LookLeft, LookRight, LookUp, Lo
 public enum Mouth { None, Smile, Small, Wavy, Open }
 public enum Arms { Down, Up, Wave, TypeLeft, TypeRight }
 public enum Mark { None, Dots1, Dots2, Dots3, Exclaim, Zzz1, Zzz2, Zzz3 }
-public enum Tint { Normal, Hot, Pale }
+public enum Tint { Normal, Hot, Pale, Ghost }
 
 /// <summary>Everything that describes one rendered frame of the pet.</summary>
 public readonly record struct SpriteFrame(
@@ -64,6 +64,7 @@ public static class Sprite
         {
             Tint.Hot => (0xFFE65F3Cu, 0xFFC0472Bu),
             Tint.Pale => (0xFFC8917Bu, 0xFFA8735Fu),
+            Tint.Ghost => (0xFFE4ECF8u, 0xFFB3C2DBu),
             _ => (0xFFD97757u, 0xFFB65E40u),
         };
 

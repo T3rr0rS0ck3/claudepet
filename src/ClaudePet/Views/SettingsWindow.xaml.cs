@@ -38,6 +38,7 @@ public partial class SettingsWindow : Window
         TerminalBox.DisplayMemberPath = "Value";
         TerminalBox.SelectedValuePath = "Key";
         TerminalBox.SelectedValue = settings.Terminal;
+        GhostDragBox.IsChecked = settings.GhostDrag;
 
         string? claude = ClaudeLauncher.FindClaude();
         ClaudeStatusText.Text = claude != null
@@ -139,6 +140,7 @@ public partial class SettingsWindow : Window
             _settings.Notifications = NotificationsBox.IsChecked == true;
             _settings.ReposPath = reposPath.Length > 0 ? reposPath : null;
             _settings.Terminal = TerminalBox.SelectedValue is TerminalKind terminal ? terminal : TerminalKind.Auto;
+            _settings.GhostDrag = GhostDragBox.IsChecked == true;
 
             _app.ApplySettings(save: true);
             Close();
