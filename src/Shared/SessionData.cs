@@ -36,6 +36,8 @@ public sealed class SessionInfo
     [JsonPropertyName("transcript_length")] public long TranscriptLength { get; set; }
     /// <summary>Claude Code's CLAUDE_CODE_ENTRYPOINT: "cli" in a terminal, e.g. "claude-desktop" in the Desktop app.</summary>
     [JsonPropertyName("origin")] public string? Origin { get; set; }
+    /// <summary>The session's model as the status line reports it (e.g. "Opus 4.1"), for its baby pet's outfit.</summary>
+    [JsonPropertyName("model")] public string? Model { get; set; }
     /// <summary>
     /// Window that shows the session (console, Windows Terminal or Desktop app) and the process it belonged
     /// to, so a reused handle is not mistaken for it; 0 if unknown (e.g. saved by an older bridge).

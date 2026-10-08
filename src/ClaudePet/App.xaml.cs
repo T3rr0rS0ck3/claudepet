@@ -204,6 +204,7 @@ public partial class App : Application
         }
         _lastMood = mood;
         _pet.SetMood(mood, Working);
+        _pet.SetOutfit(Settings.ModelOutfits ? Sprite.OutfitFor(_state.Snapshot?.Model) : Outfit.None);
 
         var snapshot = _state.Snapshot;
         CheckWarning(true, snapshot?.FiveHour, _state.Session, Settings.SessionWarnThresholds, _sessionWarn, initial, now);
@@ -355,7 +356,8 @@ public partial class App : Application
 
     private void ApplySessions()
     {
-        _pet.SetSessions(_sessions.Sessions, _sessions.Overall, Settings.SessionMarks, Settings.SessionPets);
+        _pet.SetSessions(_sessions.Sessions, _sessions.Overall, Settings.SessionMarks, Settings.SessionPets,
+            Settings.ModelOutfits);
         _pet.SetMood(_state.Mood, Working);
     }
 

@@ -43,6 +43,8 @@ public sealed class AppSettings
     public bool CrossMonitors { get; set; }
     /// <summary>Buttons to feed, pat, play with and tickle the pet while hovering it.</summary>
     public bool Emotes { get; set; } = true;
+    /// <summary>Dress for the Claude model in use: crown for Opus, sunglasses for Sonnet, a flower for Haiku.</summary>
+    public bool ModelOutfits { get; set; } = true;
     /// <summary>Look for new releases on GitHub at start and once a day.</summary>
     public bool CheckForUpdates { get; set; } = true;
     /// <summary>The last version the pet announced, so each update is mentioned only once.</summary>
