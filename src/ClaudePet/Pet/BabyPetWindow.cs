@@ -11,7 +11,7 @@ namespace ClaudePet.Pet;
 /// <summary>
 /// A small pet for one Claude Code session. It trots after the big pet and shows that session's
 /// "?" while a question waits and wears the outfit for that session's model; the tooltip names the folder
-/// and its state.
+/// and its state. A click brings the session's window to the front.
 /// </summary>
 public sealed class BabyPetWindow : Window
 {
@@ -27,6 +27,9 @@ public sealed class BabyPetWindow : Window
     public double X { get; private set; } = double.NaN;
     public double Y { get; private set; } = double.NaN;
 
+    /// <summary>Left click on the baby: the user wants to go to its session.</summary>
+    public event Action<SessionView>? Clicked;
+
     public BabyPetWindow(SessionView session, Outfit outfit, double petScale, bool topmost)
     {
         _session = session;
@@ -41,6 +44,8 @@ public sealed class BabyPetWindow : Window
         Title = "Claudius – " + session.Folder;
         RenderOptions.SetBitmapScalingMode(_image, BitmapScalingMode.NearestNeighbor);
         Content = _image;
+        Cursor = System.Windows.Input.Cursors.Hand;
+        MouseLeftButtonUp += (_, _) => Clicked?.Invoke(_session);
         SetScale(petScale);
         UpdateToolTip();
         Left = -10000;

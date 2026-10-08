@@ -38,6 +38,14 @@ public sealed class SessionInfo
     [JsonPropertyName("origin")] public string? Origin { get; set; }
     /// <summary>The session's model as the status line reports it (e.g. "Opus 4.1"), for its baby pet's outfit.</summary>
     [JsonPropertyName("model")] public string? Model { get; set; }
+    /// <summary>
+    /// Window that shows the session (console, Windows Terminal or Desktop app) and the process it belonged
+    /// to, so a reused handle is not mistaken for it; 0 if unknown (e.g. saved by an older bridge).
+    /// </summary>
+    [JsonPropertyName("window")] public long Window { get; set; }
+    [JsonPropertyName("window_pid")] public int WindowPid { get; set; }
+    /// <summary>The session's console title when it last asked something: finds its tab in Windows Terminal.</summary>
+    [JsonPropertyName("title")] public string? Title { get; set; }
 
     [JsonIgnore] public bool IsDesktop => Origin?.Contains("desktop", StringComparison.OrdinalIgnoreCase) == true;
     [JsonIgnore] public string Folder => Cwd is { Length: > 0 } cwd ? Path.GetFileName(cwd.TrimEnd('\\', '/')) : "Claude";
