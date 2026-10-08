@@ -238,7 +238,7 @@ public partial class App : Application
         string text = value >= 100
             ? $"Dein {label} ist aufgebraucht. Reset {Format.DayTime(window.ResetsAtTime, now)}."
             : $"Dein {label} ist bei {Format.Percent(value.Value)} %.";
-        ShowNotification("Claude Usage Pet", text);
+        ShowNotification("Claudius", text);
     }
 
     private void Say(string key, string? folder = null)

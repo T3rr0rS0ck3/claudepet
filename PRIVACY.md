@@ -1,6 +1,6 @@
 # Datenschutzerklärung / Privacy Policy
 
-**Claudius – Claude Usage App** (Claude Usage Pet) · Stand / Last updated: 2026-10-08
+**Claudius - Claude Usage App** · Stand / Last updated: 2026-10-08
 
 ## Deutsch
 
