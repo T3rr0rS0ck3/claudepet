@@ -29,9 +29,9 @@ its mood changes: relaxed → thoughtful → nervous → panicking → asleep un
 - 🔔 **Windows notifications** at configurable session and weekly warning thresholds
 - 📈 **Forecast** — "at the current pace you'll hit the limit in 1h 42m"
 - 🧺 **Tray icon** that reflects the current mood, plus autostart with Windows
-- 👻 **Ghost drag** — right-drag a ghost of the pet onto an Explorer window to open Claude Code in that folder
+- 👻 **Ghost drag** — drag a ghost of the pet (left mouse button) onto an Explorer window to open Claude Code in that folder
 - 📂 **Project launcher** — double-click the pet to pick a project from your repo folder and open Claude Code there
-- 🎤 **Voice chat** (optional) — opens Claude Code with its voice dictation switched on
+- 🎤 **Voice chat** (optional) — opens Claude Code with its voice dictation switched on; the pet listens while you talk
 - ⚙️ **Configurable** thresholds, texts, size, update interval, console and more
 - 🔒 **Local only** — the pet itself makes no network requests, needs no login and reads no tokens; it only reads what Claude Code already hands to its status line
 
@@ -64,8 +64,8 @@ Then right-click the pet → *Claude Code verbinden…* (connect).
 |---|---|
 | Left-click the pet | Open / close the usage overlay |
 | Double-click the pet | Project list: open Claude Code in one of your projects |
-| Drag the pet | Move it (position is remembered); it kicks its legs while carried and, when walking around, drops down from there |
-| Right-drag the pet onto an Explorer window | Open Claude Code in that folder (see [Opening Claude Code](#opening-claude-code)) |
+| Right-drag the pet | Move it (position is remembered); it kicks its legs while carried and, when walking around, drops down from there |
+| Drag the pet onto an Explorer window | Open Claude Code in that folder (see [Opening Claude Code](#opening-claude-code)) |
 | Right-click the pet | Menu: usage, open Claude, voice chat, say hello, always on top, walk around, minimize to tray, connect Claude Code, settings, quit |
 | Left-click the tray icon | Open the usage overlay |
 | Start `ClaudePet.exe` again | Brings the running pet back and opens the overlay |
@@ -76,7 +76,7 @@ The pet can open a console running Claude Code (`claude`) in a folder of your ch
 in the settings: *Automatic* (Windows Terminal if installed, otherwise Command Prompt), Windows Terminal,
 Command Prompt or PowerShell.
 
-**Ghost drag.** Hold the **right** mouse button on the pet and drag. A translucent ghost of the pet follows the cursor
+**Ghost drag.** Hold the **left** mouse button on the pet and drag. A translucent ghost of the pet follows the cursor
 while the pet itself stays where it is. Over an Explorer window or the desktop the ghost lights up and waves. Release
 it there and Claude Code opens in that folder (with Windows 11 tabs: the active tab); the ghost floats away.
 Releasing anywhere else, or pressing `Esc`, cancels. Folders without a file system path (e.g. *This PC*) get a short
@@ -95,6 +95,8 @@ project list. In the console, **hold Space** and speak. Requirements: a claude.a
 and microphone access for the console (Windows Settings → Privacy & security → Microphone). Claude Code has no
 command-line flag for voice mode, so dictation is enabled for all Claude Code sessions while the option is on.
 Switching *Sprachchat anbieten* off again hides the menu entry and sets `voice.enabled` back to `false`.
+While you hold Space in a focused terminal running Claude Code (with dictation on), the pet stops and listens, with
+sound waves next to its head. Claude Code does not report dictation itself, so the pet goes by the held Space key.
 
 ### Moods
 

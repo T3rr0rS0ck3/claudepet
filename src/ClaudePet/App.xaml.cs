@@ -17,6 +17,7 @@ public partial class App : Application
     private Mutex? _mutex;
     private EventWaitHandle? _showEvent;
     private readonly UsageMonitor _monitor = new();
+    private readonly VoiceWatcher _voice = new();
     private readonly DispatcherTimer _clock = new() { Interval = TimeSpan.FromSeconds(1) };
     private readonly Random _random = new();
     private readonly WarnState _sessionWarn = new();
@@ -86,6 +87,8 @@ public partial class App : Application
         _monitor.Changed += () => Evaluate(initial: false);
         _clock.Tick += (_, _) => OnClock();
         _clock.Start();
+        _voice.ListeningChanged += listening => _pet.SetListening(listening);
+        _voice.Start();
 
         Say(_state.Mood == PetMood.Unknown ? "NoData" : "Greeting");
     }
