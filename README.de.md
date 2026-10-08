@@ -27,7 +27,7 @@ Panik → schläft bis zum Reset.
   Das Tempo hängt von der Stimmung ab (abschaltbar). Auf Wunsch läuft oder hüpft es auch zum Nachbarmonitor,
   passend zur Monitoranordnung in Windows
 - 🎨 **Deine Farbe**: das Pet in beliebiger Farbe; Usage-Fenster, Menüs und Sprechblasen übernehmen sie als Akzentfarbe
-- 👑 **Passend zum Modell gekleidet**: eine Krone bei Opus, eine Sonnenbrille bei Sonnet, eine kleine Blume bei Haiku (abschaltbar)
+- 👑 **Passend zum Modell gekleidet**: eine Krone bei Opus, eine Sonnenbrille bei Sonnet, eine kleine Blume bei Haiku, ein Zauberhut bei Fable (abschaltbar)
 - 📊 **Usage-Fenster**: Klick aufs Pet zeigt Session- und Wochenverbrauch, Reset-Zeiten und Prognose
 - 🎭 **7 Stimmungen** mit eigenen Animationen, abhängig vom höheren der beiden Werte
 - 💬 **Sprechblasen** beim Überschreiten von Schwellen, z. B. *„90 %! 😰“*, ohne Dauergequatsche

@@ -14,7 +14,7 @@ public enum Mark
 }
 public enum Tint { Normal, Hot, Pale, Ghost }
 /// <summary>Something the pet wears, drawn over the body: so far one per Claude model (Opus, Sonnet, Haiku).</summary>
-public enum Outfit { None, Crown, Sunglasses, Flower }
+public enum Outfit { None, Crown, Sunglasses, Flower, WizardHat }
 
 /// <summary>Everything that describes one rendered frame of the pet.</summary>
 public readonly record struct SpriteFrame(
@@ -59,6 +59,8 @@ public static class Sprite
     private const uint GlintColor = 0xFF8FA6CC;
     private const uint PetalColor = 0xFFFFFFFF;
     private const uint LeafColor = 0xFF5FAE4E;
+    private const uint HatColor = 0xFF7B5CC4;
+    private const uint HatShade = 0xFF5A3F9A;
 
     /// <summary>Claude orange, the default body color.</summary>
     public const uint DefaultBodyColor = 0xFFD97757;
@@ -91,13 +93,14 @@ public static class Sprite
 
     /// <summary>
     /// The outfit for a Claude model, by name ("Opus 4.1") or id ("claude-sonnet-4-5"): Opus wears a crown,
-    /// Sonnet sunglasses, Haiku a flower; unknown models nothing.
+    /// Sonnet sunglasses, Haiku a flower, Fable a wizard's hat; unknown models nothing.
     /// </summary>
     public static Outfit OutfitFor(string? model) =>
         model == null ? Outfit.None
         : model.Contains("opus", StringComparison.OrdinalIgnoreCase) ? Outfit.Crown
         : model.Contains("sonnet", StringComparison.OrdinalIgnoreCase) ? Outfit.Sunglasses
         : model.Contains("haiku", StringComparison.OrdinalIgnoreCase) ? Outfit.Flower
+        : model.Contains("fable", StringComparison.OrdinalIgnoreCase) ? Outfit.WizardHat
         : Outfit.None;
 
     public static BitmapSource Render(SpriteFrame frame)
@@ -258,6 +261,12 @@ public static class Sprite
                 Glyph(c0 + 1, PetalColor, by - 3, ".X.", "X.X", ".X.");
                 Set(c0 + 2, by - 2, GoldColor);
                 Set(c0 + 3, by - 1, LeafColor);
+                break;
+            // Fable: a pointed wizard's hat with a little star, its tip bent to the side
+            case Outfit.WizardHat:
+                Glyph(c0 - 1, HatColor, by - 5, "....X.", "...XX.", "..XXX.", ".XXXX.");
+                Glyph(c0 - 1, HatShade, by - 1, "XXXXXX");
+                Set(c0 + 2, by - 3, GoldColor);
                 break;
         }
 

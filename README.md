@@ -27,7 +27,7 @@ until the limit resets.
   (can be turned off). Optionally it also walks or hops over to the neighbouring monitor, following how your
   monitors are arranged in Windows
 - 🎨 **Your color** — pick any color for the pet; the usage overlay, menus and speech bubbles use it as accent color
-- 👑 **Dressed for the model** — a crown for Opus, sunglasses for Sonnet, a little flower for Haiku (can be turned off)
+- 👑 **Dressed for the model** — a crown for Opus, sunglasses for Sonnet, a little flower for Haiku, a wizard's hat for Fable (can be turned off)
 - 📊 **Usage overlay** — click the pet to see session and weekly usage, reset times and a forecast
 - 🎭 **7 moods** with their own animations, based on the higher of the two usage values
 - 💬 **Speech bubbles** when thresholds are crossed, e.g. *"90 %! 😰"* — not constantly chattering

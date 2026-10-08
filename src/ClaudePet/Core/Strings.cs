@@ -98,8 +98,8 @@ public static class Strings
     public static string Emotes => L("Emotes on hover (feed, pat, …)", "Emotes beim Drüberfahren (Füttern, Streicheln, …)");
     public static string ModelOutfits => L("Outfit for the Claude model", "Outfit passend zum Claude-Modell");
     public static string ModelOutfitsTip => L(
-        "Opus wears a crown, Sonnet sunglasses, Haiku a flower. Baby pets dress for their own session's model.",
-        "Opus trägt eine Krone, Sonnet eine Sonnenbrille, Haiku eine Blume. Baby-Pets ziehen sich für das Modell ihrer Session an.");
+        "Opus wears a crown, Sonnet sunglasses, Haiku a flower, Fable a wizard's hat. Baby pets dress for their own session's model.",
+        "Opus trägt eine Krone, Sonnet eine Sonnenbrille, Haiku eine Blume, Fable einen Zauberhut. Baby-Pets ziehen sich für das Modell ihrer Session an.");
     public static string StartWithWindows => L("Start with Windows", "Mit Windows starten");
     public static string AutostartBlocked => L("Switched off in Windows –", "In Windows ausgeschaltet –");
     public static string OpenStartupSettings => L("Open startup settings", "Autostart-Einstellungen öffnen");
