@@ -1,7 +1,7 @@
 <Window x:Class="ClaudePet.Pet.PetWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Claude Pet"
+        Title="Claudius"
         WindowStyle="None"
         AllowsTransparency="True"
         Background="Transparent"

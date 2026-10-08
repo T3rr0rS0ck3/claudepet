@@ -1,7 +1,7 @@
 <Window x:Class="ClaudePet.Pet.GhostWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Claude Pet Ghost"
+        Title="Claudius Ghost"
         WindowStyle="None"
         AllowsTransparency="True"
         Background="Transparent"

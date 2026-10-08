@@ -150,7 +150,7 @@ public partial class SettingsWindow : Window
         }
         catch (Exception ex)
         {
-            MessageBox.Show(this, ex.Message, "Claude Pet", MessageBoxButton.OK, MessageBoxImage.Error);
+            MessageBox.Show(this, ex.Message, "Claudius", MessageBoxButton.OK, MessageBoxImage.Error);
         }
         RefreshSetupStatus();
     }

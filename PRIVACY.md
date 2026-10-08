@@ -4,7 +4,7 @@
 
 ## Deutsch
 
-Claude Pet ist ein Desktop-Haustier, das deinen Claude-Code-Verbrauch anzeigt. Es läuft vollständig auf deinem Rechner.
+Claudius ist ein Desktop-Haustier, das deinen Claude-Code-Verbrauch anzeigt. Es läuft vollständig auf deinem Rechner.
 
 - **Keine Konten, keine Telemetrie, keine Werbung.** Die App sammelt keine personenbezogenen Daten und sendet nichts an den Entwickler oder an Dritte.
 - **Lokale Daten, die die App liest:** die Verbrauchswerte, Sitzungsinfos und Projektordner, die Claude Code über die statusLine und Hooks an die App übergibt, sowie die Claude-Code-Einstellungen (`~/.claude/settings.json`).
@@ -19,7 +19,7 @@ Fragen: [GitHub Issues](https://github.com/T3rr0rS0ck3/claudepet/issues)
 
 ## English
 
-Claude Pet is a desktop pet that shows your Claude Code usage. It runs entirely on your computer.
+Claudius is a desktop pet that shows your Claude Code usage. It runs entirely on your computer.
 
 - **No accounts, no telemetry, no ads.** The app collects no personal data and sends nothing to the developer or any third party.
 - **Local data the app reads:** the usage values, session info and project folders that Claude Code passes to it through the statusLine and hooks, and Claude Code's settings (`~/.claude/settings.json`).

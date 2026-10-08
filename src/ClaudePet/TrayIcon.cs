@@ -50,8 +50,8 @@ public sealed class TrayIcon : IDisposable
         {
             if (e.Button == Forms.MouseButtons.Left) app.ShowUsage();
         };
-        _icon.Text = "Claude Pet";
-        Update(PetMood.Unknown, "Claude Pet – warte auf Daten");
+        _icon.Text = "Claudius";
+        Update(PetMood.Unknown, "Claudius – warte auf Daten");
         _icon.Visible = true;
     }
 

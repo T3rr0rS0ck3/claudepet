@@ -93,7 +93,7 @@ jobs:
           generate_release_notes: true
           body: |
             **Installation:** `ClaudePet-Setup-${{ steps.version.outputs.version }}.exe` herunterladen und ausführen (keine Admin-Rechte, kein .NET nötig).
-            Im Setup kann Claude Pet direkt als statusLine in Claude Code eingetragen werden.
+            Im Setup kann Claudius direkt als statusLine in Claude Code eingetragen werden.
 
             Alternativ: `ClaudePet-${{ steps.version.outputs.version }}-portable.zip` entpacken und `ClaudePet.exe` starten.
 
