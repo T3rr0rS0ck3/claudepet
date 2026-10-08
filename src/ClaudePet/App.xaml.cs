@@ -79,6 +79,7 @@ public partial class App : Application
         _pet.ApplySettings(Settings, initial: true);
         _pet.Clicked += OnPetClicked;
         _pet.DoubleClicked += ShowProjectMenu;
+        _pet.SessionClicked += GoToSession;
         _pet.GhostDropped += OnGhostDropped;
         _pet.Moved += SavePosition;
         _pet.Emoted += emote => Say(emote.ToString());
@@ -303,6 +304,14 @@ public partial class App : Application
         if (_overlay == null && releasedAt - _overlayClosedAt < TimeSpan.FromMilliseconds(600)) return;
         if (_overlay != null) _overlay.Close();
         else ShowUsage();
+    }
+
+    /// <summary>Brings the terminal tab or Desktop app window of a session to the front.</summary>
+    private async void GoToSession(SessionView session)
+    {
+        if (await SessionWindow.ActivateAsync(session)) return;
+        Log.Write("Kein Fenster für Session " + session.Id + " in " + session.Folder + " gefunden.");
+        Say("NoWindow", session.Label);
     }
 
     public void ShowPet()

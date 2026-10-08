@@ -37,7 +37,7 @@ until the limit resets.
 - 📂 **Project launcher** — double-click the pet to pick a project from your repo folder and open Claude Code there
 - 🎤 **Voice chat** (optional) — opens Claude Code with its voice dictation switched on; the pet listens while you talk
 - ❓ **Session status** — a yellow "?" when a Claude Code session asks something, a bubble when it is done;
-  optionally a baby pet per session that trots after the pet
+  optionally a baby pet per session that trots after the pet; click the "?" or a baby to jump to that session's window
 - ⚙️ **Configurable** thresholds, texts, size, update interval, console and more
 - 🔒 **Local only** — the pet itself makes no network requests, needs no login and reads no tokens; it only reads what Claude Code already hands to its status line
 
@@ -163,11 +163,14 @@ Once Claude Code is connected, the pet also registers a few [hooks](https://code
 - With several sessions the "?" stays as long as any of them waits for an answer.
 - *A baby pet for each Claude session* (settings): a small pet per running session follows the pet and shows that
   session's "?"; its tooltip names the folder and whether the session works, waits or is done.
+- **Jump to a session**: clicking the "?" brings the window of the session that asked to the front, clicking a baby pet
+  that of its session: the console window, the Windows Terminal window with the right tab selected, or Claude Desktop.
+  The hook notes the window when the session starts and asks; sessions from before that are looked for by folder name.
 
 Only rare events are hooked (prompt sent, turn finished, permission/question, session start/end), so Claude is not
 slowed down. No hook reports an answered permission prompt; the "?" goes away once the session's conversation log
 grows again. Switching *“?” on questions …* off in the settings removes the hooks again. Bubble texts: `Question`,
-`Done` (with `{folder}`).
+`Done`, `NoWindow` (with `{folder}`).
 
 ### Claude Desktop
 

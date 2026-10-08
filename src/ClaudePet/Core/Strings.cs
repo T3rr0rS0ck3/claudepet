@@ -221,8 +221,11 @@ public static class Strings
         _ => L("Tickle", "Kitzeln"),
     };
 
-    /// <summary>Tooltip of a baby pet: what Claude is doing in that session.</summary>
-    public static string SessionTip(string folder, string state) => state switch
+    /// <summary>Tooltip of a baby pet: what Claude is doing in that session, and that a click shows it.</summary>
+    public static string SessionTip(string folder, string state) => SessionState(folder, state) + "\n"
+        + L("Click: bring its window to the front", "Klick: holt ihr Fenster nach vorn");
+
+    private static string SessionState(string folder, string state) => state switch
     {
         Shared.SessionStates.Question => L($"{folder}: Claude is waiting for you", $"{folder}: Claude wartet auf dich"),
         Shared.SessionStates.Done => L($"{folder}: Claude is done", $"{folder}: Claude ist fertig"),

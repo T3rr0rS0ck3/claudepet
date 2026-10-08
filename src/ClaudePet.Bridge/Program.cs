@@ -2,9 +2,10 @@
 // Reads the session JSON from stdin, stores the rate-limit windows for the desktop pet
 // and prints a short status line back to Claude Code. Must never fail or hang.
 // With --hook it is a Claude Code hook instead: it records the session's state (working,
-// question, done) for the pet's ?/! marks and prints nothing.
+// question, done) for the pet's ?/! marks, and the window showing the session, and prints nothing.
 using System.Text;
 using System.Text.Json;
+using ClaudePet.Bridge;
 using ClaudePet.Shared;
 
 if (args.Length > 0 && args[0] == "--hook")
@@ -152,6 +153,10 @@ static void RunHook()
     // Claude Code tells its child processes where it runs: "cli" in a terminal, something else in the Desktop app.
     string? origin = Environment.GetEnvironmentVariable("CLAUDE_CODE_ENTRYPOINT");
 
+    // The window to bring up when the pet's "?" or baby pet is clicked; looked for when the session starts
+    // and again when it asks, which also picks up the current title for finding the Windows Terminal tab.
+    var host = hookEvent == "SessionStart" || state == SessionStates.Question ? SessionHost.Find() : default;
+
     SessionStore.Update(sessions =>
     {
         if (!sessions.TryGetValue(id, out var info)) sessions[id] = info = new SessionInfo();
@@ -161,6 +166,12 @@ static void RunHook()
         info.UpdatedAt = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
         info.Transcript = transcript ?? info.Transcript;
         info.TranscriptLength = length;
+        if (host.Window != IntPtr.Zero)
+        {
+            info.Window = (long)host.Window;
+            info.WindowPid = host.Pid;
+            info.Title = host.Title ?? info.Title;
+        }
     });
 }
 
