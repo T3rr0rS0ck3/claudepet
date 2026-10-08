@@ -19,11 +19,23 @@ public static class PetAnimator
                 Eyes = Eyes.Big, Mouth = Mouth.Open, Arms = Arms.Up, Legs = (int)(t % 2) + 1,
                 Bob = 0, Shake = 0, Mark = Mark.None,
             },
+            // Picked up: wide-eyed like falling, legs kicking and wriggling a little
+            Motion.Carried => frame with
+            {
+                Eyes = Eyes.Big, Mouth = Mouth.Open, Arms = Arms.Up, Legs = (int)(t % 2) + 1,
+                Bob = 0, Shake = t / 3 % 2 == 0 ? 1 : 0, Mark = Mark.None,
+            },
             Motion.Climb => frame with
             {
                 Eyes = frame.Eyes == Eyes.Closed ? Eyes.Closed : Eyes.LookUp,
                 Arms = t / 2 % 2 == 0 ? Arms.Up : Arms.Wave, Legs = (int)(t / 2 % 2) + 1,
                 Bob = 0, Shake = 0,
+            },
+            Motion.Hang => frame with
+            {
+                Eyes = frame.Eyes is Eyes.Closed or Eyes.Blink ? frame.Eyes : direction < 0 ? Eyes.LookLeft : Eyes.LookRight,
+                Arms = t / 3 % 2 == 0 ? Arms.Up : Arms.Wave, Legs = (int)(t / 3 % 2) + 1,
+                Bob = 0, Shake = 0, Mark = Mark.None,
             },
             Motion.Jump => frame with
             {

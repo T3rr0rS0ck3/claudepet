@@ -49,6 +49,7 @@ public partial class PetWindow : Window
     private bool _dragging;
     private bool _paused;
     private bool _needsPlace = true;
+    private bool _petOnTop;
     private (Motion Motion, int Direction) _pose = (Motion.Idle, 1);
     private Eyes? _lookAt;
 
@@ -128,6 +129,7 @@ public partial class PetWindow : Window
         {
             _walkTimer.Stop();
             _pose = (Motion.Idle, 1);
+            if (_petOnTop) SetPetOnTop(false);
         }
         Render();
     }
@@ -196,6 +198,14 @@ public partial class PetWindow : Window
 
     // ---------------------------------------------------------------- walking around
 
+    private void SetPetOnTop(bool onTop)
+    {
+        _petOnTop = onTop;
+        Grid.SetRow(PetImage, onTop ? 0 : 1);
+        PetImage.VerticalAlignment = onTop ? VerticalAlignment.Top : VerticalAlignment.Stretch;
+        UpdateLayout();
+    }
+
     private void Walk()
     {
         var hwnd = new WindowInteropHelper(this).Handle;
@@ -233,10 +243,14 @@ public partial class PetWindow : Window
         }
 
         bool canWalk = !_surfaces.IsFullscreen(_walker.X, _walker.Y);
-        _walker.Headroom = height;
         _walker.Step(dt, _surfaces, _mood, canWalk, petWidth, petHeight);
 
-        int x = (int)Math.Round(_walker.X - width / 2), y = (int)Math.Round(_walker.Y - height);
+        // Climbing, hanging and falling from the top: pet at the top of the window, so the
+        // (transparent) speech bubble area does not stick out above the screen.
+        bool petOnTop = _walker.Motion is Motion.Climb or Motion.Hang or Motion.Fall;
+        if (petOnTop != _petOnTop) SetPetOnTop(petOnTop);
+        double feetToTop = petOnTop ? petHeight : height;
+        int x = (int)Math.Round(_walker.X - width / 2), y = (int)Math.Round(_walker.Y - feetToTop);
         if (x != rect.Left || y != rect.Top)
             SetWindowPos(hwnd, IntPtr.Zero, x, y, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
 
@@ -288,8 +302,12 @@ public partial class PetWindow : Window
         _pressPoint = null;
         PetImage.ReleaseMouseCapture();
         _dragging = true;
+        _pose = (Motion.Carried, _pose.Direction);
+        Render();
         try { DragMove(); } catch (InvalidOperationException) { }
         _dragging = false;
+        if (!_walking) _pose = (Motion.Idle, _pose.Direction);
+        Render();
         _needsPlace = true; // let go: fall down from here
         ClampToScreen();
         Moved?.Invoke();
