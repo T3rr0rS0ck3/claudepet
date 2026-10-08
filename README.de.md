@@ -27,6 +27,7 @@ Panik → schläft bis zum Reset.
   Das Tempo hängt von der Stimmung ab (abschaltbar). Auf Wunsch läuft oder hüpft es auch zum Nachbarmonitor,
   passend zur Monitoranordnung in Windows
 - 🎨 **Deine Farbe**: das Pet in beliebiger Farbe; Usage-Fenster, Menüs und Sprechblasen übernehmen sie als Akzentfarbe
+- 👑 **Passend zum Modell gekleidet**: eine Krone bei Opus, eine Sonnenbrille bei Sonnet, eine kleine Blume bei Haiku (abschaltbar)
 - 📊 **Usage-Fenster**: Klick aufs Pet zeigt Session- und Wochenverbrauch, Reset-Zeiten und Prognose
 - 🎭 **7 Stimmungen** mit eigenen Animationen, abhängig vom höheren der beiden Werte
 - 💬 **Sprechblasen** beim Überschreiten von Schwellen, z. B. *„90 %! 😰“*, ohne Dauergequatsche
@@ -163,8 +164,9 @@ Ist Claude Code verbunden, trägt das Pet zusätzlich ein paar [Hooks](https://c
 - Ist eine Session mit ihrer Antwort fertig, erscheint eine Sprechblase wie *„mein-projekt: Claude ist fertig!“*; am Pet bleibt
   kein Zeichen stehen.
 - Bei mehreren Sessions bleibt das „?“, solange irgendeine davon auf eine Antwort wartet.
-- *Baby-Pet für jede Claude-Session* (Einstellungen): ein kleines Pet pro laufender Session folgt dem Pet und zeigt
-  deren „?“; der Tooltip nennt den Ordner und ob die Session arbeitet, wartet oder fertig ist.
+- *Baby-Pet für jede Claude-Session* (Einstellungen): ein kleines Pet pro laufender Session folgt dem Pet, zeigt
+  deren „?“ und trägt das Outfit für das Modell der Session; der Tooltip nennt den Ordner und ob die
+  Session arbeitet, wartet oder fertig ist.
 
 Es hängen nur seltene Ereignisse dran (Prompt abgeschickt, Antwort fertig, Berechtigung/Frage, Session-Start/-Ende),
 damit Claude nicht ausgebremst wird. Kein Hook meldet eine beantwortete Berechtigungsfrage; das „?“ verschwindet, sobald
@@ -174,7 +176,7 @@ Hooks wieder. Sprechblasentexte: `Question`, `Done` (mit `{folder}`).
 ## Konfiguration
 
 Die meisten Optionen gibt es unter Rechtsklick → **Einstellungen…**: Sprache, Repo-Ordner, Konsole, Geist ziehen, Sprachchat,
-Größe, Farbe, Vordergrund, Animationen, Herumlaufen, Monitorwechsel, Emotes, Autostart, Update-Suche, Aktualisierungsintervall, Warn- und Zustandsschwellen, Sprechblasen,
+Größe, Farbe, Vordergrund, Animationen, Herumlaufen, Monitorwechsel, Emotes, Modell-Outfits, Autostart, Update-Suche, Aktualisierungsintervall, Warn- und Zustandsschwellen, Sprechblasen,
 Benachrichtigungen und dein Name.
 
 Alles liegt in `%LOCALAPPDATA%\ClaudePet\settings.json`. Handänderungen werden sofort übernommen.

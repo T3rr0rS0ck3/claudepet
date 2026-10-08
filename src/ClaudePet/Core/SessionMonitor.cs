@@ -4,7 +4,7 @@ using ClaudePet.Shared;
 namespace ClaudePet.Core;
 
 /// <summary>A Claude Code session as the pet shows it.</summary>
-public sealed record SessionView(string Id, string Folder, string State, bool Desktop)
+public sealed record SessionView(string Id, string Folder, string State, bool Desktop, string? Model = null)
 {
     /// <summary>The folder, marked when the session runs in the Claude Desktop app.</summary>
     public string Label => Desktop ? Folder + " (Desktop)" : Folder;
@@ -15,14 +15,14 @@ public sealed class SessionMonitor
 {
     private DateTime _lastWrite;
     private Dictionary<string, SessionInfo> _stored = new();
-    private Dictionary<string, string> _shown = new();
+    private Dictionary<string, (string State, string? Model)> _shown = new();
     private bool _loaded;
 
     public IReadOnlyList<SessionView> Sessions { get; private set; } = [];
 
     /// <summary>A session just started asking (state = question) or finished (state = done).</summary>
     public event Action<SessionView>? Attention;
-    /// <summary>The list or a state changed.</summary>
+    /// <summary>The list, a state or a model changed.</summary>
     public event Action? Changed;
 
     /// <summary>Called once a second; cheap when nothing changed.</summary>
@@ -44,10 +44,10 @@ public sealed class SessionMonitor
         var sessions = _stored
             .Where(s => s.Value.UpdatedAt >= cutoff)
             .OrderBy(s => s.Value.UpdatedAt)
-            .Select(s => new SessionView(s.Key, s.Value.Folder, EffectiveState(s.Value), s.Value.IsDesktop))
+            .Select(s => new SessionView(s.Key, s.Value.Folder, EffectiveState(s.Value), s.Value.IsDesktop, s.Value.Model))
             .ToList();
 
-        var shown = sessions.ToDictionary(s => s.Id, s => s.State);
+        var shown = sessions.ToDictionary(s => s.Id, s => (s.State, s.Model));
         bool changed = shown.Count != _shown.Count || shown.Any(s => !_shown.TryGetValue(s.Key, out var old) || old != s.Value);
         if (!changed) return;
 
@@ -55,7 +55,7 @@ public sealed class SessionMonitor
         {
             foreach (var session in sessions)
             {
-                bool entered = !_shown.TryGetValue(session.Id, out var old) || old != session.State;
+                bool entered = !_shown.TryGetValue(session.Id, out var old) || old.State != session.State;
                 if (entered && session.State is SessionStates.Question or SessionStates.Done) Attention?.Invoke(session);
             }
         }
