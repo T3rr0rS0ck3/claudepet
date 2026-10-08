@@ -86,7 +86,7 @@
                         <ColumnDefinition Width="150" />
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
-                    <TextBlock Text="Konsole" VerticalAlignment="Center" />
+                    <TextBlock Text="Claude öffnen in" VerticalAlignment="Center" />
                     <ComboBox x:Name="TerminalBox" Grid.Column="1" />
                 </Grid>
                 <CheckBox x:Name="GhostDragBox" Content="Pet mit linker Maustaste auf Explorer ziehen öffnet Claude dort" />

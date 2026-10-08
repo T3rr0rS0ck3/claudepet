@@ -5,17 +5,18 @@ using System.Windows.Threading;
 namespace ClaudePet.Core;
 
 /// <summary>
-/// Notices when the user dictates to Claude Code: voice dictation is on, a terminal is in the
-/// foreground while Claude Code runs, and Space is held down (push to talk). Claude Code reports
+/// Notices when the user dictates to Claude Code: voice dictation is on, a terminal or the Claude
+/// Desktop app is in the foreground while Claude runs, and Space is held down (push to talk). Claude Code reports
 /// nothing about this itself, so it is inferred from the keyboard; a short tap is just a space.
 /// </summary>
 public sealed class VoiceWatcher
 {
     private static readonly TimeSpan HoldTime = TimeSpan.FromMilliseconds(350);
-    private static readonly HashSet<string> Terminals = new(StringComparer.OrdinalIgnoreCase)
+    private static readonly HashSet<string> Hosts = new(StringComparer.OrdinalIgnoreCase)
     {
         "WindowsTerminal", "OpenConsole", "conhost", "cmd", "powershell", "pwsh",
         "Code", "Cursor", "wezterm-gui", "alacritty", "Hyper", "Tabby",
+        "claude", // Claude Desktop (Code tab)
     };
 
     private readonly DispatcherTimer _timer = new() { Interval = TimeSpan.FromMilliseconds(80) };
@@ -44,7 +45,7 @@ public sealed class VoiceWatcher
         {
             // Checked once per key press: cheap enough, and the focus does not change while holding Space.
             _spaceSince = DateTime.Now;
-            _candidate = TerminalInForeground() && ClaudeRunning() && ClaudeCodeSetup.IsVoiceEnabled();
+            _candidate = HostInForeground() && ClaudeRunning() && ClaudeCodeSetup.IsVoiceEnabled();
         }
         SetListening(_candidate && DateTime.Now - _spaceSince >= HoldTime);
     }
@@ -56,7 +57,7 @@ public sealed class VoiceWatcher
         ListeningChanged?.Invoke(listening);
     }
 
-    private static bool TerminalInForeground()
+    private static bool HostInForeground()
     {
         var window = GetForegroundWindow();
         if (window == IntPtr.Zero) return false;
@@ -64,7 +65,7 @@ public sealed class VoiceWatcher
         try
         {
             using var process = Process.GetProcessById(pid);
-            return Terminals.Contains(process.ProcessName);
+            return Hosts.Contains(process.ProcessName);
         }
         catch (ArgumentException)
         {

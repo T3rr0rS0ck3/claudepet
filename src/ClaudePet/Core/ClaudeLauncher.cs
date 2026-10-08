@@ -5,7 +5,7 @@ using System.Runtime.InteropServices;
 
 namespace ClaudePet.Core;
 
-/// <summary>Opens a console window running Claude Code in a given folder.</summary>
+/// <summary>Opens Claude Code in a given folder: in a console window or in the Claude Desktop app.</summary>
 public static class ClaudeLauncher
 {
     private const int MaxRecent = 10;
@@ -24,9 +24,10 @@ public static class ClaudeLauncher
 
     /// <summary>
     /// Starts Claude Code in <paramref name="folder"/> and remembers the folder as recent project.
-    /// Throws <see cref="FileNotFoundException"/> if Claude Code is missing.
+    /// Throws <see cref="FileNotFoundException"/> if Claude Code is missing. For the Desktop app it returns
+    /// the short-lived <c>claude --desktop</c> process, whose exit code tells whether the hand-over worked.
     /// </summary>
-    public static void Launch(AppSettings settings, string folder)
+    public static Process? Launch(AppSettings settings, string folder)
     {
         if (!Directory.Exists(folder)) throw new DirectoryNotFoundException(folder);
         var env = UserEnvironment();
@@ -40,6 +41,8 @@ public static class ClaudeLauncher
 
         var start = terminal switch
         {
+            // Hands the folder over to the Desktop app and exits; needs a recent CLI and Desktop installed.
+            TerminalKind.Desktop => new ProcessStartInfo(claude) { ArgumentList = { "--desktop" }, CreateNoWindow = true },
             // wt treats ";" as a command separator, so keep it out of the arguments.
             TerminalKind.WindowsTerminal => new ProcessStartInfo(wt!)
             {
@@ -63,16 +66,21 @@ public static class ClaudeLauncher
         start.Environment.Clear();
         foreach (var (name, value) in env) start.Environment[name] = value;
 
+        Process? process;
         try
         {
-            Process.Start(start);
+            process = Process.Start(start);
         }
         catch (Win32Exception ex)
         {
-            throw new InvalidOperationException("Konsole konnte nicht gestartet werden: " + ex.Message, ex);
+            throw new InvalidOperationException((terminal == TerminalKind.Desktop
+                ? "Claude Desktop konnte nicht geöffnet werden: " : "Konsole konnte nicht gestartet werden: ") + ex.Message, ex);
         }
 
         Remember(settings, folder);
+        if (terminal == TerminalKind.Desktop) return process;
+        process?.Dispose();
+        return null;
     }
 
     public static string FolderName(string folder)
