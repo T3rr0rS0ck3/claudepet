@@ -57,6 +57,14 @@ jobs:
           & $iscc /DAppVersion=${{ steps.version.outputs.version }} /DNumericVersion=${{ steps.version.outputs.numeric }} installer/ClaudePet.iss
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
+      # The in-app updater checks the downloaded setup against this file.
+      - name: Checksums
+        shell: pwsh
+        run: |
+          Get-ChildItem dist/ClaudePet-Setup-*.exe, dist/ClaudePet-*-portable.zip |
+            ForEach-Object { "$((Get-FileHash $_ -Algorithm SHA256).Hash.ToLower())  $($_.Name)" } |
+            Set-Content dist/SHA256SUMS.txt -Encoding ascii
+
       - name: Create GitHub release
         uses: softprops/action-gh-release@v3
         with:
@@ -72,3 +80,4 @@ jobs:
           files: |
             dist/ClaudePet-Setup-${{ steps.version.outputs.version }}.exe
             dist/ClaudePet-${{ steps.version.outputs.version }}-portable.zip
+            dist/SHA256SUMS.txt

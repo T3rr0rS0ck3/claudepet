@@ -29,6 +29,8 @@ public sealed class TrayIcon : IDisposable
         menu.Items.Add(_alwaysOnTop);
         menu.Items.Add(_walkAround);
         menu.Items.Add(new Forms.ToolStripSeparator());
+        var update = new Forms.ToolStripMenuItem("", null, (_, _) => app.InstallUpdate());
+        menu.Items.Add(update);
         menu.Items.Add("Claude Code verbinden…", null, (_, _) => app.ConnectClaudeCode(null));
         menu.Items.Add("Einstellungen…", null, (_, _) => app.ShowSettings());
         menu.Items.Add(new Forms.ToolStripSeparator());
@@ -39,6 +41,8 @@ public sealed class TrayIcon : IDisposable
             _alwaysOnTop.Checked = app.Settings.AlwaysOnTop;
             _walkAround.Checked = app.Settings.WalkAround;
             voice.Visible = app.Settings.VoiceChat;
+            update.Text = app.UpdateMenuText;
+            update.Visible = app.AvailableUpdate != null;
         };
 
         _icon.ContextMenuStrip = menu;
