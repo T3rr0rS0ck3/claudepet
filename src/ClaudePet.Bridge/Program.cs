@@ -1,9 +1,18 @@
 // Claude Code statusLine command.
 // Reads the session JSON from stdin, stores the rate-limit windows for the desktop pet
 // and prints a short status line back to Claude Code. Must never fail or hang.
+// With --hook it is a Claude Code hook instead: it records the session's state (working,
+// question, done) for the pet's ?/! marks and prints nothing.
 using System.Text;
 using System.Text.Json;
 using ClaudePet.Shared;
+
+if (args.Length > 0 && args[0] == "--hook")
+{
+    try { RunHook(); }
+    catch (Exception ex) { Log(ex.ToString()); }
+    return 0; // never block or disturb Claude Code
+}
 
 string line = "Claude Pet";
 try
@@ -80,6 +89,57 @@ static string Run()
     return previous != null
         ? Format(previous, model, now)
         : (model != null ? $"[{model}] " : "") + "Claude Pet: warte auf Usage-Daten";
+}
+
+static void RunHook()
+{
+    string input;
+    using (var reader = new StreamReader(Console.OpenStandardInput(), new UTF8Encoding(false)))
+        input = reader.ReadToEnd();
+    if (string.IsNullOrWhiteSpace(input)) return;
+
+    using var doc = JsonDocument.Parse(input);
+    var root = doc.RootElement;
+    string? Text(string key) =>
+        root.TryGetProperty(key, out var v) && v.ValueKind == JsonValueKind.String ? v.GetString() : null;
+
+    if (Text("session_id") is not { Length: > 0 } id) return;
+    string hookEvent = Text("hook_event_name") ?? "";
+    if (hookEvent == "SessionEnd")
+    {
+        SessionStore.Update(sessions => sessions.Remove(id));
+        return;
+    }
+
+    string? state = hookEvent switch
+    {
+        "SessionStart" => SessionStates.Idle,
+        "UserPromptSubmit" => SessionStates.Working,
+        "Stop" => SessionStates.Done,
+        "PermissionRequest" => SessionStates.Question,
+        // Registered for the AskUserQuestion tool only
+        "PreToolUse" => SessionStates.Question,
+        "PostToolUse" => SessionStates.Working,
+        "Notification" => Text("notification_type") is "permission_prompt" or "elicitation_dialog"
+            or "elicitation_url_dialog" or "agent_needs_input" ? SessionStates.Question : null,
+        _ => null,
+    };
+    if (state == null) return;
+
+    string? transcript = Text("transcript_path");
+    long length = 0;
+    try { if (transcript != null && File.Exists(transcript)) length = new FileInfo(transcript).Length; }
+    catch (IOException) { }
+
+    SessionStore.Update(sessions =>
+    {
+        if (!sessions.TryGetValue(id, out var info)) sessions[id] = info = new SessionInfo();
+        info.Cwd = Text("cwd") ?? info.Cwd;
+        info.State = state;
+        info.UpdatedAt = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+        info.Transcript = transcript ?? info.Transcript;
+        info.TranscriptLength = length;
+    });
 }
 
 static RateWindow? ParseWindow(JsonElement limits, string key)

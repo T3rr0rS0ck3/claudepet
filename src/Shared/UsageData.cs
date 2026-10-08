@@ -53,6 +53,7 @@ public static class DataPaths
     public static string HistoryFile => Path.Combine(DataDir, "history.jsonl");
     public static string SettingsFile => Path.Combine(DataDir, "settings.json");
     public static string LogFile => Path.Combine(DataDir, "log.txt");
+    public static string SessionsFile => Path.Combine(DataDir, "sessions.json");
 }
 
 public static class UsageStore

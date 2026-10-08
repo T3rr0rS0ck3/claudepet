@@ -23,6 +23,21 @@
 
   <ItemGroup>
     <Compile Include="..\Shared\UsageData.cs" Link="Shared\UsageData.cs" />
+    <Compile Include="..\Shared\SessionData.cs" Link="Shared\SessionData.cs" />
   </ItemGroup>
+
+  <!--
+    Debug builds: build the bridge first and put it next to the app, so a self-built pet finds
+    ClaudePetBridge.exe for the statusLine and the ?/! hooks. Releases publish both via build.ps1.
+  -->
+  <ItemGroup Condition="'$(Configuration)' == 'Debug'">
+    <ProjectReference Include="..\ClaudePet.Bridge\ClaudePet.Bridge.csproj" ReferenceOutputAssembly="false" Private="false" />
+  </ItemGroup>
+  <Target Name="CopyBridge" AfterTargets="Build" Condition="'$(Configuration)' == 'Debug'">
+    <ItemGroup>
+      <BridgeFiles Include="..\ClaudePet.Bridge\bin\$(Configuration)\net8.0\ClaudePetBridge.exe;..\ClaudePet.Bridge\bin\$(Configuration)\net8.0\ClaudePetBridge.dll;..\ClaudePet.Bridge\bin\$(Configuration)\net8.0\ClaudePetBridge.deps.json;..\ClaudePet.Bridge\bin\$(Configuration)\net8.0\ClaudePetBridge.runtimeconfig.json" />
+    </ItemGroup>
+    <Copy SourceFiles="@(BridgeFiles)" DestinationFolder="$(OutDir)" SkipUnchangedFiles="true" />
+  </Target>
 
 </Project>
