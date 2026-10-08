@@ -19,6 +19,10 @@
         <StackPanel x:Name="Bubble" Grid.Row="0" VerticalAlignment="Bottom" HorizontalAlignment="Center"
                     Opacity="0" Visibility="Collapsed" Cursor="Hand" Margin="0,0,0,2"
                     MouseLeftButtonUp="Bubble_MouseLeftButtonUp">
+            <!-- Tail pointing up, used while the bubble hangs below the pet -->
+            <Path x:Name="BubbleTailUp" Data="M 0,9 L 14,9 L 7,0 Z" Fill="#FFFDF8" Stroke="{DynamicResource AccentBrush}"
+                  StrokeThickness="2" HorizontalAlignment="Center" Margin="0,0,0,-2" Visibility="Collapsed"
+                  Panel.ZIndex="1" />
             <Border Background="#FFFDF8" BorderBrush="{DynamicResource AccentBrush}" BorderThickness="2" CornerRadius="10"
                     Padding="10,6" MaxWidth="240">
                 <Border.Effect>
@@ -27,7 +31,7 @@
                 <TextBlock x:Name="BubbleText" TextWrapping="Wrap" TextAlignment="Center"
                            FontFamily="Segoe UI Semibold, Segoe UI Emoji" FontSize="13" Foreground="#2B2B2B" />
             </Border>
-            <Path Data="M 0,0 L 14,0 L 7,9 Z" Fill="#FFFDF8" Stroke="{DynamicResource AccentBrush}" StrokeThickness="2"
+            <Path x:Name="BubbleTailDown" Data="M 0,0 L 14,0 L 7,9 Z" Fill="#FFFDF8" Stroke="{DynamicResource AccentBrush}" StrokeThickness="2"
                   HorizontalAlignment="Center" Margin="0,-2,0,0" />
         </StackPanel>
 
