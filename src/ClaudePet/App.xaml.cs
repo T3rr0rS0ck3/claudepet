@@ -91,7 +91,7 @@ public partial class App : Application
         _voice.ListeningChanged += listening => _pet.SetListening(listening);
         _voice.Start();
 
-        // "?" / "!" from Claude Code's hooks; the first read is silent like the usage values.
+        // "?" and bubbles from Claude Code's hooks; the first read is silent like the usage values.
         SyncSessionHooks();
         _sessions.Changed += ApplySessions;
         _sessions.Poll();

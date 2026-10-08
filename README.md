@@ -32,7 +32,7 @@ its mood changes: relaxed → thoughtful → nervous → panicking → asleep un
 - 👻 **Ghost drag** — drag a ghost of the pet (left mouse button) onto an Explorer window to open Claude Code in that folder
 - 📂 **Project launcher** — double-click the pet to pick a project from your repo folder and open Claude Code there
 - 🎤 **Voice chat** (optional) — opens Claude Code with its voice dictation switched on; the pet listens while you talk
-- ❓❗ **Session status** — a yellow "?" when a Claude Code session asks something, a green "!" when it is done;
+- ❓ **Session status** — a yellow "?" when a Claude Code session asks something, a bubble when it is done;
   optionally a baby pet per session that trots after the pet
 - ⚙️ **Configurable** thresholds, texts, size, update interval, console and more
 - 🔒 **Local only** — the pet itself makes no network requests, needs no login and reads no tokens; it only reads what Claude Code already hands to its status line
@@ -137,17 +137,17 @@ and passes session data — including `rate_limits.five_hour` and `rate_limits.s
 The pet app runs independently and keeps working when no Claude Code terminal is open; values whose reset time
 has passed are treated as 0 %. Nothing is scraped from claude.ai and no credentials are read.
 
-## Questions and finished work (? and !)
+## Questions and finished work
 
 Once Claude Code is connected, the pet also registers a few [hooks](https://code.claude.com/docs/en/hooks) in
 `~/.claude/settings.json` (a backup is saved; your own hooks are kept). Then:
 
 - **"?"** (yellow) appears when a session asks for a permission, uses *AskUserQuestion* or needs input, with a bubble
   like *"my-project: Claude hat eine Frage."*
-- **"!"** (green) appears when a session finished its turn. It stays until you send the next prompt there.
-- A question beats done; with several sessions the pet shows the most urgent one.
+- When a session finished its turn, a bubble like *"my-project ist fertig!"* pops up; no mark stays on the pet.
+- With several sessions the "?" stays as long as any of them waits for an answer.
 - *Baby-Pet für jede Claude-Session* (settings): a small pet per running session follows the pet and shows that
-  session's ? or !; its tooltip names the folder.
+  session's "?"; its tooltip names the folder and whether the session works, waits or is done.
 
 Only rare events are hooked (prompt sent, turn finished, permission/question, session start/end), so Claude is not
 slowed down. No hook reports an answered permission prompt; the "?" goes away once the session's conversation log
@@ -157,7 +157,7 @@ grows again. Switching *„?“ bei Fragen …* off in the settings removes the 
 ### Claude Desktop
 
 The Code tab of the Claude Desktop app reads the same `~/.claude/settings.json` and runs the same hooks, so its
-sessions get "?", "!" and baby pets too, side by side with terminal sessions; bubbles mark them with *(Desktop)*.
+sessions get "?", bubbles and baby pets too, side by side with terminal sessions; bubbles mark them with *(Desktop)*.
 While any session works the pet types, even if no status line data arrives. Mood and limits still come from the status
 line, which the Desktop app may not run; then they only update from terminal sessions. Dictation is noticed in the
 Desktop app as well. The normal Desktop chat offers no hooks and is not supported.
