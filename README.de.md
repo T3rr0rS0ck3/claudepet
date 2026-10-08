@@ -249,6 +249,17 @@ und hängt es als Artefakt an den Lauf. Das wird im Partner Center hochgeladen, 
 (Entwicklermodus an): `.\build.ps1 -SelfContained -Version 1.2.3; .\packaging\build-msix.ps1 -Version 1.2.3 -Register`.
 Datenschutzerklärung für den Store-Eintrag: [PRIVACY.md](PRIVACY.md).
 
+Nach der ersten, von Hand im Partner Center gemachten Einreichung kann der Workflow neue Versionen selbst einreichen
+(Microsoft Store CLI). Das passiert, sobald im Repository (*Settings → Secrets and variables → Actions*) Folgendes hinterlegt ist:
+
+| Name | Art | Wert |
+|---|---|---|
+| `PARTNER_CENTER_TENANT_ID` | Secret | Mandanten-ID der im Partner Center verknüpften Entra-ID-App |
+| `PARTNER_CENTER_CLIENT_ID` | Secret | Client-ID dieser App |
+| `PARTNER_CENTER_CLIENT_SECRET` | Secret | Ihr Client-Secret |
+| `PARTNER_CENTER_SELLER_ID` | Secret | Verkäufer-ID (Partner Center → Kontoeinstellungen) |
+| `MSSTORE_PRODUCT_ID` | Variable | Store-ID der App (z. B. `9N…`) |
+
 ### Projektstruktur
 
 ```text

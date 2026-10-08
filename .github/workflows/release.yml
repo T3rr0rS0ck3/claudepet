@@ -15,6 +15,9 @@ permissions:
 
 env:
   TAG: ${{ inputs.tag || github.ref_name }}
+  # Automatic Store submission runs only once the Partner Center credentials are set up as secrets
+  # and the Store ID as repository variable (see README → Releases).
+  STORE_PUBLISH: ${{ secrets.PARTNER_CENTER_CLIENT_SECRET != '' && vars.MSSTORE_PRODUCT_ID != '' }}
 
 jobs:
   release:
@@ -97,3 +100,24 @@ jobs:
             dist/ClaudePet-Setup-${{ steps.version.outputs.version }}.exe
             dist/ClaudePet-${{ steps.version.outputs.version }}-portable.zip
             dist/SHA256SUMS.txt
+
+      # After the GitHub release, so a Store problem never holds back the release itself.
+      - name: Set up Microsoft Store CLI
+        if: steps.version.outputs.prerelease == 'false' && env.STORE_PUBLISH == 'true'
+        uses: microsoft/setup-msstore-cli@v1.4
+
+      # Uploads the package as a new submission and commits it; the Store certifies, signs and publishes it.
+      - name: Submit to Microsoft Store
+        if: steps.version.outputs.prerelease == 'false' && env.STORE_PUBLISH == 'true'
+        shell: pwsh
+        env:
+          TENANT_ID: ${{ secrets.PARTNER_CENTER_TENANT_ID }}
+          SELLER_ID: ${{ secrets.PARTNER_CENTER_SELLER_ID }}
+          CLIENT_ID: ${{ secrets.PARTNER_CENTER_CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.PARTNER_CENTER_CLIENT_SECRET }}
+          PRODUCT_ID: ${{ vars.MSSTORE_PRODUCT_ID }}
+        run: |
+          msstore reconfigure --tenantId $env:TENANT_ID --sellerId $env:SELLER_ID --clientId $env:CLIENT_ID --clientSecret $env:CLIENT_SECRET
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          msstore publish dist -i dist/ClaudePet-${{ steps.version.outputs.version }}.msix -id $env:PRODUCT_ID
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }

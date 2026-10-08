@@ -257,6 +257,17 @@ attaches it to the run as an artifact. Upload it in Partner Center; the Store si
 (Developer Mode on): `.\build.ps1 -SelfContained -Version 1.2.3; .\packaging\build-msix.ps1 -Version 1.2.3 -Register`.
 Privacy policy for the listing: [PRIVACY.md](PRIVACY.md).
 
+After the first submission was done by hand in Partner Center, the workflow can submit new versions itself
+(Microsoft Store CLI). It does so as soon as these are set in the repository (*Settings → Secrets and variables → Actions*):
+
+| Name | Kind | Value |
+|---|---|---|
+| `PARTNER_CENTER_TENANT_ID` | Secret | Tenant ID of the Entra ID app linked in Partner Center |
+| `PARTNER_CENTER_CLIENT_ID` | Secret | Client ID of that app |
+| `PARTNER_CENTER_CLIENT_SECRET` | Secret | Its client secret |
+| `PARTNER_CENTER_SELLER_ID` | Secret | Seller ID (Partner Center → Account settings) |
+| `MSSTORE_PRODUCT_ID` | Variable | Store ID of the app (e.g. `9N…`) |
+
 ### Project structure
 
 ```text
