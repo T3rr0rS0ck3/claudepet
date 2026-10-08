@@ -86,6 +86,10 @@ public partial class PetWindow : Window
         _ghostDrag = settings.GhostDrag;
         _scale = settings.PetScale;
 
+        var accent = Palette.Accent(settings.PetColor);
+        BubbleBorder.BorderBrush = accent;
+        BubbleTail.Stroke = accent;
+
         double petWidth = Sprite.Width * settings.PetScale;
         double petHeight = Sprite.Height * settings.PetScale;
         double newWidth = Math.Max(MinWidth_, petWidth + 20);

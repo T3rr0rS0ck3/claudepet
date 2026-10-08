@@ -27,6 +27,10 @@ public partial class UsageOverlay : Window
         var snapshot = state.Snapshot;
         var t = settings.Thresholds;
 
+        var accent = Palette.Accent(settings.PetColor);
+        Frame.BorderBrush = accent;
+        TitleText.Foreground = accent;
+
         // Session
         SetBar(SessionBar, SessionPct, state.Session, t);
         if (snapshot?.FiveHour is { } session)
