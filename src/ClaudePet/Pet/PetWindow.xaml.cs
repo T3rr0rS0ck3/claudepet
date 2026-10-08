@@ -205,6 +205,18 @@ public partial class PetWindow : Window
         _lastTick = now;
         if (_dragging || _paused) return;
 
+        // Hold still under the mouse so clicks and double-clicks land on the pet; a fall or jump still finishes.
+        bool aiming = PetImage.IsMouseOver || _pressPoint != null || _clickTimer.IsEnabled;
+        if (aiming && !_needsPlace && _walker.Motion is not (Motion.Fall or Motion.Jump))
+        {
+            if (_pose.Motion is Motion.Walk or Motion.Run)
+            {
+                _pose = (Motion.Idle, _pose.Direction);
+                Render();
+            }
+            return;
+        }
+
         // Everything below is in physical pixels; the window's bottom edge is where the feet are.
         var dpi = VisualTreeHelper.GetDpi(this);
         double petWidth = PetImage.Width * dpi.DpiScaleX, petHeight = PetImage.Height * dpi.DpiScaleY;
