@@ -355,12 +355,17 @@ public partial class App : Application
     /// </summary>
     private bool Working => _state.Active || (Settings.SessionMarks && _sessions.AnyWorking);
 
-    /// <summary>The ?/! hooks follow the setting, but only once Claude Code is connected to the pet.</summary>
+    /// <summary>
+    /// Once Claude Code is connected: statusLine and ?/! hooks point at this copy's bridge, and the hooks
+    /// follow the setting.
+    /// </summary>
     private void SyncSessionHooks()
     {
         try
         {
-            if (ClaudeCodeSetup.GetStatus() == SetupStatus.Connected) ClaudeCodeSetup.SetHooks(Settings.SessionMarks);
+            if (ClaudeCodeSetup.GetStatus() != SetupStatus.Connected) return;
+            if (ClaudeCodeSetup.Repoint()) Log.Write("statusLine auf " + ClaudeCodeSetup.BridgeCommand + " umgestellt.");
+            ClaudeCodeSetup.SetHooks(Settings.SessionMarks);
         }
         catch (Exception ex)
         {
@@ -633,7 +638,8 @@ public partial class App : Application
     /// <summary>Looks for a new release about 30 s after the start and then once a day, unless switched off.</summary>
     private void SyncUpdateChecks()
     {
-        bool on = Settings.CheckForUpdates && !Updater.IsDevBuild;
+        // The Store version updates through the Store.
+        bool on = Settings.CheckForUpdates && !Updater.IsDevBuild && !AppPackage.IsPackaged;
         if (on && !_updateTimer.IsEnabled)
         {
             _updateTimer.Interval = TimeSpan.FromSeconds(30);

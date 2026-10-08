@@ -48,6 +48,9 @@ Eine .NET-Installation ist nicht nötig, der Installer bringt alles mit.
 
 ## Installation
 
+Das Pet kommt in den **Microsoft Store** als *Claudius - Claude Usage App* (von Microsoft signiert, Updates über den Store).
+Bis es dort gelistet ist, oder wenn du GitHub bevorzugst:
+
 1. **`ClaudePet-Setup-x.y.z.exe`** aus dem [neuesten Release](https://github.com/T3rr0rS0ck3/claudepet/releases/latest) herunterladen.
 2. Ausführen. Admin-Rechte sind nicht nötig (Installation nach `%LOCALAPPDATA%\Programs\ClaudePet`).
 3. **„Mit Claude Code verbinden“** angehakt lassen. Damit wird das Pet als `statusLine` in Claude Code eingetragen, aber nur, wenn noch keine existiert.
@@ -218,6 +221,9 @@ Schau in `%LOCALAPPDATA%\ClaudePet\log.txt`. Die Datei `usage.json` im selben Or
 Über Windows-Einstellungen → Apps *Claude Usage Pet* deinstallieren. Dabei werden auch der statusLine-Eintrag in Claude Code
 und der Autostart entfernt. Die Einstellungen bleiben in `%LOCALAPPDATA%\ClaudePet`. Diesen Ordner löschen, wenn alles weg soll.
 
+**Store-Version:** Store-Apps können beim Deinstallieren nichts ausführen. Deshalb vorher in den Einstellungen des Pets
+auf *Trennen* klicken, sonst ruft Claude Code weiter die entfernte Bridge auf.
+
 ## Selbst bauen
 
 Benötigt das .NET 8 SDK (oder neuer).
@@ -237,6 +243,22 @@ Mit `CLAUDEPET_DATA_DIR` lassen sich App und Bridge auf einen anderen Datenordne
 Ein Tag wie `v1.2.3` startet den [Release-Workflow](.github/workflows/release.yml). Er baut eine Self-Contained-Version,
 erstellt den Inno-Setup-Installer und eine portable ZIP und veröffentlicht ein GitHub-Release. Tags mit Suffix
 (`v1.2.3-beta`) werden Pre-Releases. Bestehende Tags lassen sich über *Actions → Release → Run workflow* neu bauen.
+
+Für den **Microsoft Store** baut der Workflow zusätzlich ein unsigniertes `ClaudePet-1.2.3.msix` ([packaging/](packaging/))
+und hängt es als Artefakt an den Lauf. Das wird im Partner Center hochgeladen, der Store signiert es. Lokal testen
+(Entwicklermodus an): `.\build.ps1 -SelfContained -Version 1.2.3; .\packaging\build-msix.ps1 -Version 1.2.3 -Register`.
+Datenschutzerklärung für den Store-Eintrag: [PRIVACY.md](PRIVACY.md).
+
+Nach der ersten, von Hand im Partner Center gemachten Einreichung kann der Workflow neue Versionen selbst einreichen
+(Microsoft Store CLI). Das passiert, sobald im Repository (*Settings → Secrets and variables → Actions*) Folgendes hinterlegt ist:
+
+| Name | Art | Wert |
+|---|---|---|
+| `PARTNER_CENTER_TENANT_ID` | Secret | Mandanten-ID der im Partner Center verknüpften Entra-ID-App |
+| `PARTNER_CENTER_CLIENT_ID` | Secret | Client-ID dieser App |
+| `PARTNER_CENTER_CLIENT_SECRET` | Secret | Ihr Client-Secret |
+| `PARTNER_CENTER_SELLER_ID` | Secret | Verkäufer-ID (Partner Center → Kontoeinstellungen) |
+| `MSSTORE_PRODUCT_ID` | Variable | Store-ID der App (z. B. `9N…`) |
 
 ### Projektstruktur
 
