@@ -6,7 +6,7 @@ namespace ClaudePet.Pet;
 
 public enum Eyes { Normal, Blink, Closed, Happy, LookLeft, LookRight, LookUp, LookDown, Wide, Big }
 public enum Mouth { None, Smile, Small, Wavy, Open }
-public enum Arms { Down, Up, Wave, TypeLeft, TypeRight }
+public enum Arms { Down, Up, Wave, TypeLeft, TypeRight, Mic }
 public enum Mark
 {
     None, Dots1, Dots2, Dots3, Exclaim, Zzz1, Zzz2, Zzz3, Listen1, Listen2, Listen3, Question,
@@ -47,6 +47,8 @@ public static class Sprite
     private const uint CookieColor = 0xFFC98D4F;
     private const uint ChipColor = 0xFF5B3A22;
     private const uint BallColor = 0xFF5B9BE0;
+    private const uint MicColor = 0xFFC9CAD4;
+    private const uint HandleColor = 0xFF3A3A42;
 
     /// <summary>Claude orange, the default body color.</summary>
     public const uint DefaultBodyColor = 0xFFD97757;
@@ -195,6 +197,14 @@ public static class Sprite
             case Mouth.Open:
                 for (int y = by + 5; y <= by + 6; y++) { Set(c0 + 6, y, EyeColor); Set(c0 + 7, y, EyeColor); }
                 break;
+        }
+
+        // Microphone held upright in the right hand, next to the face: a silver head with a dark grille
+        if (f.Arms == Arms.Mic)
+        {
+            Glyph(c0 + 15, MicColor, by + 1, "XXX", "XXX");
+            Glyph(c0 + 15, HandleColor, by + 1, ".X.", "X.X");
+            for (int y = by + 3; y <= by + 6; y++) Set(c0 + 16, y, HandleColor);
         }
 
         if (f.Blush)
