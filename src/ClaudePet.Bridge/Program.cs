@@ -14,7 +14,7 @@ if (args.Length > 0 && args[0] == "--hook")
     return 0; // never block or disturb Claude Code
 }
 
-string line = "Claude Pet";
+string line = "Claudius";
 try
 {
     line = Run();
@@ -88,7 +88,7 @@ static string Run()
 
     return previous != null
         ? Format(previous, model, now)
-        : (model != null ? $"[{model}] " : "") + "Claude Pet: warte auf Usage-Daten";
+        : (model != null ? $"[{model}] " : "") + "Claudius: warte auf Usage-Daten";
 }
 
 static void RunHook()

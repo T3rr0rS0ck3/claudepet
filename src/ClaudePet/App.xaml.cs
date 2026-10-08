@@ -208,8 +208,8 @@ public partial class App : Application
         CheckWarning("Wochenlimit", snapshot?.SevenDay, _state.Week, Settings.WeekWarnThresholds, _weekWarn, initial, now);
 
         _tray?.Update(mood, _state.Max == null
-            ? "Claude Pet – warte auf Daten"
-            : $"Claude Pet – Session {PercentText(_state.Session)} % · Woche {PercentText(_state.Week)} %");
+            ? "Claudius – warte auf Daten"
+            : $"Claudius – Session {PercentText(_state.Session)} % · Woche {PercentText(_state.Week)} %");
 
         _overlay?.Update(_state, _monitor.History, Settings, ClaudeCodeSetup.GetStatus(), now);
     }
@@ -238,7 +238,7 @@ public partial class App : Application
         string text = value >= 100
             ? $"Dein {label} ist aufgebraucht. Reset {Format.DayTime(window.ResetsAtTime, now)}."
             : $"Dein {label} ist bei {Format.Percent(value.Value)} %.";
-        ShowNotification("Claude Usage Pet", text);
+        ShowNotification("Claudius", text);
     }
 
     private void Say(string key, string? folder = null)
@@ -421,7 +421,7 @@ public partial class App : Application
                                        or System.Text.Json.JsonException)
         {
             Log.Write("Claude-Code-Theme konnte nicht geschrieben werden: " + ex);
-            ShowNotification("Claude Pet", "Claude-Code-Theme konnte nicht geschrieben werden: " + ex.Message);
+            ShowNotification("Claudius", "Claude-Code-Theme konnte nicht geschrieben werden: " + ex.Message);
         }
     }
 
@@ -501,7 +501,7 @@ public partial class App : Application
                 $"(voice.enabled in {ClaudeCodeSetup.SettingsPath}, eine Sicherung wird angelegt).\n\n" +
                 "Voraussetzungen: Anmeldung mit einem claude.ai-Konto und Mikrofonzugriff für die Konsole " +
                 "(Windows-Einstellungen → Datenschutz → Mikrofon).\n\nEinschalten?",
-                "Claude Pet", MessageBoxButton.YesNo, MessageBoxImage.Question);
+                "Claudius", MessageBoxButton.YesNo, MessageBoxImage.Question);
             if (answer != MessageBoxResult.Yes) return;
             try
             {
@@ -510,7 +510,7 @@ public partial class App : Application
             catch (Exception ex)
             {
                 Log.Write("Sprachdiktat konnte nicht eingeschaltet werden: " + ex);
-                MessageBox.Show("Fehler beim Schreiben der Claude-Code-Einstellungen:\n" + ex.Message, "Claude Pet",
+                MessageBox.Show("Fehler beim Schreiben der Claude-Code-Einstellungen:\n" + ex.Message, "Claudius",
                     MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
@@ -536,7 +536,7 @@ public partial class App : Application
         catch (Exception ex) when (ex is FileNotFoundException or InvalidOperationException)
         {
             Log.Write("Claude konnte nicht gestartet werden: " + ex.Message);
-            MessageBox.Show(ex.Message, "Claude Pet", MessageBoxButton.OK, MessageBoxImage.Error);
+            MessageBox.Show(ex.Message, "Claudius", MessageBoxButton.OK, MessageBoxImage.Error);
             return;
         }
         SaveSettings();
@@ -556,7 +556,7 @@ public partial class App : Application
         }
         const string message = "Claude Desktop konnte nicht geöffnet werden. Ist die Desktop-App installiert und Claude Code aktuell (claude update)?";
         Log.Write(message);
-        MessageBox.Show(message, "Claude Pet", MessageBoxButton.OK, MessageBoxImage.Error);
+        MessageBox.Show(message, "Claudius", MessageBoxButton.OK, MessageBoxImage.Error);
     }
 
     private void OnGhostDropped(string? folder, bool overShell)
@@ -592,14 +592,14 @@ public partial class App : Application
 
     public void ConnectClaudeCode(Window? owner)
     {
-        const string title = "Claude Pet";
+        const string title = "Claudius";
         var status = ClaudeCodeSetup.GetStatus();
         string path = ClaudeCodeSetup.SettingsPath;
 
         switch (status)
         {
             case SetupStatus.Connected:
-                MessageBox.Show("Claude Code ist bereits mit Claude Pet verbunden.", title,
+                MessageBox.Show("Claude Code ist bereits mit Claudius verbunden.", title,
                     MessageBoxButton.OK, MessageBoxImage.Information);
                 return;
             case SetupStatus.BridgeMissing:
@@ -610,8 +610,8 @@ public partial class App : Application
 
         string question = status == SetupStatus.OtherStatusLine
             ? $"In {path} ist bereits eine statusLine eingetragen:\n\n{ClaudeCodeSetup.CurrentCommand()}\n\n" +
-              "Durch Claude Pet ersetzen? (Eine Sicherung wird angelegt.)"
-            : $"Claude Pet trägt sich als statusLine in\n{path}\nein. Fortfahren?";
+              "Durch Claudius ersetzen? (Eine Sicherung wird angelegt.)"
+            : $"Claudius trägt sich als statusLine in\n{path}\nein. Fortfahren?";
         var answer = owner != null
             ? MessageBox.Show(owner, question, title, MessageBoxButton.YesNo, MessageBoxImage.Question)
             : MessageBox.Show(question, title, MessageBoxButton.YesNo, MessageBoxImage.Question);
@@ -671,7 +671,7 @@ public partial class App : Application
             Settings.NotifiedUpdate = update.VersionText;
             SaveSettings();
             if (Settings.SpeechBubbles) Say("Update");
-            else ShowNotification("Claude Pet", $"Version {update.VersionText} ist verfügbar (Rechtsklick aufs Pet).");
+            else ShowNotification("Claudius", $"Version {update.VersionText} ist verfügbar (Rechtsklick aufs Pet).");
         }
         return AvailableUpdate;
     }
@@ -689,9 +689,9 @@ public partial class App : Application
             return;
         }
 
-        const string title = "Claude Pet – Update";
+        const string title = "Claudius – Update";
         string question = $"Version {update.VersionText} installieren?\n\n" +
-                          "Claude Pet wird dafür kurz geschlossen und danach automatisch neu gestartet.";
+                          "Claudius wird dafür kurz geschlossen und danach automatisch neu gestartet.";
         var answer = owner != null
             ? MessageBox.Show(owner, question, title, MessageBoxButton.YesNo, MessageBoxImage.Question)
             : MessageBox.Show(question, title, MessageBoxButton.YesNo, MessageBoxImage.Question);

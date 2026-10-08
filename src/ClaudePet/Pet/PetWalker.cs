@@ -3,12 +3,12 @@ using ClaudePet.Core;
 namespace ClaudePet.Pet;
 
 /// <summary>What the pet is doing; <see cref="Carried"/> is set by the window while it is dragged.</summary>
-public enum Motion { Idle, Walk, Run, Fall, Jump, Climb, Hang, Carried }
+public enum Motion { Idle, Walk, Run, Fall, Jump, Climb, Hang, Splat, Carried }
 
 /// <summary>
 /// Moves the pet across the desktop: walks along the taskbar and window tops, falls off edges
 /// and lost windows, now and then jumps up onto a nearby window, climbs up the screen edges and
-/// swings along the top of the screen until it drops.
+/// swings along the top of the screen until it drops. After a long fall it lands with a splat.
 /// It stays on the monitor it is on unless <see cref="CrossMonitors"/> is set: then it walks or hops over to a
 /// neighbouring monitor where the two touch, following their actual arrangement. Works in physical pixels;
 /// (X, Y) is the point between the pet's feet.
@@ -42,6 +42,10 @@ public sealed class PetWalker
     public const double HangDepth = 10.0 / 16;
     /// <summary>Distance from the pet's center to its side, in pet widths.</summary>
     private const double HalfBody = 0.45;
+    /// <summary>A fall at least this deep, in pet heights, squashes the pet flat on landing.</summary>
+    private const double SplatHeight = 3;
+    /// <summary>How long the pet lies flat and pulls itself together again, in seconds.</summary>
+    public const double SplatSeconds = 0.9;
 
     private readonly Random _random = new();
     private bool _airborne = true;
@@ -56,6 +60,10 @@ public sealed class PetWalker
     private ScreenRect? _crossTo;
     /// <summary>Walking over onto the next monitor's taskbar; decided once at the edge.</summary>
     private bool _crossing;
+    /// <summary>Where the current fall started; NaN while jumping, which never ends in a splat.</summary>
+    private double _fallFrom = double.NaN;
+    /// <summary>Seconds left lying flat after a long fall.</summary>
+    private double _splat;
 
     /// <summary>Walk and hop over to neighbouring monitors.</summary>
     public bool CrossMonitors { get; set; }
@@ -72,6 +80,8 @@ public sealed class PetWalker
         Y = y;
         _airborne = true;
         _climbing = _hanging = false;
+        _fallFrom = y;
+        _splat = 0;
         _vx = _vy = 0;
         _ground = IntPtr.Zero;
         _crossTo = null;
@@ -84,6 +94,13 @@ public sealed class PetWalker
         if (_airborne)
         {
             Fly(dt, surfaces, petWidth, petHeight);
+            return;
+        }
+        if (_splat > 0)
+        {
+            // Lies flat where it landed, riding along if the window moves.
+            _splat -= dt;
+            if (KeepFooting(surfaces)) Motion = _splat > 0 ? Motion.Splat : Motion.Idle;
             return;
         }
         if (_hanging)
@@ -301,7 +318,7 @@ public sealed class PetWalker
         if (ledge is { } l)
         {
             Direction = -Direction;
-            Land(l);
+            Land(l, petHeight);
             return;
         }
 
@@ -352,7 +369,7 @@ public sealed class PetWalker
         X = nx;
     }
 
-    private void Land(Platform platform)
+    private void Land(Platform platform, double petHeight)
     {
         StandOn(platform);
         _airborne = _climbing = _hanging = false;
@@ -360,6 +377,12 @@ public sealed class PetWalker
         _vx = _vy = 0;
         Motion = Motion.Idle;
         _timer = Between(0.4, 1.2);
+        if (Y - _fallFrom >= petHeight * SplatHeight)
+        {
+            Motion = Motion.Splat;
+            _splat = SplatSeconds;
+        }
+        _fallFrom = double.NaN;
     }
 
     private static ScreenRect WorkAreaAt(DesktopSurfaces surfaces, double x, double y) =>
@@ -418,6 +441,7 @@ public sealed class PetWalker
         _vx = (targetX - X) / time;
         Direction = _vx < 0 ? -1 : 1;
         _airborne = true;
+        _fallFrom = double.NaN;
         _ground = IntPtr.Zero;
         Motion = Motion.Jump;
     }
@@ -426,6 +450,8 @@ public sealed class PetWalker
     {
         _airborne = true;
         _climbing = _hanging = false;
+        _fallFrom = Y;
+        _splat = 0;
         _vx = vx;
         _vy = 0;
         _ground = IntPtr.Zero;
@@ -463,7 +489,7 @@ public sealed class PetWalker
             if (landing is { } l)
             {
                 X = nx;
-                Land(l);
+                Land(l, petHeight);
                 return;
             }
         }

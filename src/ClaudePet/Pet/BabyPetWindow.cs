@@ -35,7 +35,7 @@ public sealed class BabyPetWindow : Window
         ShowActivated = false;
         ResizeMode = ResizeMode.NoResize;
         Topmost = topmost;
-        Title = "Claude Pet – " + session.Folder;
+        Title = "Claudius – " + session.Folder;
         RenderOptions.SetBitmapScalingMode(_image, BitmapScalingMode.NearestNeighbor);
         Content = _image;
         SetScale(petScale);
@@ -59,7 +59,7 @@ public sealed class BabyPetWindow : Window
     public void SetSession(SessionView session)
     {
         _session = session;
-        Title = "Claude Pet – " + session.Folder;
+        Title = "Claudius – " + session.Folder;
         UpdateToolTip();
     }
 
@@ -98,9 +98,9 @@ public sealed class BabyPetWindow : Window
 
     private void UpdateToolTip() => ToolTip = _session.State switch
     {
-        SessionStates.Question => $"{_session.Folder}: wartet auf dich",
-        SessionStates.Done => $"{_session.Folder}: fertig",
-        SessionStates.Working => $"{_session.Folder}: arbeitet",
+        SessionStates.Question => $"{_session.Folder}: Claude wartet auf dich",
+        SessionStates.Done => $"{_session.Folder}: Claude ist fertig",
+        SessionStates.Working => $"{_session.Folder}: Claude arbeitet",
         _ => _session.Folder,
     };
 
