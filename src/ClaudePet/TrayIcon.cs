@@ -13,11 +13,15 @@ public sealed class TrayIcon : IDisposable
     private readonly Forms.ToolStripMenuItem _walkAround;
     private readonly Dictionary<PetMood, System.Drawing.Icon> _icons = new();
     private PetMood? _mood;
+    private int _spriteVersion = Sprite.Version;
 
     public TrayIcon(App app)
     {
         var menu = new Forms.ContextMenuStrip();
         menu.Items.Add("Usage anzeigen", null, (_, _) => app.ShowUsage());
+        menu.Items.Add("Claude öffnen…", null, (_, _) => app.ShowProjectMenu());
+        var voice = new Forms.ToolStripMenuItem("Sprachchat starten…", null, (_, _) => app.StartVoiceChat());
+        menu.Items.Add(voice);
         _petVisible = new Forms.ToolStripMenuItem("Pet anzeigen", null, (_, _) => app.TogglePetVisible());
         _alwaysOnTop = new Forms.ToolStripMenuItem("Immer im Vordergrund", null, (_, _) => app.ToggleAlwaysOnTop());
         _walkAround = new Forms.ToolStripMenuItem("Herumlaufen", null, (_, _) => app.ToggleWalkAround());
@@ -34,6 +38,7 @@ public sealed class TrayIcon : IDisposable
             _petVisible.Checked = app.PetVisible;
             _alwaysOnTop.Checked = app.Settings.AlwaysOnTop;
             _walkAround.Checked = app.Settings.WalkAround;
+            voice.Visible = app.Settings.VoiceChat;
         };
 
         _icon.ContextMenuStrip = menu;
@@ -48,6 +53,17 @@ public sealed class TrayIcon : IDisposable
 
     public void Update(PetMood mood, string tooltip)
     {
+        if (_spriteVersion != Sprite.Version)
+        {
+            // The pet's color changed: redraw the icons.
+            _spriteVersion = Sprite.Version;
+            var old = _icons.Values.ToList();
+            _icons.Clear();
+            _mood = null;
+            Update(mood, tooltip);
+            foreach (var icon in old) icon.Dispose();
+            return;
+        }
         if (_mood != mood)
         {
             _mood = mood;
