@@ -17,6 +17,8 @@ public partial class PetWindow : Window
 {
     private const double BubbleArea = 130;
     private const double MinWidth_ = 260;
+    /// <summary>Height of the emote buttons plus their gap to the pet.</summary>
+    private const double EmoteBarArea = 34;
 
     private readonly DispatcherTimer _animationTimer = new()
     {
@@ -61,6 +63,11 @@ public partial class PetWindow : Window
     private bool _topmost = true;
     private (Motion Motion, int Direction) _pose = (Motion.Idle, 1);
     private Eyes? _lookAt;
+    private bool _emotesEnabled = true;
+    private Emote? _emote;
+    private DateTime _emoteStart;
+    // Leaving the pet towards the emote buttons (or back) must not hide them on the way.
+    private readonly DispatcherTimer _emoteHideTimer = new() { Interval = TimeSpan.FromMilliseconds(400) };
 
     /// <summary>Left click without dragging; carries the time the button was released.</summary>
     public event Action<DateTime>? Clicked;
@@ -73,12 +80,19 @@ public partial class PetWindow : Window
     public event Action<string?, bool>? GhostDropped;
     /// <summary>The pet was dragged to a new position.</summary>
     public event Action? Moved;
+    /// <summary>One of the emote buttons was clicked; the pet already reacts to it.</summary>
+    public event Action<Emote>? Emoted;
 
     public PetWindow()
     {
         InitializeComponent();
         _animationTimer.Tick += (_, _) => { _tick++; Render(); RenderBabies(); };
         _bubbleTimer.Tick += (_, _) => HideBubble();
+        _emoteHideTimer.Tick += (_, _) =>
+        {
+            _emoteHideTimer.Stop();
+            if (!PetImage.IsMouseOver && !EmoteBar.IsMouseOver) HideEmotes();
+        };
         _walkTimer.Tick += (_, _) => Walk();
         _babyTimer.Tick += (_, _) => FollowWithBabies();
         Closed += (_, _) => { foreach (var baby in _babies.Values) baby.Close(); };
@@ -101,6 +115,8 @@ public partial class PetWindow : Window
         }
         _animations = settings.Animations;
         _ghostDrag = settings.GhostDrag;
+        _emotesEnabled = settings.Emotes;
+        if (!_emotesEnabled) HideEmotes();
         _scale = settings.PetScale;
 
         double petWidth = Sprite.Width * settings.PetScale;
@@ -306,6 +322,18 @@ public partial class PetWindow : Window
 
     private void Render()
     {
+        if (_emote is { } emote)
+        {
+            // Emotes run on their own clock, so they also play with animations switched off.
+            long et = (long)((DateTime.Now - _emoteStart).TotalSeconds * PetAnimator.TicksPerSecond);
+            if (et < PetAnimator.EmoteTicks(emote))
+            {
+                PetImage.Source = Sprite.Render(PetAnimator.EmoteFrame(emote, et));
+                return;
+            }
+            _emote = null;
+            if (!_animations) _animationTimer.Stop();
+        }
         bool cheering = DateTime.Now < _cheerUntil;
         long t = _animations ? _tick : 1;
         var frame = PetAnimator.Frame(_mood, _working, cheering, t, _pose.Motion, _pose.Direction, _listening);
@@ -325,8 +353,22 @@ public partial class PetWindow : Window
         _petOnTop = onTop;
         Grid.SetRow(PetImage, onTop ? 0 : 1);
         PetImage.VerticalAlignment = onTop ? VerticalAlignment.Top : VerticalAlignment.Stretch;
-        Bubble.VerticalAlignment = onTop ? VerticalAlignment.Top : VerticalAlignment.Bottom;
-        Bubble.Margin = onTop ? new Thickness(0, PetImage.Height + 2, 0, 0) : new Thickness(0, 0, 0, 2);
+        LayoutOverlays();
+    }
+
+    /// <summary>
+    /// Emote buttons right next to the pet and the speech bubble beyond them: above the pet, or below it
+    /// while the pet is at the top of the window.
+    /// </summary>
+    private void LayoutOverlays()
+    {
+        bool onTop = _petOnTop;
+        double bar = EmoteBar.Visibility == Visibility.Visible ? EmoteBarArea : 0;
+        var align = onTop ? VerticalAlignment.Top : VerticalAlignment.Bottom;
+        EmoteBar.VerticalAlignment = align;
+        EmoteBar.Margin = onTop ? new Thickness(0, PetImage.Height + 4, 0, 0) : new Thickness(0, 0, 0, 4);
+        Bubble.VerticalAlignment = align;
+        Bubble.Margin = onTop ? new Thickness(0, PetImage.Height + 2 + bar, 0, 0) : new Thickness(0, 0, 0, 2 + bar);
         BubbleTailUp.Visibility = onTop ? Visibility.Visible : Visibility.Collapsed;
         BubbleTailDown.Visibility = onTop ? Visibility.Collapsed : Visibility.Visible;
         UpdateLayout();
@@ -339,10 +381,12 @@ public partial class PetWindow : Window
     private bool WantsPetOnTop(double feetX, double feetY, double petHeight)
     {
         if (_walking && _walker.Motion is Motion.Climb or Motion.Hang or Motion.Fall) return true;
-        if (Bubble.Visibility != Visibility.Visible) return false;
-        double bubbleHeight = (Bubble.ActualHeight + 2) * VisualTreeHelper.GetDpi(this).DpiScaleY;
+        double above = (Bubble.Visibility == Visibility.Visible ? Bubble.ActualHeight + 2 : 0)
+                       + (EmoteBar.Visibility == Visibility.Visible ? EmoteBarArea : 0);
+        if (above == 0) return false;
+        above *= VisualTreeHelper.GetDpi(this).DpiScaleY;
         var screen = Forms.Screen.FromPoint(new System.Drawing.Point((int)feetX, (int)feetY - 1));
-        return feetY - petHeight - bubbleHeight < screen.WorkingArea.Top;
+        return feetY - petHeight - above < screen.WorkingArea.Top;
     }
 
     /// <summary>Moves the bubble below the pet or back above it if needed, keeping the pet where it is.</summary>
@@ -372,7 +416,8 @@ public partial class PetWindow : Window
         if (_dragging || _paused) return;
 
         // Hold still under the mouse so clicks and double-clicks land on the pet; a fall or jump still finishes.
-        bool aiming = PetImage.IsMouseOver || _pressPoint != null || _clickTimer.IsEnabled;
+        bool aiming = PetImage.IsMouseOver || EmoteBar.IsMouseOver || _emote != null
+                      || _pressPoint != null || _clickTimer.IsEnabled;
         if (aiming && !_needsPlace && _walker.Motion is not (Motion.Fall or Motion.Jump))
         {
             if (_pose.Motion is Motion.Walk or Motion.Run)
@@ -520,6 +565,7 @@ public partial class PetWindow : Window
 
     private void StartMove()
     {
+        HideEmotes(); // first: it may move the window
         var hwnd = new WindowInteropHelper(this).Handle;
         GetCursorPos(out var cursor);
         if (!GetWindowRect(hwnd, out var rect)) return;
@@ -559,6 +605,7 @@ public partial class PetWindow : Window
 
     private void StartGhostDrag()
     {
+        HideEmotes();
         _rightPressPoint = null;
         _clickTimer.Stop();
 
@@ -611,6 +658,59 @@ public partial class PetWindow : Window
         ghost.SetHighlight(folder != null);
         ghost.Vanish();
         if (drop) GhostDropped?.Invoke(folder, isShell);
+    }
+
+    // ---------------------------------------------------------------- emotes
+
+    private void Pet_MouseEnter(object sender, MouseEventArgs e)
+    {
+        _emoteHideTimer.Stop();
+        if (!_emotesEnabled || _dragging || _ghost != null || EmoteBar.Visibility == Visibility.Visible) return;
+        EmoteBar.Visibility = Visibility.Visible;
+        LayoutOverlays();
+        UpdateBubblePlacement();
+    }
+
+    private void Emotes_MouseLeave(object sender, MouseEventArgs e)
+    {
+        _emoteHideTimer.Stop();
+        _emoteHideTimer.Start();
+    }
+
+    private void HideEmotes()
+    {
+        _emoteHideTimer.Stop();
+        if (EmoteBar.Visibility != Visibility.Visible) return;
+        EmoteBar.Visibility = Visibility.Collapsed;
+        LayoutOverlays();
+        UpdateBubblePlacement();
+    }
+
+    private void Emote_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not FrameworkElement { Tag: string tag } || !Enum.TryParse(tag, out Emote emote)) return;
+        PlayEmote(emote);
+        Emoted?.Invoke(emote);
+    }
+
+    /// <summary>Plays the pet's reaction to an emote; playing also makes it hop.</summary>
+    public void PlayEmote(Emote emote)
+    {
+        _emote = emote;
+        _emoteStart = DateTime.Now;
+        _animationTimer.Start();
+        if (emote == Emote.Play && !_petOnTop)
+        {
+            var shift = new TranslateTransform();
+            PetImage.RenderTransform = shift;
+            shift.BeginAnimation(TranslateTransform.YProperty, new DoubleAnimation(0, -PetImage.Height * 0.4, TimeSpan.FromSeconds(0.25))
+            {
+                AutoReverse = true,
+                RepeatBehavior = new RepeatBehavior(3),
+                EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut },
+            });
+        }
+        Render();
     }
 
     private void Bubble_MouseLeftButtonUp(object sender, MouseButtonEventArgs e) => HideBubble();

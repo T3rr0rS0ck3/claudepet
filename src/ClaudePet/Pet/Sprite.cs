@@ -7,7 +7,11 @@ namespace ClaudePet.Pet;
 public enum Eyes { Normal, Blink, Closed, Happy, LookLeft, LookRight, LookUp, LookDown, Wide, Big }
 public enum Mouth { None, Smile, Small, Wavy, Open }
 public enum Arms { Down, Up, Wave, TypeLeft, TypeRight }
-public enum Mark { None, Dots1, Dots2, Dots3, Exclaim, Zzz1, Zzz2, Zzz3, Listen1, Listen2, Listen3, Question }
+public enum Mark
+{
+    None, Dots1, Dots2, Dots3, Exclaim, Zzz1, Zzz2, Zzz3, Listen1, Listen2, Listen3, Question,
+    Heart1, Heart2, Cookie, Crumbs, Ball1, Ball2, Ball3,
+}
 public enum Tint { Normal, Hot, Pale, Ghost }
 
 /// <summary>Everything that describes one rendered frame of the pet.</summary>
@@ -39,6 +43,10 @@ public static class Sprite
     private const uint MarkColor = 0xFF8C90B8;
     private const uint AlertColor = 0xFFE5484D;
     private const uint QuestionColor = 0xFFE5C14B;
+    private const uint HeartColor = 0xFFEF5D7A;
+    private const uint CookieColor = 0xFFC98D4F;
+    private const uint ChipColor = 0xFF5B3A22;
+    private const uint BallColor = 0xFF5B9BE0;
 
     /// <summary>Claude orange, the default body color.</summary>
     public const uint DefaultBodyColor = 0xFFD97757;
@@ -224,8 +232,21 @@ public static class Sprite
             case Mark.Zzz3: break;
             // Claude Code sessions: a question is waiting
             case Mark.Question:
-                Glyph(c0 + 5, QuestionColor, "XXX", "..X", ".XX", "...", ".X.");
+                Glyph(c0 + 5, QuestionColor, 0, "XXX", "..X", ".XX", "...", ".X.");
                 break;
+            // Emotes: hearts drifting up, a cookie on its way into the mouth, crumbs on the chin, a juggled ball
+            case Mark.Heart1: Glyph(c0 + 9, HeartColor, 1, "XX.XX", "XXXXX", ".XXX.", "..X.."); break;
+            case Mark.Heart2: Glyph(c0 + 11, HeartColor, 0, "XX.XX", "XXXXX", ".XXX.", "..X.."); break;
+            case Mark.Cookie:
+                Glyph(c0 + 5, CookieColor, 0, ".XXX.", "XXXXX", "XXXXX", ".XXX.");
+                Glyph(c0 + 5, ChipColor, 0, ".....", ".X...", "...X.", ".....");
+                break;
+            case Mark.Crumbs:
+                Set(c0 + 5, by + 7, CookieColor); Set(c0 + 9, by + 7, CookieColor); Set(c0 + 7, by + 8, CookieColor);
+                break;
+            case Mark.Ball1: Glyph(c0 + 2, BallColor, 1, ".XX.", "XXXX", "XXXX", ".XX."); break;
+            case Mark.Ball2: Glyph(c0 + 5, BallColor, 0, ".XX.", "XXXX", "XXXX", ".XX."); break;
+            case Mark.Ball3: Glyph(c0 + 8, BallColor, 1, ".XX.", "XXXX", "XXXX", ".XX."); break;
             // Sound waves next to the head, growing outwards: the pet is listening
             case Mark.Listen1 or Mark.Listen2 or Mark.Listen3:
                 int waves = f.Mark - Mark.Listen1 + 1;
@@ -235,12 +256,12 @@ public static class Sprite
                 break;
         }
 
-        // Rows of a small pixel glyph above the head, X = pixel
-        void Glyph(int x, uint color, params string[] rows)
+        // Rows of a small pixel glyph above the head, starting at row top, X = pixel
+        void Glyph(int x, uint color, int top, params string[] rows)
         {
             for (int y = 0; y < rows.Length; y++)
                 for (int i = 0; i < rows[y].Length; i++)
-                    if (rows[y][i] == 'X') Set(x + i, y, color);
+                    if (rows[y][i] == 'X') Set(x + i, top + y, color);
         }
 
         // ")" shaped arc, h pixels tall
