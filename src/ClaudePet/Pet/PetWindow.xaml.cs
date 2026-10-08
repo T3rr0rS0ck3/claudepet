@@ -135,6 +135,7 @@ public partial class PetWindow : Window
         else _animationTimer.Stop();
 
         _walking = settings.WalkAround && _animations;
+        _walker.CrossMonitors = settings.CrossMonitors;
         _needsPlace = true;
         if (_walking)
         {

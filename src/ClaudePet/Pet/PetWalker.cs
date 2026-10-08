@@ -9,7 +9,8 @@ public enum Motion { Idle, Walk, Run, Fall, Jump, Climb, Hang, Carried }
 /// Moves the pet across the desktop: walks along the taskbar and window tops, falls off edges
 /// and lost windows, now and then jumps up onto a nearby window, climbs up the screen edges and
 /// swings along the top of the screen until it drops.
-/// It stays on the monitor it is on; only dragging moves it to another one. Works in physical pixels;
+/// It stays on the monitor it is on unless <see cref="CrossMonitors"/> is set: then it walks or hops over to a
+/// neighbouring monitor where the two touch, following their actual arrangement. Works in physical pixels;
 /// (X, Y) is the point between the pet's feet.
 /// </summary>
 public sealed class PetWalker
@@ -34,6 +35,9 @@ public sealed class PetWalker
     private const double EdgeJumpChance = 0.5;
     private const double ClimbChance = 0.6;
     private const double HangChance = 0.75;
+    private const double CrossChance = 0.6;
+    /// <summary>How far up the floor of the next monitor may be for a hop across, in pet heights.</summary>
+    private const double CrossReachUp = 2.5;
     /// <summary>Feet below the top of the screen while hanging, in pet heights (arms reach up to row 6 of 16).</summary>
     public const double HangDepth = 10.0 / 16;
     /// <summary>Distance from the pet's center to its side, in pet widths.</summary>
@@ -48,6 +52,13 @@ public sealed class PetWalker
     private int _checkedVersion;
     private bool _climbing;
     private bool _hanging;
+    /// <summary>Monitor (work area) the pet is hopping over to; it may leave the current one while flying.</summary>
+    private ScreenRect? _crossTo;
+    /// <summary>Walking over onto the next monitor's taskbar; decided once at the edge.</summary>
+    private bool _crossing;
+
+    /// <summary>Walk and hop over to neighbouring monitors.</summary>
+    public bool CrossMonitors { get; set; }
 
     public double X { get; private set; }
     public double Y { get; private set; }
@@ -63,6 +74,7 @@ public sealed class PetWalker
         _climbing = _hanging = false;
         _vx = _vy = 0;
         _ground = IntPtr.Zero;
+        _crossTo = null;
         Motion = Motion.Fall;
     }
 
@@ -107,9 +119,26 @@ public sealed class PetWalker
 
         double speed = gait.Speed * petWidth;
         double nx = X + Direction * speed * dt;
-        if (ScreenEdge(surfaces, nx, petWidth) is { } wall)
+        var edge = ScreenEdge(surfaces, nx, petWidth);
+        if (edge == null) _crossing = false;
+        if (edge is { } wall)
         {
-            if (_random.NextDouble() < ClimbChance) StartClimb(wall, petWidth);
+            if (NextMonitor(surfaces, petHeight) is { } next && (_crossing || _random.NextDouble() < CrossChance))
+            {
+                // Its taskbar is level with the floor: just walk on. Otherwise hop across.
+                if (_ground == IntPtr.Zero && Math.Abs(next.Bottom - Y) <= 2)
+                {
+                    _crossing = true;
+                    X = nx;
+                }
+                else
+                {
+                    JumpTo(wall + Direction * petWidth * 0.8, next.Bottom, petHeight);
+                    _crossTo = next;
+                    return;
+                }
+            }
+            else if (_random.NextDouble() < ClimbChance) StartClimb(wall, petWidth);
             else Direction = -Direction;
         }
         else if (Supports(surfaces, _ground, nx))
@@ -155,7 +184,8 @@ public sealed class PetWalker
                 .OrderBy(p => Math.Abs(p.Y - Y))
                 .Cast<Platform?>()
                 .FirstOrDefault();
-            if (floor is not { } f || f.Y > Y + 0.5) { StartFall(0); return false; }
+            // A couple of pixels lower is no fall, e.g. the taskbar of the next monitor.
+            if (floor is not { } f || f.Y > Y + 2.5) { StartFall(0); return false; }
             Y = f.Y; // e.g. the taskbar got taller
             return true;
         }
@@ -226,6 +256,26 @@ public sealed class PetWalker
         double wall = Direction < 0 ? wa.Left : wa.Right;
         bool inside = Direction < 0 ? x - petWidth * HalfBody >= wall : x + petWidth * HalfBody <= wall;
         return inside ? null : wall;
+    }
+
+    /// <summary>
+    /// The monitor next to the current one in the walking direction, if the two touch where the pet can get
+    /// through and its taskbar is within reach.
+    /// </summary>
+    private ScreenRect? NextMonitor(DesktopSurfaces surfaces, double petHeight)
+    {
+        if (!CrossMonitors) return null;
+        var here = WorkAreaAt(surfaces, X, Y - 1);
+        return surfaces.WorkAreas
+            .Where(next => next != here
+                           && (Direction > 0 ? Math.Abs(next.Left - here.Right) <= 2 : Math.Abs(next.Right - here.Left) <= 2)
+                           // The shared stretch of the edge leaves room for the pet at the higher of the two floors.
+                           && Math.Max(here.Top, next.Top) <= Math.Min(Y, next.Bottom) - petHeight
+                           && next.Bottom >= Y - petHeight * CrossReachUp
+                           && !surfaces.IsFullscreen((next.Left + next.Right) / 2.0, next.Bottom))
+            .OrderBy(next => Math.Abs(next.Bottom - Y))
+            .Cast<ScreenRect?>()
+            .FirstOrDefault();
     }
 
     private void StartClimb(double wall, double petWidth)
@@ -306,6 +356,7 @@ public sealed class PetWalker
     {
         StandOn(platform);
         _airborne = _climbing = _hanging = false;
+        _crossTo = null;
         _vx = _vy = 0;
         Motion = Motion.Idle;
         _timer = Between(0.4, 1.2);
@@ -385,9 +436,15 @@ public sealed class PetWalker
     {
         double g = Gravity(petHeight);
         _vy = Math.Min(_vy + g * dt, petHeight * 30);
-        // Stay on the current monitor.
+        // Stay on the current monitor, or on it and the one it is hopping over to.
         var wa = WorkAreaAt(surfaces, X, Math.Min(Y, Y + _vy * dt) - 1);
-        double nx = Math.Clamp(X + _vx * dt, wa.Left + petWidth * HalfBody, wa.Right - petWidth * HalfBody);
+        double left = wa.Left, right = wa.Right;
+        if (_crossTo is { } to)
+        {
+            left = Math.Min(left, to.Left);
+            right = Math.Max(right, to.Right);
+        }
+        double nx = Math.Clamp(X + _vx * dt, left + petWidth * HalfBody, right - petWidth * HalfBody);
         double ny = Y + _vy * dt;
         Motion = _vy < 0 ? Motion.Jump : Motion.Fall;
 
