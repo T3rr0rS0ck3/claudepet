@@ -13,6 +13,8 @@
     <!-- DPI awareness is declared in app.manifest for WPF; the WinForms analyzer warning does not apply. -->
     <NoWarn>$(NoWarn);WFAC010</NoWarn>
     <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+    <!-- Releases pass -p:Version from the tag (build.ps1); self-built copies are 0.0.0 and skip update checks. -->
+    <Version>0.0.0</Version>
   </PropertyGroup>
 
   <ItemGroup>

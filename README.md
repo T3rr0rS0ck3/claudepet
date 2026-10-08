@@ -61,6 +61,13 @@ Then right-click the pet → *Claude Code verbinden…* (connect).
 > **Windows SmartScreen** may warn about an unknown publisher because the installer isn't code-signed.
 > Click *More info → Run anyway*.
 
+### Updates
+
+The pet looks for a new release on start and once a day. When there is one, it tells you and the right-click
+menu shows **Update auf x.y.z installieren…** (install update): one click downloads the setup, checks it against
+the release's `SHA256SUMS.txt`, installs it silently and restarts the pet. Portable copies only get a link to the
+release page. You can switch the check off or run it by hand in the settings (*Updates*).
+
 ## Using the pet
 
 | Action | Result |
@@ -167,7 +174,7 @@ Desktop app as well. The normal Desktop chat offers no hooks and is not supporte
 ## Configuration
 
 Most options are available via right-click → **Einstellungen…** (settings): repo folder, console, ghost drag,
-voice chat, size, pet color, always on top, animations, walking around, crossing monitors, emotes, autostart, update interval, warning thresholds, mood thresholds,
+voice chat, size, pet color, always on top, animations, walking around, crossing monitors, emotes, autostart, update checks, update interval, warning thresholds, mood thresholds,
 speech bubbles, notifications and your name.
 
 Everything lives in `%LOCALAPPDATA%\ClaudePet\settings.json`, and manual edits are picked up live.

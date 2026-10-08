@@ -37,6 +37,10 @@ public sealed class AppSettings
     public bool CrossMonitors { get; set; }
     /// <summary>Buttons to feed, pat, play with and tickle the pet while hovering it.</summary>
     public bool Emotes { get; set; } = true;
+    /// <summary>Look for new releases on GitHub at start and once a day.</summary>
+    public bool CheckForUpdates { get; set; } = true;
+    /// <summary>The last version the pet announced, so each update is mentioned only once.</summary>
+    public string? NotifiedUpdate { get; set; }
     /// <summary>"?" when a Claude Code session asks something, a bubble when it is done (via Claude Code hooks).</summary>
     public bool SessionMarks { get; set; } = true;
     /// <summary>A small pet per running Claude Code session, showing that session's "?".</summary>
@@ -103,6 +107,8 @@ public sealed class AppSettings
         ["Feed"] = ["Mmmh, lecker! 🍪", "Kekse sind das beste Token-Futter.", "*mampf mampf*"],
         ["Pat"] = ["Hach, das ist schön ❤", "Mehr davon!", "Du bist der Beste, {name}."],
         ["Play"] = ["Fang! ⚽", "Nochmal, nochmal!", "Ich bin ein Profi-Jongleur."],
+        ["Update"] = ["Version {version} ist da! Rechtsklick → Update installieren.", "Psst, {name}: Es gibt eine neue Version ({version})."],
+        ["Updating"] = ["Lade das Update… bis gleich!"],
         ["Tickle"] = ["Hihihi! Aufhören! 😆", "Nicht da, da bin ich kitzlig!", "Hahaha… Gnade!"],
     };
 

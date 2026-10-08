@@ -23,6 +23,8 @@ public partial class App : Application
     private readonly Random _random = new();
     private readonly WarnState _sessionWarn = new();
     private readonly WarnState _weekWarn = new();
+    private readonly DispatcherTimer _updateTimer = new();
+    private bool _updating;
 
     private PetWindow _pet = null!;
     private TrayIcon? _tray;
@@ -35,6 +37,8 @@ public partial class App : Application
 
     public AppSettings Settings { get; private set; } = null!;
     public bool PetVisible => _pet.IsVisible;
+    /// <summary>A newer release found by the last update check.</summary>
+    public UpdateInfo? AvailableUpdate { get; private set; }
 
     protected override void OnStartup(StartupEventArgs e)
     {
@@ -102,6 +106,13 @@ public partial class App : Application
         };
 
         Say(_state.Mood == PetMood.Unknown ? "NoData" : "Greeting");
+
+        _updateTimer.Tick += (_, _) =>
+        {
+            _updateTimer.Interval = TimeSpan.FromHours(24);
+            _ = CheckForUpdateAsync(silent: true);
+        };
+        SyncUpdateChecks();
     }
 
     /// <summary>Silent commands used by the installer. Returns true if one was handled.</summary>
@@ -243,6 +254,7 @@ public partial class App : Application
             .Replace("{percent}", PercentText(_state.Max))
             .Replace("{session}", PercentText(_state.Session))
             .Replace("{week}", PercentText(_state.Week))
+            .Replace("{version}", AvailableUpdate?.VersionText ?? "")
             .Replace(" %", " %"); // keep "62 %" together when wrapping
         _pet.Say(text, Settings.BubbleDurationSeconds);
     }
@@ -366,6 +378,7 @@ public partial class App : Application
         _pet.ApplySettings(Settings);
         _monitor.SetInterval(Settings.PollIntervalSeconds);
         if (Settings.StartWithWindows != Autostart.IsEnabled()) Autostart.Set(Settings.StartWithWindows);
+        SyncUpdateChecks();
         Evaluate(initial: true);
     }
 
@@ -615,6 +628,95 @@ public partial class App : Application
         Evaluate(initial: false);
     }
 
+    // ---------------------------------------------------------------- updates
+
+    /// <summary>Looks for a new release about 30 s after the start and then once a day, unless switched off.</summary>
+    private void SyncUpdateChecks()
+    {
+        bool on = Settings.CheckForUpdates && !Updater.IsDevBuild;
+        if (on && !_updateTimer.IsEnabled)
+        {
+            _updateTimer.Interval = TimeSpan.FromSeconds(30);
+            _updateTimer.Start();
+        }
+        else if (!on)
+        {
+            _updateTimer.Stop();
+        }
+    }
+
+    /// <summary>
+    /// Asks GitHub for a newer release and remembers it for the menus; the pet mentions each new version once.
+    /// Network errors are only logged when silent, otherwise thrown.
+    /// </summary>
+    public async Task<UpdateInfo?> CheckForUpdateAsync(bool silent)
+    {
+        try
+        {
+            AvailableUpdate = await Updater.CheckAsync();
+        }
+        catch (Exception ex) when (silent)
+        {
+            Log.Write("Update-Prüfung fehlgeschlagen: " + ex.Message);
+            return AvailableUpdate;
+        }
+        if (AvailableUpdate is { } update && Settings.NotifiedUpdate != update.VersionText)
+        {
+            Settings.NotifiedUpdate = update.VersionText;
+            SaveSettings();
+            if (Settings.SpeechBubbles) Say("Update");
+            else ShowNotification("Claude Pet", $"Version {update.VersionText} ist verfügbar (Rechtsklick aufs Pet).");
+        }
+        return AvailableUpdate;
+    }
+
+    /// <summary>
+    /// Installed via setup: asks, then downloads and installs the update; the setup starts the new version.
+    /// Portable copies just open the release page.
+    /// </summary>
+    public async void InstallUpdate(Window? owner = null)
+    {
+        if (AvailableUpdate is not { } update || _updating) return;
+        if (!Updater.IsInstalled)
+        {
+            OpenUrl(update.PageUrl);
+            return;
+        }
+
+        const string title = "Claude Pet – Update";
+        string question = $"Version {update.VersionText} installieren?\n\n" +
+                          "Claude Pet wird dafür kurz geschlossen und danach automatisch neu gestartet.";
+        var answer = owner != null
+            ? MessageBox.Show(owner, question, title, MessageBoxButton.YesNo, MessageBoxImage.Question)
+            : MessageBox.Show(question, title, MessageBoxButton.YesNo, MessageBoxImage.Question);
+        if (answer != MessageBoxResult.Yes) return;
+
+        _updating = true;
+        Say("Updating");
+        try
+        {
+            await Updater.InstallAsync(update);
+            Quit();
+        }
+        catch (Exception ex)
+        {
+            Log.Write("Update fehlgeschlagen: " + ex);
+            MessageBox.Show("Das Update konnte nicht installiert werden:\n" + ex.Message, title,
+                MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+        finally
+        {
+            _updating = false;
+        }
+    }
+
+    /// <summary>Menu text for the available update, depending on whether it can be installed in place.</summary>
+    public string UpdateMenuText => AvailableUpdate is not { } update ? ""
+        : Updater.IsInstalled ? $"Update auf {update.VersionText} installieren…" : $"Version {update.VersionText} herunterladen…";
+
+    public static void OpenUrl(string url) =>
+        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(url) { UseShellExecute = true });
+
     public void Quit()
     {
         _overlay?.Close();
@@ -649,6 +751,7 @@ public partial class App : Application
         walk.IsCheckable = true;
         Item("In den Tray minimieren", () => _pet.Hide());
         menu.Items.Add(new Separator());
+        var update = Item("", () => InstallUpdate());
         Item("Claude Code verbinden…", () => ConnectClaudeCode(null));
         Item("Einstellungen…", ShowSettings);
         menu.Items.Add(new Separator());
@@ -659,6 +762,8 @@ public partial class App : Application
             onTop.IsChecked = Settings.AlwaysOnTop;
             walk.IsChecked = Settings.WalkAround;
             voice.Visibility = Settings.VoiceChat ? Visibility.Visible : Visibility.Collapsed;
+            update.Header = UpdateMenuText;
+            update.Visibility = AvailableUpdate != null ? Visibility.Visible : Visibility.Collapsed;
         };
         return menu;
     }
