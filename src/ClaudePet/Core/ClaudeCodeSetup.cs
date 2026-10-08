@@ -11,7 +11,14 @@ public enum SetupStatus { BridgeMissing, NotConfigured, Connected, OtherStatusLi
 /// <summary>Registers ClaudePetBridge.exe as statusLine command in the Claude Code user settings.</summary>
 public static class ClaudeCodeSetup
 {
-    public static string BridgePath => Path.Combine(AppContext.BaseDirectory, "ClaudePetBridge.exe");
+    /// <summary>
+    /// The Store version's install folder changes with every update and is closed to other programs, so
+    /// Claude Code reaches its bridge through the package's app execution alias instead.
+    /// </summary>
+    public static string BridgePath => AppPackage.IsPackaged
+        ? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "Microsoft", "WindowsApps", "ClaudePetBridge.exe")
+        : Path.Combine(AppContext.BaseDirectory, "ClaudePetBridge.exe");
 
     public static string ConfigDir
     {
@@ -81,6 +88,22 @@ public static class ClaudeCodeSetup
         RemoveHooks(root);
         if (hooks) AddHooks(root);
         Save(root);
+    }
+
+    /// <summary>
+    /// Connected, but to another copy of the bridge (e.g. a portable copy before switching to the Store
+    /// version): point the statusLine at this app's bridge. Returns true if it changed anything.
+    /// </summary>
+    public static bool Repoint()
+    {
+        if (GetStatus() != SetupStatus.Connected || CurrentCommand() == BridgeCommand || !File.Exists(BridgePath))
+            return false;
+        var root = Load();
+        if (root?["statusLine"] is not JsonObject statusLine) return false;
+        Backup();
+        statusLine["command"] = BridgeCommand;
+        Save(root);
+        return true;
     }
 
     public static void Uninstall()
