@@ -27,9 +27,9 @@ desto mehr ändert sich seine Stimmung: entspannt → nachdenklich → nervös �
 - 🔔 **Windows-Benachrichtigungen** bei einstellbaren Warnschwellen für Session und Woche
 - 📈 **Prognose**: „Limit bei aktuellem Verbrauch in 1h 42m“
 - 🧺 **Tray-Icon** in der aktuellen Stimmung, Autostart mit Windows
-- 👻 **Geist ziehen**: einen Geist des Pets mit der rechten Maustaste auf ein Explorer-Fenster ziehen und Claude Code öffnet sich in diesem Ordner
+- 👻 **Geist ziehen**: einen Geist des Pets mit der linken Maustaste auf ein Explorer-Fenster ziehen und Claude Code öffnet sich in diesem Ordner
 - 📂 **Projektliste**: Doppelklick aufs Pet, Projekt aus deinem Repo-Ordner wählen, Claude Code startet dort
-- 🎤 **Sprachchat** (optional): öffnet Claude Code mit eingeschaltetem Sprachdiktat
+- 🎤 **Sprachchat** (optional): öffnet Claude Code mit eingeschaltetem Sprachdiktat; das Pet hört zu, während du sprichst
 - ⚙️ **Konfigurierbar**: Schwellen, Texte, Größe, Aktualisierungsintervall, Konsole und mehr
 - 🔒 **Rein lokal**: das Pet selbst greift nicht aufs Netzwerk zu, braucht keinen Login und liest keine Tokens; es liest nur, was Claude Code ohnehin an seine Statuszeile übergibt
 
@@ -62,8 +62,8 @@ Danach Rechtsklick aufs Pet → *Claude Code verbinden…*
 |---|---|
 | Linksklick aufs Pet | Usage-Fenster öffnen/schließen |
 | Doppelklick aufs Pet | Projektliste: Claude Code in einem deiner Projekte öffnen |
-| Pet ziehen | Verschieben (Position wird gespeichert); es strampelt beim Tragen und fällt beim Herumlaufen von dort herunter |
-| Pet mit rechter Maustaste auf ein Explorer-Fenster ziehen | Claude Code in diesem Ordner öffnen (siehe [Claude Code öffnen](#claude-code-öffnen)) |
+| Pet mit rechter Maustaste ziehen | Verschieben (Position wird gespeichert); es strampelt beim Tragen und fällt beim Herumlaufen von dort herunter |
+| Pet auf ein Explorer-Fenster ziehen | Claude Code in diesem Ordner öffnen (siehe [Claude Code öffnen](#claude-code-öffnen)) |
 | Rechtsklick aufs Pet | Menü: Usage, Claude öffnen, Sprachchat, Hallo sagen, Vordergrund, Herumlaufen, in den Tray, Claude Code verbinden, Einstellungen, Beenden |
 | Linksklick aufs Tray-Icon | Usage-Fenster öffnen |
 | `ClaudePet.exe` erneut starten | Holt das laufende Pet zurück und öffnet das Usage-Fenster |
@@ -74,7 +74,7 @@ Das Pet kann eine Konsole mit Claude Code (`claude`) in einem Ordner deiner Wahl
 legst du in den Einstellungen fest: *Automatisch* (Windows Terminal, falls installiert, sonst Eingabeaufforderung),
 Windows Terminal, Eingabeaufforderung (cmd) oder PowerShell.
 
-**Geist ziehen.** Mit der **rechten** Maustaste aufs Pet drücken und ziehen. Ein halbdurchsichtiger Geist folgt dem
+**Geist ziehen.** Mit der **linken** Maustaste aufs Pet drücken und ziehen. Ein halbdurchsichtiger Geist folgt dem
 Mauszeiger, das Pet selbst bleibt stehen und schaut ihm nach. Über einem Explorer-Fenster oder dem Desktop leuchtet der
 Geist auf und winkt. Dort loslassen, und Claude Code öffnet sich in diesem Ordner (bei Windows-11-Tabs im aktiven Tab);
 der Geist schwebt davon. Loslassen woanders oder `Esc` bricht ab. Bei Ordnern ohne Dateisystempfad (z. B. *Dieser PC*)
@@ -94,6 +94,9 @@ einem claude.ai-Konto angemeldet (kein API-Key) und die Konsole darf aufs Mikrof
 Datenschutz und Sicherheit → Mikrofon). Claude Code hat keinen Startparameter für den Sprachmodus, deshalb ist das
 Diktat in allen Claude-Code-Sitzungen aktiv, solange die Option an ist. *Sprachchat anbieten* wieder ausschalten
 blendet den Menüeintrag aus und setzt `voice.enabled` zurück auf `false`.
+Hältst du in einem Terminal mit Claude Code (bei eingeschaltetem Diktat) die Leertaste gedrückt, bleibt das Pet stehen
+und hört zu, mit Schallwellen neben dem Kopf. Claude Code meldet das Diktat nicht selbst, deshalb richtet sich das Pet
+nach der gehaltenen Leertaste.
 
 ### Stimmungen
 
