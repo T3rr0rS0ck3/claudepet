@@ -339,14 +339,16 @@ public partial class App : Application
 
     // ---------------------------------------------------------------- opening Claude Code
 
-    public void ShowProjectMenu()
+    public void ShowProjectMenu() => ShowProjectMenu(voice: false);
+
+    private void ShowProjectMenu(bool voice)
     {
         // First use: nothing to offer yet, so ask for the repo folder right away.
         if (Settings.ReposPath == null && Settings.RecentProjects.Count == 0 && !ChooseReposFolder()) return;
 
-        var menu = ProjectMenu.Build(Settings, LaunchClaude, ChooseAndLaunch, () =>
+        var menu = ProjectMenu.Build(Settings, folder => LaunchClaude(folder, voice), () => ChooseAndLaunch(voice), () =>
         {
-            if (ChooseReposFolder()) ShowProjectMenu();
+            if (ChooseReposFolder()) ShowProjectMenu(voice);
         });
         if (_pet.IsVisible)
         {
@@ -356,7 +358,40 @@ public partial class App : Application
         menu.IsOpen = true;
     }
 
-    public void LaunchClaude(string folder)
+    /// <summary>
+    /// Claude Code has no flag to start in voice mode, so voice dictation is switched on in its
+    /// settings and the user is told how to talk (hold Space).
+    /// </summary>
+    public void StartVoiceChat()
+    {
+        if (!Settings.VoiceChat) return;
+        if (!ClaudeCodeSetup.IsVoiceEnabled())
+        {
+            var answer = MessageBox.Show(
+                "Für den Sprachchat wird das Sprachdiktat von Claude Code eingeschaltet " +
+                $"(voice.enabled in {ClaudeCodeSetup.SettingsPath}, eine Sicherung wird angelegt).\n\n" +
+                "Voraussetzungen: Anmeldung mit einem claude.ai-Konto und Mikrofonzugriff für die Konsole " +
+                "(Windows-Einstellungen → Datenschutz → Mikrofon).\n\nEinschalten?",
+                "Claude Pet", MessageBoxButton.YesNo, MessageBoxImage.Question);
+            if (answer != MessageBoxResult.Yes) return;
+            try
+            {
+                ClaudeCodeSetup.SetVoiceEnabled(true);
+            }
+            catch (Exception ex)
+            {
+                Log.Write("Sprachdiktat konnte nicht eingeschaltet werden: " + ex);
+                MessageBox.Show("Fehler beim Schreiben der Claude-Code-Einstellungen:\n" + ex.Message, "Claude Pet",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+        }
+        ShowProjectMenu(voice: true);
+    }
+
+    public void LaunchClaude(string folder) => LaunchClaude(folder, voice: false);
+
+    private void LaunchClaude(string folder, bool voice)
     {
         try
         {
@@ -377,7 +412,7 @@ public partial class App : Application
         }
         SaveSettings();
         _pet.Cheer(TimeSpan.FromSeconds(2));
-        Say("Launch", ClaudeLauncher.FolderName(folder));
+        Say(voice ? "Voice" : "Launch", ClaudeLauncher.FolderName(folder));
     }
 
     private void OnGhostDropped(string? folder, bool overShell)
@@ -386,11 +421,11 @@ public partial class App : Application
         else if (overShell) Say("NoFolder");   // e.g. "This PC"; anywhere else the drop is just a cancel
     }
 
-    private void ChooseAndLaunch()
+    private void ChooseAndLaunch(bool voice)
     {
         var dialog = new Microsoft.Win32.OpenFolderDialog { Title = "In welchem Ordner soll Claude starten?" };
         if (Settings.ReposPath != null) dialog.InitialDirectory = Settings.ReposPath;
-        if (dialog.ShowDialog() == true) LaunchClaude(dialog.FolderName);
+        if (dialog.ShowDialog() == true) LaunchClaude(dialog.FolderName, voice);
     }
 
     /// <summary>Asks for the folder containing all projects. Returns false if cancelled.</summary>
@@ -475,6 +510,7 @@ public partial class App : Application
 
         Item("Usage anzeigen", ShowUsage);
         Item("Claude öffnen…", ShowProjectMenu);
+        var voice = Item("Sprachchat starten…", StartVoiceChat);
         Item("Hallo sagen", () =>
         {
             _pet.Cheer(TimeSpan.FromSeconds(2));
@@ -496,6 +532,7 @@ public partial class App : Application
         {
             onTop.IsChecked = Settings.AlwaysOnTop;
             walk.IsChecked = Settings.WalkAround;
+            voice.Visibility = Settings.VoiceChat ? Visibility.Visible : Visibility.Collapsed;
         };
         return menu;
     }

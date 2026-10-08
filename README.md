@@ -27,8 +27,11 @@ its mood changes: relaxed → thoughtful → nervous → panicking → asleep un
 - 🔔 **Windows notifications** at configurable session and weekly warning thresholds
 - 📈 **Forecast** — "at the current pace you'll hit the limit in 1h 42m"
 - 🧺 **Tray icon** that reflects the current mood, plus autostart with Windows
-- ⚙️ **Configurable** thresholds, texts, size, update interval and more
-- 🔒 **Local only** — no network access, no login, no tokens; it only reads what Claude Code already hands to its status line
+- 👻 **Ghost drag** — right-drag a ghost of the pet onto an Explorer window to open Claude Code in that folder
+- 📂 **Project launcher** — double-click the pet to pick a project from your repo folder and open Claude Code there
+- 🎤 **Voice chat** (optional) — opens Claude Code with its voice dictation switched on
+- ⚙️ **Configurable** thresholds, texts, size, update interval, console and more
+- 🔒 **Local only** — the pet itself makes no network requests, needs no login and reads no tokens; it only reads what Claude Code already hands to its status line
 
 <p align="center"><img src="docs/overlay.png" alt="Usage overlay showing session 80 %, week 70 %, reset times and a forecast" width="390"></p>
 
@@ -58,10 +61,38 @@ Then right-click the pet → *Claude Code verbinden…* (connect).
 | Action | Result |
 |---|---|
 | Left-click the pet | Open / close the usage overlay |
+| Double-click the pet | Project list: open Claude Code in one of your projects |
 | Drag the pet | Move it (position is remembered); while walking around it drops down from there |
-| Right-click the pet | Menu: usage, say hello, always on top, walk around, minimize to tray, connect Claude Code, settings, quit |
+| Right-drag the pet onto an Explorer window | Open Claude Code in that folder (see [Opening Claude Code](#opening-claude-code)) |
+| Right-click the pet | Menu: usage, open Claude, voice chat, say hello, always on top, walk around, minimize to tray, connect Claude Code, settings, quit |
 | Left-click the tray icon | Open the usage overlay |
 | Start `ClaudePet.exe` again | Brings the running pet back and opens the overlay |
+
+## Opening Claude Code
+
+The pet can open a console running Claude Code (`claude`) in a folder of your choice. Which console is used is set
+in the settings: *Automatic* (Windows Terminal if installed, otherwise Command Prompt), Windows Terminal,
+Command Prompt or PowerShell.
+
+**Ghost drag.** Hold the **right** mouse button on the pet and drag. A translucent ghost of the pet follows the cursor
+while the pet itself stays where it is. Over an Explorer window or the desktop the ghost lights up and waves. Release
+it there and Claude Code opens in that folder (with Windows 11 tabs: the active tab); the ghost floats away.
+Releasing anywhere else, or pressing `Esc`, cancels. Folders without a file system path (e.g. *This PC*) get a short
+"no folder here" bubble. Can be switched off in the settings.
+
+**Project list.** Double-click the pet (or right-click → *Claude öffnen…*, also in the tray menu). The list shows your
+recently opened projects first, then all subfolders of your **repo folder** (hidden folders and folders starting with
+`.` are skipped). *Anderen Ordner wählen…* opens any folder, *Repo-Ordner festlegen…* changes the repo folder. On first
+use the pet asks for the repo folder right away. A single click now waits for the double-click time before opening
+the usage overlay.
+
+**Voice chat.** Off by default; switch on *Sprachchat anbieten* in the settings to get the menu entry
+*Sprachchat starten…*. It uses Claude Code's [voice dictation](https://code.claude.com/docs/en/voice-dictation):
+on first use the pet asks to set `voice.enabled` in `~/.claude/settings.json` (a backup is saved), then shows the
+project list. In the console, **hold Space** and speak. Requirements: a claude.ai login in Claude Code (not an API key)
+and microphone access for the console (Windows Settings → Privacy & security → Microphone). Claude Code has no
+command-line flag for voice mode, so dictation is enabled for all Claude Code sessions while the option is on.
+Switching *Sprachchat anbieten* off again hides the menu entry and sets `voice.enabled` back to `false`.
 
 ### Moods
 
@@ -101,8 +132,9 @@ has passed are treated as 0 %. Nothing is scraped from claude.ai and no credenti
 
 ## Configuration
 
-Most options are available via right-click → **Einstellungen…** (settings): size, always on top, animations, walking around, autostart,
-update interval, warning thresholds, mood thresholds, speech bubbles, notifications and your name.
+Most options are available via right-click → **Einstellungen…** (settings): repo folder, console, ghost drag,
+voice chat, size, always on top, animations, walking around, autostart, update interval, warning thresholds, mood thresholds,
+speech bubbles, notifications and your name.
 
 Everything lives in `%LOCALAPPDATA%\ClaudePet\settings.json`, and manual edits are picked up live.
 Speech bubble texts are under `Texts`. Each event can have several variants; one is picked at random:
@@ -116,8 +148,13 @@ Speech bubble texts are under `Texts`. Each event can have several variants; one
 }
 ```
 
-Events: `Greeting`, `NoData`, `Normal`, `Attentive`, `Nervous`, `Worried`, `Panic`, `Exhausted`, `Reset`, `Poke`.
-Placeholders: `{name}`, `{NAME}` (upper case), `{percent}` (the higher value), `{session}`, `{week}`.
+Events: `Greeting`, `NoData`, `Normal`, `Attentive`, `Nervous`, `Worried`, `Panic`, `Exhausted`, `Reset`, `Poke`,
+`Launch` (Claude Code opened), `NoFolder` (ghost dropped where there is no folder), `Voice` (voice chat started).
+Placeholders: `{name}`, `{NAME}` (upper case), `{percent}` (the higher value), `{session}`, `{week}`,
+`{folder}` (name of the opened folder, for `Launch` and `Voice`).
+
+Other keys for opening Claude Code: `ReposPath`, `Terminal` (`Auto`, `WindowsTerminal`, `Cmd`, `PowerShell`),
+`GhostDrag`, `VoiceChat` and `RecentProjects` (the last 10 opened folders).
 
 ## Troubleshooting
 
@@ -128,6 +165,17 @@ Rate-limit data only arrives after the first response of a session and only for 
 **I already had a custom status line.**
 The installer never overwrites it. Connecting from the app asks first and saves a backup as
 `~/.claude/settings.json.claudepet-backup`. Only one status line command can be active.
+
+**Opening Claude Code fails with "Claude Code wurde nicht gefunden".**
+The pet looks for `claude` on the `PATH` and in `%USERPROFILE%\.local\bin`. The settings window shows which
+`claude` was found. Install Claude Code or add it to the `PATH`, then restart the pet.
+
+**The ghost doesn't light up over an Explorer window.**
+Only Explorer windows and the desktop are targets; other apps (e.g. file dialogs or IDEs) and the pet itself are ignored.
+
+**Voice dictation doesn't react.**
+Check the microphone permission for your console and that Claude Code is signed in with a claude.ai account.
+Run `/voice` in Claude Code to see its status.
 
 **Something seems off.**
 Look at `%LOCALAPPDATA%\ClaudePet\log.txt`. `usage.json` there shows the last values received from Claude Code.
@@ -162,9 +210,10 @@ version, packs the Inno Setup installer and a portable zip, and publishes a GitH
 ```text
 src/Shared/            Data model and file access shared by app and bridge
 src/ClaudePet.Bridge/  The status line command
-src/ClaudePet/Core/    Settings, mood logic, forecast, autostart, Claude Code setup
-src/ClaudePet/Pet/     Procedural pixel sprite, animations, pet window
-src/ClaudePet/Views/   Usage overlay and settings window
+src/ClaudePet/Core/    Settings, mood logic, forecast, autostart, Claude Code setup,
+                       launching Claude Code, finding the Explorer folder under the cursor
+src/ClaudePet/Pet/     Procedural pixel sprite, animations, pet window, ghost window
+src/ClaudePet/Views/   Usage overlay, settings window, project menu
 installer/             Inno Setup script
 ```
 

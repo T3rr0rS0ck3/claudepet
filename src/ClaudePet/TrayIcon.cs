@@ -19,6 +19,8 @@ public sealed class TrayIcon : IDisposable
         var menu = new Forms.ContextMenuStrip();
         menu.Items.Add("Usage anzeigen", null, (_, _) => app.ShowUsage());
         menu.Items.Add("Claude öffnen…", null, (_, _) => app.ShowProjectMenu());
+        var voice = new Forms.ToolStripMenuItem("Sprachchat starten…", null, (_, _) => app.StartVoiceChat());
+        menu.Items.Add(voice);
         _petVisible = new Forms.ToolStripMenuItem("Pet anzeigen", null, (_, _) => app.TogglePetVisible());
         _alwaysOnTop = new Forms.ToolStripMenuItem("Immer im Vordergrund", null, (_, _) => app.ToggleAlwaysOnTop());
         _walkAround = new Forms.ToolStripMenuItem("Herumlaufen", null, (_, _) => app.ToggleWalkAround());
@@ -35,6 +37,7 @@ public sealed class TrayIcon : IDisposable
             _petVisible.Checked = app.PetVisible;
             _alwaysOnTop.Checked = app.Settings.AlwaysOnTop;
             _walkAround.Checked = app.Settings.WalkAround;
+            voice.Visible = app.Settings.VoiceChat;
         };
 
         _icon.ContextMenuStrip = menu;

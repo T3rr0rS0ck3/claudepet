@@ -56,6 +56,8 @@
                     <ComboBox x:Name="TerminalBox" Grid.Column="1" />
                 </Grid>
                 <CheckBox x:Name="GhostDragBox" Content="Pet mit rechter Maustaste auf Explorer ziehen öffnet Claude dort" />
+                <CheckBox x:Name="VoiceBox" Content="Sprachchat anbieten (Menüeintrag „Sprachchat starten…“)"
+                          ToolTip="Nutzt das Sprachdiktat von Claude Code. Benötigt ein claude.ai-Konto und ein Mikrofon. Ausschalten schaltet auch das Diktat in Claude Code wieder ab." />
                 <TextBlock x:Name="ClaudeStatusText" Foreground="Gray" FontSize="11" TextWrapping="Wrap" />
             </StackPanel>
         </GroupBox>

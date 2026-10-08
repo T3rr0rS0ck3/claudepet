@@ -61,6 +61,8 @@ public sealed class AppSettings
     public List<string> RecentProjects { get; set; } = [];
     /// <summary>Dragging the pet with the right mouse button onto an Explorer window opens Claude there.</summary>
     public bool GhostDrag { get; set; } = true;
+    /// <summary>Offers "Sprachchat starten…" (Claude Code voice dictation) in the menus.</summary>
+    public bool VoiceChat { get; set; }
 
     public static Dictionary<string, List<string>> DefaultTexts() => new()
     {
