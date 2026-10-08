@@ -81,6 +81,14 @@ public partial class SettingsWindow : Window
     {
         bool valid = Sprite.TryParseColor(ColorBox.Text, out uint argb);
         ColorPreview.Background = valid ? new SolidColorBrush(ToColor(argb)) : Brushes.Transparent;
+        // Show the color on the pet right away; closing without saving goes back to the saved one.
+        if (valid && IsLoaded) _app.PreviewPetColor(argb);
+    }
+
+    protected override void OnClosed(EventArgs e)
+    {
+        base.OnClosed(e);
+        _app.PreviewPetColor(null);
     }
 
     private void PickColor_Click(object sender, RoutedEventArgs e)

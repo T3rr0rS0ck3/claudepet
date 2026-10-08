@@ -259,6 +259,13 @@ public partial class PetWindow : Window
         }
     }
 
+    /// <summary>Draws the pet and its babies again, e.g. after the body color changed.</summary>
+    public void Redraw()
+    {
+        Render();
+        RenderBabies();
+    }
+
     private void RenderBabies()
     {
         long t = _animations ? _tick : 1;
