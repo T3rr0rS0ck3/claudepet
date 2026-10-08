@@ -67,7 +67,7 @@ public partial class App : Application
         _settingsWrite = File.GetLastWriteTimeUtc(DataPaths.SettingsFile);
         if (Settings.StartWithWindows != Autostart.IsEnabled()) Autostart.Set(Settings.StartWithWindows);
 
-        Sprite.SetBodyColor(ParsePetColor());
+        ApplyPetColor();
         _pet = new PetWindow();
         _pet.ApplySettings(Settings, initial: true);
         _pet.Clicked += OnPetClicked;
@@ -319,7 +319,7 @@ public partial class App : Application
     public void ApplySettings(bool save)
     {
         if (save) SaveSettings();
-        Sprite.SetBodyColor(ParsePetColor());
+        ApplyPetColor();
         SyncClaudeMascot();
         _pet.ApplySettings(Settings);
         _monitor.SetInterval(Settings.PollIntervalSeconds);
@@ -363,6 +363,17 @@ public partial class App : Application
             Log.Write("Claude-Code-Theme konnte nicht geschrieben werden: " + ex);
             ShowNotification("Claude Pet", "Claude-Code-Theme konnte nicht geschrieben werden: " + ex.Message);
         }
+    }
+
+    /// <summary>The pet's color is also the accent color of the overlay, menus and speech bubble.</summary>
+    private void ApplyPetColor()
+    {
+        uint color = ParsePetColor();
+        Sprite.SetBodyColor(color);
+        var accent = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(
+            (byte)(color >> 16), (byte)(color >> 8), (byte)color));
+        accent.Freeze();
+        Resources["AccentBrush"] = accent;
     }
 
     private uint ParsePetColor() =>
@@ -543,7 +554,7 @@ public partial class App : Application
 
     private ContextMenu BuildContextMenu()
     {
-        var menu = new ContextMenu();
+        var menu = new ContextMenu { Style = (Style)FindResource("PetMenu") };
         MenuItem Item(string header, Action action)
         {
             var item = new MenuItem { Header = header };
