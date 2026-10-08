@@ -19,6 +19,8 @@ its mood changes: relaxed → thoughtful → nervous → panicking → asleep un
 ## Features
 
 - 🟠 **Desktop pet** — transparent, borderless, draggable, optionally always on top
+- 🚶 **Walks around** — strolls along the taskbar and the tops of open windows, jumps up onto windows,
+  climbs the screen edges and falls off when a window moves away; its mood sets the pace (can be turned off)
 - 📊 **Usage overlay** — click the pet to see session and weekly usage, reset times and a forecast
 - 🎭 **7 moods** with their own animations, based on the higher of the two usage values
 - 💬 **Speech bubbles** when thresholds are crossed, e.g. *"90 %! 😰"* — not constantly chattering
@@ -56,8 +58,8 @@ Then right-click the pet → *Claude Code verbinden…* (connect).
 | Action | Result |
 |---|---|
 | Left-click the pet | Open / close the usage overlay |
-| Drag the pet | Move it (position is remembered) |
-| Right-click the pet | Menu: usage, say hello, always on top, minimize to tray, connect Claude Code, settings, quit |
+| Drag the pet | Move it (position is remembered); while walking around it drops down from there |
+| Right-click the pet | Menu: usage, say hello, always on top, walk around, minimize to tray, connect Claude Code, settings, quit |
 | Left-click the tray icon | Open the usage overlay |
 | Start `ClaudePet.exe` again | Brings the running pet back and opens the overlay |
 
@@ -99,7 +101,7 @@ has passed are treated as 0 %. Nothing is scraped from claude.ai and no credenti
 
 ## Configuration
 
-Most options are available via right-click → **Einstellungen…** (settings): size, always on top, animations, autostart,
+Most options are available via right-click → **Einstellungen…** (settings): size, always on top, animations, walking around, autostart,
 update interval, warning thresholds, mood thresholds, speech bubbles, notifications and your name.
 
 Everything lives in `%LOCALAPPDATA%\ClaudePet\settings.json`, and manual edits are picked up live.
