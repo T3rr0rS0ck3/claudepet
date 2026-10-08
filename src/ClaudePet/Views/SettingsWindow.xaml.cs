@@ -1,6 +1,8 @@
 using System.Diagnostics;
 using System.Globalization;
+using System.IO;
 using System.Windows;
+using Microsoft.Win32;
 using ClaudePet.Core;
 using ClaudePet.Shared;
 
@@ -31,8 +33,33 @@ public partial class SettingsWindow : Window
         BubbleDurationBox.Text = settings.BubbleDurationSeconds.ToString(CultureInfo.InvariantCulture);
         NameBox.Text = settings.UserName;
         NotificationsBox.IsChecked = settings.Notifications;
+        ReposPathBox.Text = settings.ReposPath ?? "";
+        TerminalBox.ItemsSource = TerminalChoices;
+        TerminalBox.DisplayMemberPath = "Value";
+        TerminalBox.SelectedValuePath = "Key";
+        TerminalBox.SelectedValue = settings.Terminal;
+
+        string? claude = ClaudeLauncher.FindClaude();
+        ClaudeStatusText.Text = claude != null
+            ? "Claude Code gefunden: " + claude
+            : "⚠ Claude Code wurde nicht gefunden (claude ist nicht im PATH).";
 
         RefreshSetupStatus();
+    }
+
+    private static readonly KeyValuePair<TerminalKind, string>[] TerminalChoices =
+    [
+        new(TerminalKind.Auto, ClaudeLauncher.HasWindowsTerminal ? "Automatisch (Windows Terminal)" : "Automatisch (cmd)"),
+        new(TerminalKind.WindowsTerminal, "Windows Terminal"),
+        new(TerminalKind.Cmd, "Eingabeaufforderung (cmd)"),
+        new(TerminalKind.PowerShell, "PowerShell"),
+    ];
+
+    private void BrowseRepos_Click(object sender, RoutedEventArgs e)
+    {
+        var dialog = new OpenFolderDialog { Title = "Ordner mit deinen Projekten wählen" };
+        if (Directory.Exists(ReposPathBox.Text)) dialog.InitialDirectory = ReposPathBox.Text;
+        if (dialog.ShowDialog(this) == true) ReposPathBox.Text = dialog.FolderName;
     }
 
     private void RefreshSetupStatus()
@@ -87,6 +114,9 @@ public partial class SettingsWindow : Window
             var weekWarn = ParseList(WeekWarnBox.Text, "Wochen-Warnschwellen");
             var moods = ParseList(MoodThresholdsBox.Text, "Zustandsgrenzen");
             if (moods.Count != 6) throw new FormatException("Zustandsgrenzen: genau 6 Werte angeben.");
+            string reposPath = ReposPathBox.Text.Trim().Trim('"');
+            if (reposPath.Length > 0 && !Directory.Exists(reposPath))
+                throw new FormatException("Repo-Ordner existiert nicht.");
             for (int i = 1; i < moods.Count; i++)
                 if (moods[i] < moods[i - 1]) throw new FormatException("Zustandsgrenzen müssen aufsteigend sein.");
 
@@ -107,6 +137,8 @@ public partial class SettingsWindow : Window
             _settings.BubbleDurationSeconds = Math.Clamp(duration, 1, 60);
             _settings.UserName = NameBox.Text.Trim();
             _settings.Notifications = NotificationsBox.IsChecked == true;
+            _settings.ReposPath = reposPath.Length > 0 ? reposPath : null;
+            _settings.Terminal = TerminalBox.SelectedValue is TerminalKind terminal ? terminal : TerminalKind.Auto;
 
             _app.ApplySettings(save: true);
             Close();

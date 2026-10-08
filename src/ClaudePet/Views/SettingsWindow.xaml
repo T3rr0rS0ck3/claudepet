@@ -34,6 +34,31 @@
             </StackPanel>
         </GroupBox>
 
+        <GroupBox Header="Claude starten">
+            <StackPanel>
+                <Grid Style="{StaticResource Row}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="150" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="Repo-Ordner" VerticalAlignment="Center"
+                               ToolTip="Ordner, in dem alle Projekte liegen" />
+                    <TextBox x:Name="ReposPathBox" Grid.Column="1" ToolTip="Ordner, in dem alle Projekte liegen" />
+                    <Button Grid.Column="2" Content="…" Width="28" Margin="6,0,0,0" Click="BrowseRepos_Click" />
+                </Grid>
+                <Grid Style="{StaticResource Row}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="150" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="Konsole" VerticalAlignment="Center" />
+                    <ComboBox x:Name="TerminalBox" Grid.Column="1" />
+                </Grid>
+                <TextBlock x:Name="ClaudeStatusText" Foreground="Gray" FontSize="11" TextWrapping="Wrap" />
+            </StackPanel>
+        </GroupBox>
+
         <GroupBox Header="Pet">
             <StackPanel>
                 <Grid Style="{StaticResource Row}">

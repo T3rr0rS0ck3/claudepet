@@ -17,6 +17,7 @@ public sealed class TrayIcon : IDisposable
     {
         var menu = new Forms.ContextMenuStrip();
         menu.Items.Add("Usage anzeigen", null, (_, _) => app.ShowUsage());
+        menu.Items.Add("Claude öffnen…", null, (_, _) => app.ShowProjectMenu());
         _petVisible = new Forms.ToolStripMenuItem("Pet anzeigen", null, (_, _) => app.TogglePetVisible());
         _alwaysOnTop = new Forms.ToolStripMenuItem("Immer im Vordergrund", null, (_, _) => app.ToggleAlwaysOnTop());
         menu.Items.Add(_petVisible);

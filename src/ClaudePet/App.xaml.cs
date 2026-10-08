@@ -70,6 +70,7 @@ public partial class App : Application
         _pet = new PetWindow();
         _pet.ApplySettings(Settings, initial: true);
         _pet.Clicked += OnPetClicked;
+        _pet.DoubleClicked += ShowProjectMenu;
         _pet.Moved += SavePosition;
         _pet.PetImage.ContextMenu = BuildContextMenu();
         _pet.Show();
@@ -201,7 +202,7 @@ public partial class App : Application
         ShowNotification("Claude Usage Pet", text);
     }
 
-    private void Say(string key)
+    private void Say(string key, string? folder = null)
     {
         if (!Settings.SpeechBubbles) return;
         if (!Settings.Texts.TryGetValue(key, out var variants) || variants.Count == 0) return;
@@ -210,6 +211,7 @@ public partial class App : Application
         string text = variants[_random.Next(variants.Count)]
             .Replace("{NAME}", name.ToUpperInvariant())
             .Replace("{name}", name)
+            .Replace("{folder}", folder ?? "")
             .Replace("{percent}", PercentText(_state.Max))
             .Replace("{session}", PercentText(_state.Session))
             .Replace("{week}", PercentText(_state.Week))
@@ -252,10 +254,10 @@ public partial class App : Application
         _overlay.ShowNear(anchor, _pet);
     }
 
-    private void OnPetClicked()
+    private void OnPetClicked(DateTime releasedAt)
     {
         // The click that deactivated (and closed) the overlay should not reopen it.
-        if (_overlay == null && DateTime.Now - _overlayClosedAt < TimeSpan.FromMilliseconds(600)) return;
+        if (_overlay == null && releasedAt - _overlayClosedAt < TimeSpan.FromMilliseconds(600)) return;
         if (_overlay != null) _overlay.Close();
         else ShowUsage();
     }
@@ -292,22 +294,85 @@ public partial class App : Application
 
     public void ApplySettings(bool save)
     {
-        if (save)
-        {
-            try
-            {
-                Settings.Save();
-                _settingsWrite = File.GetLastWriteTimeUtc(DataPaths.SettingsFile);
-            }
-            catch (IOException ex)
-            {
-                Log.Write("Einstellungen konnten nicht gespeichert werden: " + ex.Message);
-            }
-        }
+        if (save) SaveSettings();
         _pet.ApplySettings(Settings);
         _monitor.SetInterval(Settings.PollIntervalSeconds);
         if (Settings.StartWithWindows != Autostart.IsEnabled()) Autostart.Set(Settings.StartWithWindows);
         Evaluate(initial: true);
+    }
+
+    private void SaveSettings()
+    {
+        try
+        {
+            Settings.Save();
+            _settingsWrite = File.GetLastWriteTimeUtc(DataPaths.SettingsFile);
+        }
+        catch (IOException ex)
+        {
+            Log.Write("Einstellungen konnten nicht gespeichert werden: " + ex.Message);
+        }
+    }
+
+    // ---------------------------------------------------------------- opening Claude Code
+
+    public void ShowProjectMenu()
+    {
+        // First use: nothing to offer yet, so ask for the repo folder right away.
+        if (Settings.ReposPath == null && Settings.RecentProjects.Count == 0 && !ChooseReposFolder()) return;
+
+        var menu = ProjectMenu.Build(Settings, LaunchClaude, ChooseAndLaunch, () =>
+        {
+            if (ChooseReposFolder()) ShowProjectMenu();
+        });
+        if (_pet.IsVisible)
+        {
+            menu.PlacementTarget = _pet.PetImage;
+            menu.Placement = System.Windows.Controls.Primitives.PlacementMode.Top;
+        }
+        menu.IsOpen = true;
+    }
+
+    public void LaunchClaude(string folder)
+    {
+        try
+        {
+            ClaudeLauncher.Launch(Settings, folder);
+        }
+        catch (DirectoryNotFoundException)
+        {
+            Settings.RecentProjects.Remove(folder);
+            SaveSettings();
+            Say("NoFolder");
+            return;
+        }
+        catch (Exception ex) when (ex is FileNotFoundException or InvalidOperationException)
+        {
+            Log.Write("Claude konnte nicht gestartet werden: " + ex.Message);
+            MessageBox.Show(ex.Message, "Claude Pet", MessageBoxButton.OK, MessageBoxImage.Error);
+            return;
+        }
+        SaveSettings();
+        _pet.Cheer(TimeSpan.FromSeconds(2));
+        Say("Launch", ClaudeLauncher.FolderName(folder));
+    }
+
+    private void ChooseAndLaunch()
+    {
+        var dialog = new Microsoft.Win32.OpenFolderDialog { Title = "In welchem Ordner soll Claude starten?" };
+        if (Settings.ReposPath != null) dialog.InitialDirectory = Settings.ReposPath;
+        if (dialog.ShowDialog() == true) LaunchClaude(dialog.FolderName);
+    }
+
+    /// <summary>Asks for the folder containing all projects. Returns false if cancelled.</summary>
+    private bool ChooseReposFolder()
+    {
+        var dialog = new Microsoft.Win32.OpenFolderDialog { Title = "Ordner mit deinen Projekten wählen" };
+        if (Settings.ReposPath != null) dialog.InitialDirectory = Settings.ReposPath;
+        if (dialog.ShowDialog() != true) return false;
+        Settings.ReposPath = dialog.FolderName;
+        SaveSettings();
+        return true;
     }
 
     private void SavePosition()
@@ -380,6 +445,7 @@ public partial class App : Application
         }
 
         Item("Usage anzeigen", ShowUsage);
+        Item("Claude öffnen…", ShowProjectMenu);
         Item("Hallo sagen", () =>
         {
             _pet.Cheer(TimeSpan.FromSeconds(2));
