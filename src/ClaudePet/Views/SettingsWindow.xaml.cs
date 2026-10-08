@@ -20,6 +20,9 @@ public partial class SettingsWindow : Window
     public SettingsWindow(App app, AppSettings settings)
     {
         InitializeComponent();
+        // Scroll instead of growing past the screen; Escape closes like a normal dialog.
+        MaxHeight = SystemParameters.WorkArea.Height - 20;
+        PreviewKeyDown += (_, e) => { if (e.Key == System.Windows.Input.Key.Escape) Close(); };
         _app = app;
         _settings = settings;
 
@@ -203,6 +206,14 @@ public partial class SettingsWindow : Window
             ErrorText.Visibility = Visibility.Visible;
         }
     }
+
+    // Borderless like the usage overlay: drag by the title, close with the ✕.
+    private void Title_MouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+    {
+        try { DragMove(); } catch (InvalidOperationException) { }
+    }
+
+    private void Close_Click(object sender, System.Windows.Input.MouseButtonEventArgs e) => Close();
 
     // IsCancel only closes modal dialogs; this window is shown non-modally.
     private void Cancel_Click(object sender, RoutedEventArgs e) => Close();
