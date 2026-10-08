@@ -407,14 +407,28 @@ public partial class App : Application
     }
 
     /// <summary>The pet's color is also the accent color of the overlay, menus and speech bubble.</summary>
-    private void ApplyPetColor()
+    private void ApplyPetColor() => ApplyPetColor(ParsePetColor());
+
+    private void ApplyPetColor(uint color)
     {
-        uint color = ParsePetColor();
         Sprite.SetBodyColor(color);
         var accent = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(
             (byte)(color >> 16), (byte)(color >> 8), (byte)color));
         accent.Freeze();
         Resources["AccentBrush"] = accent;
+    }
+
+    /// <summary>
+    /// Shows a color on the pet, tray and accents without saving it, while it is being picked in the settings.
+    /// Null goes back to the saved color.
+    /// </summary>
+    public void PreviewPetColor(uint? color)
+    {
+        int previous = Sprite.Version;
+        ApplyPetColor(color ?? ParsePetColor());
+        if (Sprite.Version == previous) return;
+        _pet.Redraw();
+        Evaluate(initial: true);
     }
 
     private uint ParsePetColor() =>
