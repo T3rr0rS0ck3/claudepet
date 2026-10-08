@@ -74,9 +74,10 @@ Then right-click the pet → *Claude Code verbinden…* (connect).
 
 ## Opening Claude Code
 
-The pet can open a console running Claude Code (`claude`) in a folder of your choice. Which console is used is set
-in the settings: *Automatic* (Windows Terminal if installed, otherwise Command Prompt), Windows Terminal,
-Command Prompt or PowerShell.
+The pet can open Claude Code (`claude`) in a folder of your choice. Where it opens is set in the settings
+(*Claude öffnen in*): *Automatic* (Windows Terminal if installed, otherwise Command Prompt), Windows Terminal,
+Command Prompt, PowerShell or *Claude Desktop (Code-Tab)*. The Desktop option runs `claude --desktop` in the folder,
+which needs the Claude Desktop app and a recent Claude Code (`claude update`).
 
 **Ghost drag.** Hold the **left** mouse button on the pet and drag. A translucent ghost of the pet follows the cursor
 while the pet itself stays where it is. Over an Explorer window or the desktop the ghost lights up and waves. Release
@@ -153,6 +154,14 @@ slowed down. No hook reports an answered permission prompt; the "?" goes away on
 grows again. Switching *„?“ bei Fragen …* off in the settings removes the hooks again. Bubble texts: `Question`,
 `Done` (with `{folder}`).
 
+### Claude Desktop
+
+The Code tab of the Claude Desktop app reads the same `~/.claude/settings.json` and runs the same hooks, so its
+sessions get "?", "!" and baby pets too, side by side with terminal sessions; bubbles mark them with *(Desktop)*.
+While any session works the pet types, even if no status line data arrives. Mood and limits still come from the status
+line, which the Desktop app may not run; then they only update from terminal sessions. Dictation is noticed in the
+Desktop app as well. The normal Desktop chat offers no hooks and is not supported.
+
 ## Configuration
 
 Most options are available via right-click → **Einstellungen…** (settings): repo folder, console, ghost drag,
@@ -176,7 +185,7 @@ Events: `Greeting`, `NoData`, `Normal`, `Attentive`, `Nervous`, `Worried`, `Pani
 Placeholders: `{name}`, `{NAME}` (upper case), `{percent}` (the higher value), `{session}`, `{week}`,
 `{folder}` (name of the opened folder, for `Launch` and `Voice`).
 
-Other keys for opening Claude Code: `ReposPath`, `Terminal` (`Auto`, `WindowsTerminal`, `Cmd`, `PowerShell`),
+Other keys for opening Claude Code: `ReposPath`, `Terminal` (`Auto`, `WindowsTerminal`, `Cmd`, `PowerShell`, `Desktop`),
 `GhostDrag`, `VoiceChat` and `RecentProjects` (the last 10 opened folders).
 
 ## Troubleshooting

@@ -18,7 +18,8 @@ public sealed class MoodThresholds
     public int Exhausted { get; set; } = 100;
 }
 
-public enum TerminalKind { Auto, WindowsTerminal, Cmd, PowerShell }
+/// <summary>Where Claude is opened; <see cref="Desktop"/> is the Code tab of the Claude Desktop app.</summary>
+public enum TerminalKind { Auto, WindowsTerminal, Cmd, PowerShell, Desktop }
 
 public sealed class AppSettings
 {

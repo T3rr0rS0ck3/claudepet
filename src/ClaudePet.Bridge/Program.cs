@@ -131,10 +131,14 @@ static void RunHook()
     try { if (transcript != null && File.Exists(transcript)) length = new FileInfo(transcript).Length; }
     catch (IOException) { }
 
+    // Claude Code tells its child processes where it runs: "cli" in a terminal, something else in the Desktop app.
+    string? origin = Environment.GetEnvironmentVariable("CLAUDE_CODE_ENTRYPOINT");
+
     SessionStore.Update(sessions =>
     {
         if (!sessions.TryGetValue(id, out var info)) sessions[id] = info = new SessionInfo();
         info.Cwd = Text("cwd") ?? info.Cwd;
+        if (!string.IsNullOrEmpty(origin)) info.Origin = origin;
         info.State = state;
         info.UpdatedAt = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
         info.Transcript = transcript ?? info.Transcript;

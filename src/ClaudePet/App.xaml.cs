@@ -97,7 +97,7 @@ public partial class App : Application
         _sessions.Poll();
         _sessions.Attention += session =>
         {
-            if (Settings.SessionMarks) Say(session.State == SessionStates.Question ? "Question" : "Done", session.Folder);
+            if (Settings.SessionMarks) Say(session.State == SessionStates.Question ? "Question" : "Done", session.Label);
         };
 
         Say(_state.Mood == PetMood.Unknown ? "NoData" : "Greeting");
@@ -189,7 +189,7 @@ public partial class App : Application
             }
         }
         _lastMood = mood;
-        _pet.SetMood(mood, _state.Active);
+        _pet.SetMood(mood, Working);
 
         var snapshot = _state.Snapshot;
         CheckWarning("Session-Limit", snapshot?.FiveHour, _state.Session, Settings.SessionWarnThresholds, _sessionWarn, initial, now);
@@ -330,8 +330,17 @@ public partial class App : Application
         _settingsWindow.Activate();
     }
 
-    private void ApplySessions() =>
+    private void ApplySessions()
+    {
         _pet.SetSessions(_sessions.Sessions, _sessions.Overall, Settings.SessionMarks, Settings.SessionPets);
+        _pet.SetMood(_state.Mood, Working);
+    }
+
+    /// <summary>
+    /// Claude is working: the status line just reported, or a hooked session is busy. The latter also
+    /// covers the Desktop app, which may not run the status line.
+    /// </summary>
+    private bool Working => _state.Active || (Settings.SessionMarks && _sessions.AnyWorking);
 
     /// <summary>The ?/! hooks follow the setting, but only once Claude Code is connected to the pet.</summary>
     private void SyncSessionHooks()
@@ -482,7 +491,7 @@ public partial class App : Application
     {
         try
         {
-            ClaudeLauncher.Launch(Settings, folder);
+            if (ClaudeLauncher.Launch(Settings, folder) is { } desktop) _ = ReportDesktopFailure(desktop);
         }
         catch (DirectoryNotFoundException)
         {
@@ -500,6 +509,21 @@ public partial class App : Application
         SaveSettings();
         _pet.Cheer(TimeSpan.FromSeconds(2));
         Say(voice ? "Voice" : "Launch", ClaudeLauncher.FolderName(folder));
+    }
+
+    /// <summary><c>claude --desktop</c> fails quietly (CLI too old, Desktop missing); say so instead.</summary>
+    private async Task ReportDesktopFailure(System.Diagnostics.Process process)
+    {
+        using (process)
+        {
+            using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+            try { await process.WaitForExitAsync(timeout.Token); }
+            catch (OperationCanceledException) { return; }
+            if (process.ExitCode == 0) return;
+        }
+        const string message = "Claude Desktop konnte nicht geöffnet werden. Ist die Desktop-App installiert und Claude Code aktuell (claude update)?";
+        Log.Write(message);
+        MessageBox.Show(message, "Claude Pet", MessageBoxButton.OK, MessageBoxImage.Error);
     }
 
     private void OnGhostDropped(string? folder, bool overShell)
