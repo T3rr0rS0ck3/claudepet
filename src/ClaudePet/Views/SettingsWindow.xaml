@@ -55,6 +55,7 @@
                     <TextBlock Text="Konsole" VerticalAlignment="Center" />
                     <ComboBox x:Name="TerminalBox" Grid.Column="1" />
                 </Grid>
+                <CheckBox x:Name="GhostDragBox" Content="Pet mit rechter Maustaste auf Explorer ziehen öffnet Claude dort" />
                 <TextBlock x:Name="ClaudeStatusText" Foreground="Gray" FontSize="11" TextWrapping="Wrap" />
             </StackPanel>
         </GroupBox>

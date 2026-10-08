@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
@@ -29,6 +30,14 @@ public partial class PetWindow : Window
     private readonly DispatcherTimer _clickTimer = new() { Interval = TimeSpan.FromMilliseconds(GetDoubleClickTime()) };
     private DateTime _clickedAt;
 
+    // Right-button drag: a ghost copy of the pet is carried to an Explorer window.
+    private readonly DispatcherTimer _ghostTimer = new() { Interval = TimeSpan.FromMilliseconds(15) };
+    private GhostWindow? _ghost;
+    private Point? _rightPressPoint;
+    private bool _suppressContextMenu;
+    private bool _ghostDrag = true;
+    private double _scale = 5;
+
     private long _tick = 1;
     private PetMood _mood = PetMood.Unknown;
     private bool _working;
@@ -41,11 +50,17 @@ public partial class PetWindow : Window
     private bool _paused;
     private bool _needsPlace = true;
     private (Motion Motion, int Direction) _pose = (Motion.Idle, 1);
+    private Eyes? _lookAt;
 
     /// <summary>Left click without dragging; carries the time the button was released.</summary>
     public event Action<DateTime>? Clicked;
     /// <summary>Left double-click.</summary>
     public event Action? DoubleClicked;
+    /// <summary>
+    /// The ghost was dropped: the folder under it (null if none) and whether it was over Explorer
+    /// or the desktop at all.
+    /// </summary>
+    public event Action<string?, bool>? GhostDropped;
     /// <summary>The pet was dragged to a new position.</summary>
     public event Action? Moved;
 
@@ -55,6 +70,7 @@ public partial class PetWindow : Window
         _animationTimer.Tick += (_, _) => { _tick++; Render(); };
         _bubbleTimer.Tick += (_, _) => HideBubble();
         _walkTimer.Tick += (_, _) => Walk();
+        _ghostTimer.Tick += (_, _) => UpdateGhost();
         _clickTimer.Tick += (_, _) =>
         {
             _clickTimer.Stop();
@@ -67,6 +83,8 @@ public partial class PetWindow : Window
     {
         Topmost = settings.AlwaysOnTop;
         _animations = settings.Animations;
+        _ghostDrag = settings.GhostDrag;
+        _scale = settings.PetScale;
 
         double petWidth = Sprite.Width * settings.PetScale;
         double petHeight = Sprite.Height * settings.PetScale;
@@ -171,7 +189,9 @@ public partial class PetWindow : Window
     {
         bool cheering = DateTime.Now < _cheerUntil;
         long t = _animations ? _tick : 1;
-        PetImage.Source = Sprite.Render(PetAnimator.Frame(_mood, _working, cheering, t, _pose.Motion, _pose.Direction));
+        var frame = PetAnimator.Frame(_mood, _working, cheering, t, _pose.Motion, _pose.Direction);
+        if (_lookAt is { } eyes) frame = frame with { Eyes = eyes };
+        PetImage.Source = Sprite.Render(frame);
     }
 
     // ---------------------------------------------------------------- walking around
@@ -243,6 +263,12 @@ public partial class PetWindow : Window
 
     private void Pet_MouseMove(object sender, MouseEventArgs e)
     {
+        if (_rightPressPoint is { } rightStart && e.RightButton == MouseButtonState.Pressed)
+        {
+            var moved = e.GetPosition(this) - rightStart;
+            if (Math.Abs(moved.X) >= 4 || Math.Abs(moved.Y) >= 4) StartGhostDrag();
+            return;
+        }
         if (_pressPoint is not { } start || e.LeftButton != MouseButtonState.Pressed) return;
         var delta = e.GetPosition(this) - start;
         if (Math.Abs(delta.X) < 4 && Math.Abs(delta.Y) < 4) return;
@@ -266,6 +292,91 @@ public partial class PetWindow : Window
         _clickTimer.Start();
     }
 
+    // ---------------------------------------------------------------- ghost drag
+
+    private void Pet_MouseRightButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        _suppressContextMenu = false;
+        _rightPressPoint = _ghostDrag ? e.GetPosition(this) : null;
+    }
+
+    private void Pet_MouseRightButtonUp(object sender, MouseButtonEventArgs e)
+    {
+        _rightPressPoint = null;
+        if (_ghost != null) EndGhostDrag(drop: true);
+    }
+
+    private void Pet_LostMouseCapture(object sender, MouseEventArgs e)
+    {
+        // e.g. Alt+Tab or a system dialog while dragging
+        if (_ghost != null) EndGhostDrag(drop: false);
+    }
+
+    private void Pet_ContextMenuOpening(object sender, ContextMenuEventArgs e)
+    {
+        // The right button release that ends a ghost drag must not open the menu.
+        if (!_suppressContextMenu) return;
+        _suppressContextMenu = false;
+        e.Handled = true;
+    }
+
+    private void StartGhostDrag()
+    {
+        _rightPressPoint = null;
+        _suppressContextMenu = true;
+        _clickTimer.Stop();
+
+        _ghost = new GhostWindow(_scale) { Left = -10000, Top = -10000 };
+        _ghost.Show();
+        PetImage.CaptureMouse();
+        UpdateGhost();
+        _ghostTimer.Start();
+    }
+
+    private void UpdateGhost()
+    {
+        if (_ghost == null) return;
+        if (GetAsyncKeyState(VK_ESCAPE) < 0)
+        {
+            EndGhostDrag(drop: false);
+            return;
+        }
+
+        GetCursorPos(out var cursor);
+        _ghost.MoveTo(cursor.X, cursor.Y);
+        _ghost.SetHighlight(ExplorerLocator.IsShellAt(cursor.X, cursor.Y, _ghost.Handle));
+
+        // The pet watches its ghost.
+        var center = PetImage.PointToScreen(new Point(PetImage.ActualWidth / 2, 0));
+        var eyes = cursor.X < center.X ? Eyes.LookLeft : Eyes.LookRight;
+        if (_lookAt != eyes)
+        {
+            _lookAt = eyes;
+            Render();
+        }
+    }
+
+    private void EndGhostDrag(bool drop)
+    {
+        if (_ghost is not { } ghost) return;
+        _ghost = null;               // before releasing capture: LostMouseCapture must not end it twice
+        _ghostTimer.Stop();
+        PetImage.ReleaseMouseCapture();
+        _lookAt = null;
+        Render();
+
+        string? folder = null;
+        bool isShell = false;
+        if (drop)
+        {
+            GetCursorPos(out var cursor);
+            folder = ExplorerLocator.FolderAt(cursor.X, cursor.Y, ghost.Handle, out isShell);
+        }
+        ghost.SetHighlight(folder != null);
+        ghost.Vanish();
+        if (drop) GhostDropped?.Invoke(folder, isShell);
+    }
+
     private void Bubble_MouseLeftButtonUp(object sender, MouseButtonEventArgs e) => HideBubble();
 
     private void HideFromAltTab()
@@ -279,7 +390,13 @@ public partial class PetWindow : Window
     private const int WS_EX_TOOLWINDOW = 0x00000080;
     private const int WS_EX_APPWINDOW = 0x00040000;
 
+    private const int VK_ESCAPE = 0x1B;
+
+    [StructLayout(LayoutKind.Sequential)] private struct POINT { public int X, Y; }
+
     [DllImport("user32.dll")] private static extern uint GetDoubleClickTime();
+    [DllImport("user32.dll")] private static extern bool GetCursorPos(out POINT point);
+    [DllImport("user32.dll")] private static extern short GetAsyncKeyState(int key);
     [DllImport("user32.dll")] private static extern int GetWindowLong(IntPtr hWnd, int nIndex);
     [DllImport("user32.dll")] private static extern int SetWindowLong(IntPtr hWnd, int nIndex, int dwNewLong);
 
