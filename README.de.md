@@ -245,7 +245,7 @@ erstellt den Inno-Setup-Installer und eine portable ZIP und veröffentlicht ein 
 (`v1.2.3-beta`) werden Pre-Releases. Bestehende Tags lassen sich über *Actions → Release → Run workflow* neu bauen.
 
 Für den **Microsoft Store** baut der Workflow zusätzlich ein unsigniertes `ClaudePet-1.2.3.msix` ([packaging/](packaging/))
-und hängt es als Artefakt an den Lauf. Das wird im Partner Center hochgeladen, der Store signiert es. Lokal testen
+und hängt es an den Lauf und das Release (so nicht installierbar). Das wird im Partner Center hochgeladen, der Store signiert es. Lokal testen
 (Entwicklermodus an): `.\build.ps1 -SelfContained -Version 1.2.3; .\packaging\build-msix.ps1 -Version 1.2.3 -Register`.
 Datenschutzerklärung für den Store-Eintrag: [PRIVACY.md](PRIVACY.md).
 
