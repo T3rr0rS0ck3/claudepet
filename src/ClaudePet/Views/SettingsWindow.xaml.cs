@@ -150,7 +150,7 @@ public partial class SettingsWindow : Window
         }
         catch (Exception ex)
         {
-            MessageBox.Show(this, ex.Message, "Claude Pet", MessageBoxButton.OK, MessageBoxImage.Error);
+            MessageBox.Show(this, ex.Message, "Claudius", MessageBoxButton.OK, MessageBoxImage.Error);
         }
         RefreshSetupStatus();
     }
@@ -196,7 +196,7 @@ public partial class SettingsWindow : Window
     private void InstallUpdate_Click(object sender, RoutedEventArgs e) => _app.InstallUpdate(this);
 
     private void TestNotification_Click(object sender, RoutedEventArgs e) =>
-        _app.ShowNotification("Claude Usage Pet", "So sehen Warnungen aus. 🟠");
+        _app.ShowNotification("Claudius", "So sehen Warnungen aus. 🟠");
 
     private void Save_Click(object sender, RoutedEventArgs e)
     {

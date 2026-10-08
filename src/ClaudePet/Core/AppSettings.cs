@@ -71,6 +71,8 @@ public sealed class AppSettings
     /// Placeholders: {name}, {NAME}, {percent}, {session}, {week}.
     /// </summary>
     public Dictionary<string, List<string>> Texts { get; set; } = DefaultTexts();
+    /// <summary>Which rewordings of the default texts have been applied, see <see cref="RewordedTexts"/>.</summary>
+    public int TextsVersion { get; set; }
 
     // Notifications
     public bool Notifications { get; set; } = true;
@@ -102,8 +104,9 @@ public sealed class AppSettings
         ["Launch"] = ["Viel Spaß in {folder}!", "Auf geht's: {folder}"],
         ["NoFolder"] = ["Da ist kein Ordner, den ich öffnen kann…"],
         ["Voice"] = ["Halte die Leertaste gedrückt und sprich mit Claude 🎤"],
-        ["Question"] = ["{folder}: Claude hat eine Frage.", "Psst, {folder} wartet auf dich."],
-        ["Done"] = ["{folder} ist fertig!", "Fertig in {folder}."],
+        // Relayed from Claude Code: Claude is the one asking or done, the pet only passes it on.
+        ["Question"] = ["{folder}: Claude hat eine Frage.", "Psst, Claude wartet in {folder} auf dich."],
+        ["Done"] = ["{folder}: Claude ist fertig!", "Claude ist fertig in {folder}."],
         ["Feed"] = ["Mmmh, lecker! 🍪", "Kekse sind das beste Token-Futter.", "*mampf mampf*"],
         ["Pat"] = ["Hach, das ist schön ❤", "Mehr davon!", "Du bist der Beste, {name}."],
         ["Play"] = ["Fang! ⚽", "Nochmal, nochmal!", "Ich bin ein Profi-Jongleur."],
@@ -150,12 +153,28 @@ public sealed class AppSettings
         RecentProjects ??= [];
         if (string.IsNullOrWhiteSpace(ReposPath)) ReposPath = null;
         PetColor = Sprite.TryParseColor(PetColor, out uint color) ? Sprite.ToHex(color) : DefaultPetColor;
-        foreach (var (key, value) in DefaultTexts())
+        var defaults = DefaultTexts();
+        foreach (var (version, keys) in RewordedTexts)
+        {
+            if (TextsVersion >= version) continue;
+            foreach (var key in keys) Texts[key] = defaults[key];
+        }
+        TextsVersion = RewordedTexts[^1].Version;
+        foreach (var (key, value) in defaults)
         {
             if (!Texts.TryGetValue(key, out var list) || list == null || list.Count == 0)
                 Texts[key] = value;
         }
     }
+
+    /// <summary>
+    /// Texts whose defaults were reworded, by <see cref="TextsVersion"/>: saved settings from before get the
+    /// new wording once, replacing their own. Add an entry with the next version when changing a default text.
+    /// </summary>
+    private static readonly (int Version, string[] Keys)[] RewordedTexts =
+    [
+        (1, ["Question", "Done"]), // Claude asks and finishes, not the pet
+    ];
 
     private static string Capitalize(string s) => s.Length == 0 ? s : char.ToUpper(s[0]) + s[1..];
 

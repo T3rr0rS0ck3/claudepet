@@ -1,4 +1,4 @@
-; Inno Setup script for Claude Usage Pet.
+; Inno Setup script for Claudius - Claude Usage App.
 ; Build: ISCC.exe /DAppVersion=1.2.3 installer\ClaudePet.iss   (expects .\build.ps1 -SelfContained output in dist\ClaudePet)
 
 #ifndef AppVersion
@@ -8,7 +8,9 @@
   #define NumericVersion "0.0.0.0"
 #endif
 
-#define AppName "Claude Usage Pet"
+#define AppName "Claudius - Claude Usage App"
+; Name before the rename; its shortcuts are removed on update.
+#define OldAppName "Claude Usage Pet"
 #define AppExe "ClaudePet.exe"
 
 [Setup]
@@ -25,6 +27,8 @@ DefaultDirName={localappdata}\Programs\ClaudePet
 DisableDirPage=yes
 DefaultGroupName={#AppName}
 DisableProgramGroupPage=yes
+; Not the old "Claude Usage Pet" folder from earlier installs.
+UsePreviousGroup=no
 UninstallDisplayIcon={app}\{#AppExe}
 UninstallDisplayName={#AppName}
 OutputDir=..\dist
@@ -46,8 +50,8 @@ de.ConnectClaudeCode=Mit Claude Code verbinden (statusLine eintragen, falls noch
 en.ConnectClaudeCode=Connect to Claude Code (register statusLine if none is set)
 de.DesktopIcon=Desktop-Verknüpfung erstellen
 en.DesktopIcon=Create a desktop shortcut
-de.LaunchApp=Claude Usage Pet starten
-en.LaunchApp=Launch Claude Usage Pet
+de.LaunchApp=Claudius starten
+en.LaunchApp=Launch Claudius
 
 [Tasks]
 Name: "connect"; Description: "{cm:ConnectClaudeCode}"
@@ -55,6 +59,11 @@ Name: "desktopicon"; Description: "{cm:DesktopIcon}"; Flags: unchecked
 
 [Files]
 Source: "..\dist\ClaudePet\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+
+[InstallDelete]
+; Shortcuts from before the rename.
+Type: filesandordirs; Name: "{autoprograms}\{#OldAppName}"
+Type: files; Name: "{autodesktop}\{#OldAppName}.lnk"
 
 [Icons]
 Name: "{group}\{#AppName}"; Filename: "{app}\{#AppExe}"

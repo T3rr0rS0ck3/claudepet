@@ -59,13 +59,13 @@ public sealed class UsageState
 
     public static string MoodLabel(PetMood mood) => mood switch
     {
-        PetMood.Relaxed => "Claude ist entspannt",
-        PetMood.Normal => "Claude ist gut drauf",
-        PetMood.Attentive => "Claude ist aufmerksam",
-        PetMood.Nervous => "Claude wird nervös",
-        PetMood.Worried => "Claude ist besorgt",
-        PetMood.Panic => "Claude ist in Panik!",
-        PetMood.Exhausted => "Claude schläft bis zum Reset",
-        _ => "Claude wartet auf Daten",
+        PetMood.Relaxed => "Claudius ist entspannt",
+        PetMood.Normal => "Claudius ist gut drauf",
+        PetMood.Attentive => "Claudius ist aufmerksam",
+        PetMood.Nervous => "Claudius wird nervös",
+        PetMood.Worried => "Claudius ist besorgt",
+        PetMood.Panic => "Claudius ist in Panik!",
+        PetMood.Exhausted => "Claudius schläft bis zum Reset",
+        _ => "Claudius wartet auf Daten",
     };
 }

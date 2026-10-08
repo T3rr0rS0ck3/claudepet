@@ -290,7 +290,7 @@ public static class ClaudeCodeSetup
 
         string json = new JsonObject
         {
-            ["name"] = "Claude Pet",
+            ["name"] = "Claudius",
             ["base"] = themeBase,
             ["overrides"] = overrides,
         }.ToJsonString(WriteOptions);

@@ -1,4 +1,4 @@
-# Claude Usage Pet
+# Claudius - Claude Usage App
 
 **A tiny pixel-art desktop pet for Windows that keeps an eye on your Claude usage limits — and gets visibly nervous when you're about to run out.**
 
@@ -10,9 +10,10 @@
 
 ![The pet in different moods: happy after a reset, thinking, panicking, sleeping](docs/moods.png)
 
-Claude Pro and Max plans have a rolling **5-hour session limit** and a **weekly limit**. Claude Usage Pet sits on your
-desktop and shows how much of both you've used — at a glance, without opening anything. The more you use, the more
-its mood changes: relaxed → thoughtful → nervous → panicking → asleep until the limit resets.
+Claude Pro and Max plans have a rolling **5-hour session limit** and a **weekly limit**.
+**Claudius - Claude Usage App** sits on your desktop and shows how much of both you've used — at a glance, without
+opening anything. The more you use, the more its mood changes: relaxed → thoughtful → nervous → panicking → asleep
+until the limit resets.
 
 > The app's interface is currently in German. Bubble texts can be changed to any language (see [Configuration](#configuration)).
 
@@ -21,8 +22,9 @@ its mood changes: relaxed → thoughtful → nervous → panicking → asleep un
 - 🟠 **Desktop pet** — transparent, borderless, draggable, optionally always on top
 - 🚶 **Walks around** — strolls along the taskbar and the tops of open windows, jumps up onto windows,
   climbs the screen edges, swings along the top of the screen until it drops, and falls off when a window
-  moves away; its mood sets the pace (can be turned off). Optionally it also walks or hops over to the
-  neighbouring monitor, following how your monitors are arranged in Windows
+  moves away; after a long fall it lands with a splat and pulls itself back into shape. Its mood sets the pace
+  (can be turned off). Optionally it also walks or hops over to the neighbouring monitor, following how your
+  monitors are arranged in Windows
 - 🎨 **Your color** — pick any color for the pet; the usage overlay, menus and speech bubbles use it as accent color
 - 📊 **Usage overlay** — click the pet to see session and weekly usage, reset times and a forecast
 - 🎭 **7 moods** with their own animations, based on the higher of the two usage values
@@ -226,7 +228,7 @@ Look at `%LOCALAPPDATA%\ClaudePet\log.txt`. `usage.json` there shows the last va
 
 ## Uninstall
 
-Uninstall *Claude Usage Pet* via Windows Settings → Apps. This also removes the status line entry from Claude Code and
+Uninstall *Claudius - Claude Usage App* via Windows Settings → Apps. This also removes the status line entry from Claude Code and
 the autostart entry. Your settings stay in `%LOCALAPPDATA%\ClaudePet` — delete that folder for a clean slate.
 
 **Store version:** Store apps can't run anything on uninstall, so first open the pet's settings and click *Trennen*
