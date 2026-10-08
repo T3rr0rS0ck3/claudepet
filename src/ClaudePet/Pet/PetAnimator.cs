@@ -2,10 +2,46 @@ using ClaudePet.Core;
 
 namespace ClaudePet.Pet;
 
+/// <summary>Things the user can do to the pet from the buttons shown while hovering it.</summary>
+public enum Emote { Feed, Pat, Play, Tickle }
+
 /// <summary>Maps mood + animation tick (8 per second) to a sprite frame.</summary>
 public static class PetAnimator
 {
     public const int TicksPerSecond = 8;
+
+    /// <summary>Length of an emote's reaction in ticks.</summary>
+    public static int EmoteTicks(Emote emote) => emote switch
+    {
+        Emote.Feed => 32,
+        Emote.Play => 24,
+        _ => 28,
+    };
+
+    /// <summary>The pet's reaction to an emote, t ticks after it started.</summary>
+    public static SpriteFrame EmoteFrame(Emote emote, long t) => emote switch
+    {
+        // Looks up at the cookie with the mouth open, munches it, then beams.
+        Emote.Feed when t < 8 => new SpriteFrame(Eyes.LookUp, Mouth.Open, Arms.Up, Mark: Mark.Cookie),
+        Emote.Feed when t < 22 => new SpriteFrame(Eyes.Closed, t / 2 % 2 == 0 ? Mouth.Small : Mouth.Smile,
+            Bob: (int)(t / 2 % 2), Mark: Mark.Crumbs, Blush: true),
+        Emote.Feed => new SpriteFrame(Eyes.Happy, Mouth.Smile, t / 3 % 2 == 0 ? Arms.Wave : Arms.Down,
+            Mark: Mark.Heart1, Blush: true),
+
+        // Leans into the hand, hearts drifting up.
+        Emote.Pat => new SpriteFrame(t % 20 == 10 ? Eyes.Closed : Eyes.Happy, Mouth.Smile,
+            Bob: (int)(t / 4 % 2), Shake: (t / 4 % 4) switch { 1 => 1, 3 => -1, _ => 0 },
+            Mark: t / 4 % 2 == 0 ? Mark.Heart1 : Mark.Heart2, Blush: true),
+
+        // Juggles a ball from one side to the other; the window adds real hops.
+        Emote.Play => new SpriteFrame(t / 2 % 4 == 1 ? Eyes.Happy : Eyes.LookUp, Mouth.Open, Arms.Up,
+            Legs: (int)(t / 2 % 2) + 1,
+            Mark: (t / 2 % 4) switch { 0 => Mark.Ball1, 2 => Mark.Ball3, _ => Mark.Ball2 }),
+
+        // Giggles and wriggles.
+        _ => new SpriteFrame(Eyes.Happy, t % 2 == 0 ? Mouth.Open : Mouth.Smile,
+            t / 2 % 2 == 0 ? Arms.Up : Arms.Down, Shake: t % 2 == 0 ? 1 : -1, Legs: (int)(t % 2) + 1, Blush: true),
+    };
 
     public static SpriteFrame Frame(PetMood mood, bool working, bool cheering, long t,
         Motion motion = Motion.Idle, int direction = 1, bool listening = false)

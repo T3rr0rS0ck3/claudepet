@@ -69,6 +69,7 @@ Then right-click the pet → *Claude Code verbinden…* (connect).
 | Double-click the pet | Project list: open Claude Code in one of your projects |
 | Right-drag the pet | Move it (position is remembered); it kicks its legs while carried and, when walking around, drops down from there |
 | Drag the pet onto an Explorer window | Open Claude Code in that folder (see [Opening Claude Code](#opening-claude-code)) |
+| Hover the pet | Emote buttons: feed 🍪, pat ❤, play ⚽ and tickle 🪶 it, each with its own reaction (can be turned off) |
 | Right-click the pet | Menu: usage, open Claude, voice chat, say hello, always on top, walk around, minimize to tray, connect Claude Code, settings, quit |
 | Left-click the tray icon | Open the usage overlay |
 | Start `ClaudePet.exe` again | Brings the running pet back and opens the overlay |
@@ -166,7 +167,7 @@ Desktop app as well. The normal Desktop chat offers no hooks and is not supporte
 ## Configuration
 
 Most options are available via right-click → **Einstellungen…** (settings): repo folder, console, ghost drag,
-voice chat, size, pet color, always on top, animations, walking around, crossing monitors, autostart, update interval, warning thresholds, mood thresholds,
+voice chat, size, pet color, always on top, animations, walking around, crossing monitors, emotes, autostart, update interval, warning thresholds, mood thresholds,
 speech bubbles, notifications and your name.
 
 Everything lives in `%LOCALAPPDATA%\ClaudePet\settings.json`, and manual edits are picked up live.

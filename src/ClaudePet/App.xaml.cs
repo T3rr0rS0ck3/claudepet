@@ -76,6 +76,7 @@ public partial class App : Application
         _pet.DoubleClicked += ShowProjectMenu;
         _pet.GhostDropped += OnGhostDropped;
         _pet.Moved += SavePosition;
+        _pet.Emoted += emote => Say(emote.ToString());
         _pet.PetImage.ContextMenu = BuildContextMenu();
         _pet.Show();
 

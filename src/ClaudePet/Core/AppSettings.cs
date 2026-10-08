@@ -35,6 +35,8 @@ public sealed class AppSettings
     public bool WalkAround { get; set; } = true;
     /// <summary>While walking around, also walk and hop over to neighbouring monitors.</summary>
     public bool CrossMonitors { get; set; }
+    /// <summary>Buttons to feed, pat, play with and tickle the pet while hovering it.</summary>
+    public bool Emotes { get; set; } = true;
     /// <summary>"?" when a Claude Code session asks something, a bubble when it is done (via Claude Code hooks).</summary>
     public bool SessionMarks { get; set; } = true;
     /// <summary>A small pet per running Claude Code session, showing that session's "?".</summary>
@@ -98,6 +100,10 @@ public sealed class AppSettings
         ["Voice"] = ["Halte die Leertaste gedrückt und sprich mit Claude 🎤"],
         ["Question"] = ["{folder}: Claude hat eine Frage.", "Psst, {folder} wartet auf dich."],
         ["Done"] = ["{folder} ist fertig!", "Fertig in {folder}."],
+        ["Feed"] = ["Mmmh, lecker! 🍪", "Kekse sind das beste Token-Futter.", "*mampf mampf*"],
+        ["Pat"] = ["Hach, das ist schön ❤", "Mehr davon!", "Du bist der Beste, {name}."],
+        ["Play"] = ["Fang! ⚽", "Nochmal, nochmal!", "Ich bin ein Profi-Jongleur."],
+        ["Tickle"] = ["Hihihi! Aufhören! 😆", "Nicht da, da bin ich kitzlig!", "Hahaha… Gnade!"],
     };
 
     public static AppSettings Load()
