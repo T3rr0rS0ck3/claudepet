@@ -32,6 +32,8 @@ public partial class SettingsWindow : Window
         AlwaysOnTopBox.IsChecked = settings.AlwaysOnTop;
         AnimationsBox.IsChecked = settings.Animations;
         WalkAroundBox.IsChecked = settings.WalkAround;
+        SessionMarksBox.IsChecked = settings.SessionMarks;
+        SessionPetsBox.IsChecked = settings.SessionPets;
         AutostartBox.IsChecked = settings.StartWithWindows;
         IntervalBox.Text = settings.PollIntervalSeconds.ToString(CultureInfo.InvariantCulture);
         SessionWarnBox.Text = string.Join(", ", settings.SessionWarnThresholds);
@@ -178,6 +180,8 @@ public partial class SettingsWindow : Window
             _settings.AlwaysOnTop = AlwaysOnTopBox.IsChecked == true;
             _settings.Animations = AnimationsBox.IsChecked == true;
             _settings.WalkAround = WalkAroundBox.IsChecked == true;
+            _settings.SessionMarks = SessionMarksBox.IsChecked == true;
+            _settings.SessionPets = SessionPetsBox.IsChecked == true;
             _settings.StartWithWindows = AutostartBox.IsChecked == true;
             _settings.PollIntervalSeconds = Math.Clamp(interval, 1, 300);
             _settings.SessionWarnThresholds = sessionWarn;

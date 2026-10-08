@@ -18,6 +18,7 @@ public partial class App : Application
     private EventWaitHandle? _showEvent;
     private readonly UsageMonitor _monitor = new();
     private readonly VoiceWatcher _voice = new();
+    private readonly SessionMonitor _sessions = new();
     private readonly DispatcherTimer _clock = new() { Interval = TimeSpan.FromSeconds(1) };
     private readonly Random _random = new();
     private readonly WarnState _sessionWarn = new();
@@ -90,6 +91,15 @@ public partial class App : Application
         _voice.ListeningChanged += listening => _pet.SetListening(listening);
         _voice.Start();
 
+        // "?" / "!" from Claude Code's hooks; the first read is silent like the usage values.
+        SyncSessionHooks();
+        _sessions.Changed += ApplySessions;
+        _sessions.Poll();
+        _sessions.Attention += session =>
+        {
+            if (Settings.SessionMarks) Say(session.State == SessionStates.Question ? "Question" : "Done", session.Folder);
+        };
+
         Say(_state.Mood == PetMood.Unknown ? "NoData" : "Greeting");
     }
 
@@ -157,6 +167,7 @@ public partial class App : Application
 
         // Re-evaluate every second: reset times pass, "working" expires, countdowns tick.
         Evaluate(initial: false);
+        _sessions.Poll();
     }
 
     private void Evaluate(bool initial)
@@ -319,9 +330,27 @@ public partial class App : Application
         _settingsWindow.Activate();
     }
 
+    private void ApplySessions() =>
+        _pet.SetSessions(_sessions.Sessions, _sessions.Overall, Settings.SessionMarks, Settings.SessionPets);
+
+    /// <summary>The ?/! hooks follow the setting, but only once Claude Code is connected to the pet.</summary>
+    private void SyncSessionHooks()
+    {
+        try
+        {
+            if (ClaudeCodeSetup.GetStatus() == SetupStatus.Connected) ClaudeCodeSetup.SetHooks(Settings.SessionMarks);
+        }
+        catch (Exception ex)
+        {
+            Log.Write("Claude-Code-Hooks konnten nicht angepasst werden: " + ex.Message);
+        }
+    }
+
     public void ApplySettings(bool save)
     {
         if (save) SaveSettings();
+        SyncSessionHooks();
+        ApplySessions();
         ApplyPetColor();
         SyncClaudeMascot();
         _pet.ApplySettings(Settings);
@@ -533,7 +562,7 @@ public partial class App : Application
 
         try
         {
-            ClaudeCodeSetup.Install();
+            ClaudeCodeSetup.Install(hooks: Settings.SessionMarks);
             MessageBox.Show("Verbunden! Die Usage-Werte erscheinen nach der nächsten Antwort in Claude Code " +
                             "(laufende Sessions übernehmen die Änderung automatisch).", title,
                 MessageBoxButton.OK, MessageBoxImage.Information);

@@ -30,6 +30,8 @@ desto mehr ändert sich seine Stimmung: entspannt → nachdenklich → nervös �
 - 👻 **Geist ziehen**: einen Geist des Pets mit der linken Maustaste auf ein Explorer-Fenster ziehen und Claude Code öffnet sich in diesem Ordner
 - 📂 **Projektliste**: Doppelklick aufs Pet, Projekt aus deinem Repo-Ordner wählen, Claude Code startet dort
 - 🎤 **Sprachchat** (optional): öffnet Claude Code mit eingeschaltetem Sprachdiktat; das Pet hört zu, während du sprichst
+- ❓❗ **Session-Status**: ein gelbes „?“, wenn eine Claude-Code-Session etwas fragt, ein grünes „!“, wenn sie fertig ist;
+  optional ein Baby-Pet pro Session, das dem Pet hinterherläuft
 - ⚙️ **Konfigurierbar**: Schwellen, Texte, Größe, Aktualisierungsintervall, Konsole und mehr
 - 🔒 **Rein lokal**: das Pet selbst greift nicht aufs Netzwerk zu, braucht keinen Login und liest keine Tokens; es liest nur, was Claude Code ohnehin an seine Statuszeile übergibt
 
@@ -133,6 +135,24 @@ aus und übergibt Sitzungsdaten inklusive `rate_limits.five_hour` und `rate_limi
 
 Das Pet läuft unabhängig davon weiter, auch ohne offenes Claude-Code-Terminal. Werte, deren Reset-Zeit
 vorbei ist, zählen als 0 %. Es wird nichts von claude.ai ausgelesen und es werden keine Zugangsdaten gelesen.
+
+## Fragen und fertige Arbeit (? und !)
+
+Ist Claude Code verbunden, trägt das Pet zusätzlich ein paar [Hooks](https://code.claude.com/docs/en/hooks) in
+`~/.claude/settings.json` ein (mit Sicherung; eigene Hooks bleiben erhalten). Dann gilt:
+
+- **„?“** (gelb) erscheint, wenn eine Session eine Berechtigung braucht, per *AskUserQuestion* fragt oder auf eine
+  Eingabe wartet, dazu eine Sprechblase wie *„mein-projekt: Claude hat eine Frage.“*
+- **„!“** (grün) erscheint, wenn eine Session mit ihrer Antwort fertig ist. Es bleibt, bis du dort den nächsten Prompt
+  abschickst.
+- Eine Frage geht vor „fertig“; bei mehreren Sessions zeigt das Pet die dringendste.
+- *Baby-Pet für jede Claude-Session* (Einstellungen): ein kleines Pet pro laufender Session folgt dem Pet und zeigt
+  deren ? oder !; der Tooltip nennt den Ordner.
+
+Es hängen nur seltene Ereignisse dran (Prompt abgeschickt, Antwort fertig, Berechtigung/Frage, Session-Start/-Ende),
+damit Claude nicht ausgebremst wird. Kein Hook meldet eine beantwortete Berechtigungsfrage; das „?“ verschwindet, sobald
+das Gesprächsprotokoll der Session wieder wächst. *„?“ bei Fragen …* in den Einstellungen ausschalten entfernt die
+Hooks wieder. Sprechblasentexte: `Question`, `Done` (mit `{folder}`).
 
 ## Konfiguration
 
