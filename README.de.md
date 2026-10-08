@@ -67,6 +67,7 @@ Danach Rechtsklick aufs Pet → *Claude Code verbinden…*
 | Doppelklick aufs Pet | Projektliste: Claude Code in einem deiner Projekte öffnen |
 | Pet mit rechter Maustaste ziehen | Verschieben (Position wird gespeichert); es strampelt beim Tragen und fällt beim Herumlaufen von dort herunter |
 | Pet auf ein Explorer-Fenster ziehen | Claude Code in diesem Ordner öffnen (siehe [Claude Code öffnen](#claude-code-öffnen)) |
+| Mit der Maus übers Pet fahren | Emote-Knöpfe: füttern 🍪, streicheln ❤, spielen ⚽ und kitzeln 🪶, jeweils mit eigener Reaktion (abschaltbar) |
 | Rechtsklick aufs Pet | Menü: Usage, Claude öffnen, Sprachchat, Hallo sagen, Vordergrund, Herumlaufen, in den Tray, Claude Code verbinden, Einstellungen, Beenden |
 | Linksklick aufs Tray-Icon | Usage-Fenster öffnen |
 | `ClaudePet.exe` erneut starten | Holt das laufende Pet zurück und öffnet das Usage-Fenster |
@@ -158,7 +159,7 @@ Hooks wieder. Sprechblasentexte: `Question`, `Done` (mit `{folder}`).
 ## Konfiguration
 
 Die meisten Optionen gibt es unter Rechtsklick → **Einstellungen…**: Repo-Ordner, Konsole, Geist ziehen, Sprachchat,
-Größe, Farbe, Vordergrund, Animationen, Herumlaufen, Monitorwechsel, Autostart, Aktualisierungsintervall, Warn- und Zustandsschwellen, Sprechblasen,
+Größe, Farbe, Vordergrund, Animationen, Herumlaufen, Monitorwechsel, Emotes, Autostart, Aktualisierungsintervall, Warn- und Zustandsschwellen, Sprechblasen,
 Benachrichtigungen und dein Name.
 
 Alles liegt in `%LOCALAPPDATA%\ClaudePet\settings.json`. Handänderungen werden sofort übernommen.

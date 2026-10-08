@@ -135,6 +135,7 @@
                 <CheckBox x:Name="CrossMonitorsBox" Content="Zwischen Monitoren wechseln"
                           ToolTip="Läuft oder hüpft dort zum Nachbarmonitor, wo sich die Monitore laut Windows-Anordnung berühren."
                           IsEnabled="{Binding IsChecked, ElementName=WalkAroundBox}" />
+                <CheckBox x:Name="EmotesBox" Content="Emotes beim Drüberfahren (Füttern, Streicheln, …)" />
                 <CheckBox x:Name="AutostartBox" Content="Mit Windows starten" />
             </StackPanel>
         </GroupBox>
