@@ -1,10 +1,18 @@
+using System.Runtime.InteropServices;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
+using System.Windows.Interop;
 using ClaudePet.Core;
 using ClaudePet.Pet;
 using Forms = System.Windows.Forms;
 
 namespace ClaudePet;
 
-/// <summary>Notification-area icon (WinForms, since WPF has none).</summary>
+/// <summary>
+/// Notification-area icon (WinForms, since WPF has none). Its right-click menu is a WPF menu in the look of the
+/// pet's own menu.
+/// </summary>
 public sealed class TrayIcon : IDisposable
 {
     private readonly App _app;
@@ -16,51 +24,54 @@ public sealed class TrayIcon : IDisposable
     public TrayIcon(App app)
     {
         _app = app;
-        BuildMenu();
         _icon.MouseClick += (_, e) =>
         {
             if (e.Button == Forms.MouseButtons.Left) app.ShowUsage();
+        };
+        _icon.MouseUp += (_, e) =>
+        {
+            if (e.Button == Forms.MouseButtons.Right) ShowMenu();
         };
         _icon.Text = "Claudius";
         Update(PetMood.Unknown, Strings.TrayWaiting);
         _icon.Visible = true;
     }
 
-    /// <summary>Builds the right-click menu, again after the language changed.</summary>
-    public void BuildMenu()
+    /// <summary>Opens the menu at the cursor; built anew each time, so it shows the current state and language.</summary>
+    private void ShowMenu()
     {
         var app = _app;
-        var menu = new Forms.ContextMenuStrip();
-        menu.Items.Add(Strings.ShowUsage, null, (_, _) => app.ShowUsage());
-        menu.Items.Add(Strings.OpenClaude, null, (_, _) => app.ShowProjectMenu());
-        var voice = new Forms.ToolStripMenuItem(Strings.StartVoiceChat, null, (_, _) => app.StartVoiceChat());
-        menu.Items.Add(voice);
-        var petVisible = new Forms.ToolStripMenuItem(Strings.ShowPet, null, (_, _) => app.TogglePetVisible());
-        var alwaysOnTop = new Forms.ToolStripMenuItem(Strings.AlwaysOnTop, null, (_, _) => app.ToggleAlwaysOnTop());
-        var walkAround = new Forms.ToolStripMenuItem(Strings.WalkAround, null, (_, _) => app.ToggleWalkAround());
-        menu.Items.Add(petVisible);
-        menu.Items.Add(alwaysOnTop);
-        menu.Items.Add(walkAround);
-        menu.Items.Add(new Forms.ToolStripSeparator());
-        var update = new Forms.ToolStripMenuItem("", null, (_, _) => app.InstallUpdate());
-        menu.Items.Add(update);
-        menu.Items.Add(Strings.ConnectMenu, null, (_, _) => app.ConnectClaudeCode(null));
-        menu.Items.Add(Strings.SettingsMenu, null, (_, _) => app.ShowSettings());
-        menu.Items.Add(new Forms.ToolStripSeparator());
-        menu.Items.Add(Strings.Quit, null, (_, _) => app.Quit());
-        menu.Opening += (_, _) =>
+        var menu = new ContextMenu
         {
-            petVisible.Checked = app.PetVisible;
-            alwaysOnTop.Checked = app.Settings.AlwaysOnTop;
-            walkAround.Checked = app.Settings.WalkAround;
-            voice.Visible = app.Settings.VoiceChat;
-            update.Text = app.UpdateMenuText;
-            update.Visible = app.AvailableUpdate != null;
+            Style = (Style)Application.Current.FindResource("PetMenu"),
+            Placement = PlacementMode.MousePoint,
         };
+        void Item(string header, Action action, bool isChecked = false)
+        {
+            var item = new MenuItem { Header = header, IsChecked = isChecked };
+            item.Click += (_, _) => action();
+            menu.Items.Add(item);
+        }
 
-        var old = _icon.ContextMenuStrip;
-        _icon.ContextMenuStrip = menu;
-        old?.Dispose();
+        Item(Strings.ShowUsage, app.ShowUsage);
+        Item(Strings.OpenClaude, app.ShowProjectMenu);
+        if (app.Settings.VoiceChat) Item(Strings.StartVoiceChat, app.StartVoiceChat);
+        Item(Strings.ShowPet, app.TogglePetVisible, app.PetVisible);
+        Item(Strings.AlwaysOnTop, app.ToggleAlwaysOnTop, app.Settings.AlwaysOnTop);
+        Item(Strings.WalkAround, app.ToggleWalkAround, app.Settings.WalkAround);
+        menu.Items.Add(new Separator());
+        if (app.AvailableUpdate != null) Item(app.UpdateMenuText, () => app.InstallUpdate());
+        Item(Strings.ConnectMenu, () => app.ConnectClaudeCode(null));
+        Item(Strings.SettingsMenu, app.ShowSettings);
+        menu.Items.Add(new Separator());
+        Item(Strings.Quit, app.Quit);
+
+        // Without the focus the menu would stay open when clicking elsewhere, e.g. on the desktop.
+        menu.Opened += (_, _) =>
+        {
+            if (PresentationSource.FromVisual(menu) is HwndSource source) SetForegroundWindow(source.Handle);
+        };
+        menu.IsOpen = true;
     }
 
     public void Update(PetMood mood, string tooltip)
@@ -99,4 +110,6 @@ public sealed class TrayIcon : IDisposable
         _icon.Dispose();
         foreach (var icon in _icons.Values) icon.Dispose();
     }
+
+    [DllImport("user32.dll")] private static extern bool SetForegroundWindow(IntPtr hWnd);
 }
