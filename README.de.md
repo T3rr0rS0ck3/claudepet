@@ -19,7 +19,8 @@ desto mehr ändert sich seine Stimmung: entspannt → nachdenklich → nervös �
 - 🟠 **Desktop-Pet**: transparent, randlos, frei verschiebbar, optional immer im Vordergrund
 - 🚶 **Läuft herum**: bummelt über die Taskleiste und die Oberkanten offener Fenster, springt auf Fenster,
   klettert an den Bildschirmrändern hoch, hangelt sich am oberen Rand entlang, bis es runterfällt, und fällt
-  runter, wenn ein Fenster verschwindet; das Tempo hängt von der Stimmung ab (abschaltbar)
+  runter, wenn ein Fenster verschwindet; das Tempo hängt von der Stimmung ab (abschaltbar). Auf Wunsch läuft
+  oder hüpft es auch zum Nachbarmonitor, passend zur Monitoranordnung in Windows
 - 🎨 **Deine Farbe**: das Pet in beliebiger Farbe; Usage-Fenster, Menüs und Sprechblasen übernehmen sie als Akzentfarbe
 - 📊 **Usage-Fenster**: Klick aufs Pet zeigt Session- und Wochenverbrauch, Reset-Zeiten und Prognose
 - 🎭 **7 Stimmungen** mit eigenen Animationen, abhängig vom höheren der beiden Werte
@@ -157,7 +158,7 @@ Hooks wieder. Sprechblasentexte: `Question`, `Done` (mit `{folder}`).
 ## Konfiguration
 
 Die meisten Optionen gibt es unter Rechtsklick → **Einstellungen…**: Repo-Ordner, Konsole, Geist ziehen, Sprachchat,
-Größe, Farbe, Vordergrund, Animationen, Herumlaufen, Autostart, Aktualisierungsintervall, Warn- und Zustandsschwellen, Sprechblasen,
+Größe, Farbe, Vordergrund, Animationen, Herumlaufen, Monitorwechsel, Autostart, Aktualisierungsintervall, Warn- und Zustandsschwellen, Sprechblasen,
 Benachrichtigungen und dein Name.
 
 Alles liegt in `%LOCALAPPDATA%\ClaudePet\settings.json`. Handänderungen werden sofort übernommen.

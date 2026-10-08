@@ -32,6 +32,7 @@ public partial class SettingsWindow : Window
         AlwaysOnTopBox.IsChecked = settings.AlwaysOnTop;
         AnimationsBox.IsChecked = settings.Animations;
         WalkAroundBox.IsChecked = settings.WalkAround;
+        CrossMonitorsBox.IsChecked = settings.CrossMonitors;
         SessionMarksBox.IsChecked = settings.SessionMarks;
         SessionPetsBox.IsChecked = settings.SessionPets;
         AutostartBox.IsChecked = settings.StartWithWindows;
@@ -189,6 +190,7 @@ public partial class SettingsWindow : Window
             _settings.AlwaysOnTop = AlwaysOnTopBox.IsChecked == true;
             _settings.Animations = AnimationsBox.IsChecked == true;
             _settings.WalkAround = WalkAroundBox.IsChecked == true;
+            _settings.CrossMonitors = CrossMonitorsBox.IsChecked == true;
             _settings.SessionMarks = SessionMarksBox.IsChecked == true;
             _settings.SessionPets = SessionPetsBox.IsChecked == true;
             _settings.StartWithWindows = AutostartBox.IsChecked == true;

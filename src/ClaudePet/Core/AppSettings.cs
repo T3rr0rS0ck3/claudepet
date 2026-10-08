@@ -33,6 +33,8 @@ public sealed class AppSettings
     public bool Animations { get; set; } = true;
     /// <summary>Walk around on the taskbar and on top of open windows.</summary>
     public bool WalkAround { get; set; } = true;
+    /// <summary>While walking around, also walk and hop over to neighbouring monitors.</summary>
+    public bool CrossMonitors { get; set; }
     /// <summary>"?" when a Claude Code session asks something, a bubble when it is done (via Claude Code hooks).</summary>
     public bool SessionMarks { get; set; } = true;
     /// <summary>A small pet per running Claude Code session, showing that session's "?".</summary>

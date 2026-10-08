@@ -132,6 +132,9 @@
                 <CheckBox x:Name="AnimationsBox" Content="Animationen" />
                 <CheckBox x:Name="WalkAroundBox" Content="Auf dem Desktop herumlaufen"
                           IsEnabled="{Binding IsChecked, ElementName=AnimationsBox}" />
+                <CheckBox x:Name="CrossMonitorsBox" Content="Zwischen Monitoren wechseln"
+                          ToolTip="Läuft oder hüpft dort zum Nachbarmonitor, wo sich die Monitore laut Windows-Anordnung berühren."
+                          IsEnabled="{Binding IsChecked, ElementName=WalkAroundBox}" />
                 <CheckBox x:Name="AutostartBox" Content="Mit Windows starten" />
             </StackPanel>
         </GroupBox>
