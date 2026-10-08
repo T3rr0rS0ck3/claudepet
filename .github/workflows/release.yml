@@ -68,8 +68,8 @@ jobs:
             ForEach-Object { "$((Get-FileHash $_ -Algorithm SHA256).Hash.ToLower())  $($_.Name)" } |
             Set-Content dist/SHA256SUMS.txt -Encoding ascii
 
-      # Unsigned MSIX for the Microsoft Store (the Store signs it); uploaded by hand in Partner Center,
-      # so it is a workflow artifact rather than a release asset nobody could install.
+      # Unsigned MSIX for the Microsoft Store (the Store signs it). Attached to the run and to the release;
+      # it can't be installed as is, only uploaded in Partner Center.
       - name: Store package
         if: steps.version.outputs.prerelease == 'false'
         shell: pwsh
@@ -96,10 +96,13 @@ jobs:
             Im Setup kann Claude Pet direkt als statusLine in Claude Code eingetragen werden.
 
             Alternativ: `ClaudePet-${{ steps.version.outputs.version }}-portable.zip` entpacken und `ClaudePet.exe` starten.
+
+            `ClaudePet-${{ steps.version.outputs.version }}.msix` ist das unsignierte Paket für den Microsoft Store und lässt sich so nicht installieren.
           files: |
             dist/ClaudePet-Setup-${{ steps.version.outputs.version }}.exe
             dist/ClaudePet-${{ steps.version.outputs.version }}-portable.zip
             dist/SHA256SUMS.txt
+            dist/ClaudePet-${{ steps.version.outputs.version }}.msix
 
       # After the GitHub release, so a Store problem never holds back the release itself.
       - name: Set up Microsoft Store CLI
