@@ -2,11 +2,13 @@ using ClaudePet.Core;
 
 namespace ClaudePet.Pet;
 
-public enum Motion { Idle, Walk, Run, Fall, Jump, Climb }
+/// <summary>What the pet is doing; <see cref="Carried"/> is set by the window while it is dragged.</summary>
+public enum Motion { Idle, Walk, Run, Fall, Jump, Climb, Hang, Carried }
 
 /// <summary>
 /// Moves the pet across the desktop: walks along the taskbar and window tops, falls off edges
-/// and lost windows, now and then jumps up onto a nearby window and climbs up the screen edges.
+/// and lost windows, now and then jumps up onto a nearby window, climbs up the screen edges and
+/// swings along the top of the screen until it drops.
 /// It stays on the monitor it is on; only dragging moves it to another one. Works in physical pixels;
 /// (X, Y) is the point between the pet's feet.
 /// </summary>
@@ -30,6 +32,9 @@ public sealed class PetWalker
 
     private const double FallOffChance = 0.6;
     private const double ClimbChance = 0.6;
+    private const double HangChance = 0.75;
+    /// <summary>Feet below the top of the screen while hanging, in pet heights (arms reach up to row 6 of 16).</summary>
+    public const double HangDepth = 10.0 / 16;
     /// <summary>Distance from the pet's center to its side, in pet widths.</summary>
     private const double HalfBody = 0.45;
 
@@ -41,13 +46,12 @@ public sealed class PetWalker
     private ScreenRect _groundRect;
     private int _checkedVersion;
     private bool _climbing;
+    private bool _hanging;
 
     public double X { get; private set; }
     public double Y { get; private set; }
     public int Direction { get; private set; } = 1;
     public Motion Motion { get; private set; }
-    /// <summary>Space needed above the feet (pet + speech bubble) to stay on screen.</summary>
-    public double Headroom { get; set; }
 
     /// <summary>Drops the pet at the given position; it falls until it lands on something.</summary>
     public void Place(double x, double y)
@@ -55,7 +59,7 @@ public sealed class PetWalker
         X = x;
         Y = y;
         _airborne = true;
-        _climbing = false;
+        _climbing = _hanging = false;
         _vx = _vy = 0;
         _ground = IntPtr.Zero;
         Motion = Motion.Fall;
@@ -67,6 +71,11 @@ public sealed class PetWalker
         if (_airborne)
         {
             Fly(dt, surfaces, petWidth, petHeight);
+            return;
+        }
+        if (_hanging)
+        {
+            Hang(dt, surfaces, For(mood), canWalk, petWidth, petHeight);
             return;
         }
         if (_climbing)
@@ -241,10 +250,12 @@ public sealed class PetWalker
             return;
         }
 
-        // Top of the screen: let go.
-        if (ny - Math.Max(Headroom, petHeight) <= WorkAreaAt(surfaces, X, Y - 1).Top)
+        // Top of the screen: swing along it, or let go.
+        var wa = WorkAreaAt(surfaces, X, Y - 1);
+        if (ny - petHeight * HangDepth <= wa.Top)
         {
-            StartFall(-Direction * petWidth * 0.5);
+            if (_random.NextDouble() < HangChance) StartHang(wa, petHeight, gait);
+            else StartFall(-Direction * petWidth * 0.5);
             return;
         }
 
@@ -252,10 +263,44 @@ public sealed class PetWalker
         Y = ny;
     }
 
+    private void StartHang(ScreenRect wa, double petHeight, Gait gait)
+    {
+        _climbing = false;
+        _hanging = true;
+        Y = wa.Top + petHeight * HangDepth;
+        Direction = -Direction; // away from the wall it came up
+        Motion = Motion.Hang;
+        _timer = Between(Math.Max(gait.WalkMin, 3), gait.WalkMax + 6);
+    }
+
+    /// <summary>Hand over hand along the top edge of the screen; drops at random.</summary>
+    private void Hang(double dt, DesktopSurfaces surfaces, Gait gait, bool canWalk, double petWidth, double petHeight)
+    {
+        Motion = Motion.Hang;
+        if (!canWalk) return;
+        _timer -= dt;
+        if (_timer <= 0 || _random.NextDouble() < dt * 0.12)
+        {
+            StartFall(Direction * petWidth * 0.3);
+            return;
+        }
+
+        var wa = WorkAreaAt(surfaces, X, Y - 1);
+        Y = wa.Top + petHeight * HangDepth; // e.g. a taskbar at the top changed size
+        double nx = X + Direction * Math.Max(gait.Speed * 0.7, 0.4) * petWidth * dt;
+        if (Direction < 0 ? nx - petWidth * HalfBody < wa.Left : nx + petWidth * HalfBody > wa.Right)
+        {
+            if (_random.NextDouble() < 0.5) StartFall(0);
+            else Direction = -Direction;
+            return;
+        }
+        X = nx;
+    }
+
     private void Land(Platform platform)
     {
         StandOn(platform);
-        _airborne = _climbing = false;
+        _airborne = _climbing = _hanging = false;
         _vx = _vy = 0;
         Motion = Motion.Idle;
         _timer = Between(0.4, 1.2);
@@ -302,7 +347,7 @@ public sealed class PetWalker
     private void StartFall(double vx)
     {
         _airborne = true;
-        _climbing = false;
+        _climbing = _hanging = false;
         _vx = vx;
         _vy = 0;
         _ground = IntPtr.Zero;

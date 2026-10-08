@@ -1,4 +1,5 @@
 using System.IO;
+using System.Windows;
 using System.Windows.Controls;
 using ClaudePet.Core;
 
@@ -9,7 +10,7 @@ public static class ProjectMenu
 {
     public static ContextMenu Build(AppSettings settings, Action<string> open, Action chooseOther, Action chooseRepos)
     {
-        var menu = new ContextMenu();
+        var menu = new ContextMenu { Style = (Style)Application.Current.FindResource("PetMenu") };
         void Add(string header, Action action, string? tooltip = null)
         {
             var item = new MenuItem { Header = header, ToolTip = tooltip };
@@ -17,7 +18,7 @@ public static class ProjectMenu
             menu.Items.Add(item);
         }
         void Heading(string text) =>
-            menu.Items.Add(new MenuItem { Header = text, IsEnabled = false, FontWeight = System.Windows.FontWeights.SemiBold });
+            menu.Items.Add(new MenuItem { Header = text.ToUpper(), Style = (Style)Application.Current.FindResource("PetMenuHeading") });
 
         var recent = settings.RecentProjects.Where(Directory.Exists).ToList();
         if (recent.Count > 0)
