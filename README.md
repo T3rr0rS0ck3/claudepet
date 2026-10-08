@@ -253,7 +253,7 @@ version, packs the Inno Setup installer and a portable zip, and publishes a GitH
 (`v1.2.3-beta`) become pre-releases. Existing tags can be rebuilt via *Actions → Release → Run workflow*.
 
 For the **Microsoft Store**, the workflow also builds an unsigned `ClaudePet-1.2.3.msix` ([packaging/](packaging/)) and
-attaches it to the run as an artifact. Upload it in Partner Center; the Store signs it. To try the package locally
+attaches it to the run and the release (it is not installable as is). Upload it in Partner Center; the Store signs it. To try the package locally
 (Developer Mode on): `.\build.ps1 -SelfContained -Version 1.2.3; .\packaging\build-msix.ps1 -Version 1.2.3 -Register`.
 Privacy policy for the listing: [PRIVACY.md](PRIVACY.md).
 
