@@ -395,7 +395,6 @@ public partial class App : Application
         Strings.Use(Settings.Language!);
         _pet.PetImage.ContextMenu = BuildContextMenu();
         _pet.ApplyLanguage();
-        _tray?.BuildMenu();
     }
 
     /// <summary>Keeps Claude Code's theme in line with <see cref="AppSettings.ClaudeMascotColor"/>.</summary>
