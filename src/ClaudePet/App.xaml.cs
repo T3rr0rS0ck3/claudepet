@@ -69,6 +69,7 @@ public partial class App : Application
         };
 
         Settings = AppSettings.Load();
+        Strings.Use(Settings.Language!);
         Settings.Save();
         _settingsWrite = File.GetLastWriteTimeUtc(DataPaths.SettingsFile);
         if (Settings.StartWithWindows != Autostart.IsEnabled()) Autostart.Set(Settings.StartWithWindows);
@@ -204,12 +205,12 @@ public partial class App : Application
         _pet.SetMood(mood, Working);
 
         var snapshot = _state.Snapshot;
-        CheckWarning("Session-Limit", snapshot?.FiveHour, _state.Session, Settings.SessionWarnThresholds, _sessionWarn, initial, now);
-        CheckWarning("Wochenlimit", snapshot?.SevenDay, _state.Week, Settings.WeekWarnThresholds, _weekWarn, initial, now);
+        CheckWarning(true, snapshot?.FiveHour, _state.Session, Settings.SessionWarnThresholds, _sessionWarn, initial, now);
+        CheckWarning(false, snapshot?.SevenDay, _state.Week, Settings.WeekWarnThresholds, _weekWarn, initial, now);
 
         _tray?.Update(mood, _state.Max == null
-            ? "Claudius – warte auf Daten"
-            : $"Claudius – Session {PercentText(_state.Session)} % · Woche {PercentText(_state.Week)} %");
+            ? Strings.TrayWaiting
+            : Strings.TrayUsage(Strings.Percent(PercentText(_state.Session)), Strings.Percent(PercentText(_state.Week))));
 
         _overlay?.Update(_state, _monitor.History, Settings, ClaudeCodeSetup.GetStatus(), now);
     }
@@ -220,7 +221,7 @@ public partial class App : Application
         public int Highest;
     }
 
-    private void CheckWarning(string label, RateWindow? window, double? value, List<int> thresholds,
+    private void CheckWarning(bool session, RateWindow? window, double? value, List<int> thresholds,
         WarnState state, bool initial, DateTimeOffset now)
     {
         if (window == null || value == null) return;
@@ -236,8 +237,8 @@ public partial class App : Application
         if (initial || !Settings.Notifications) return;
 
         string text = value >= 100
-            ? $"Dein {label} ist aufgebraucht. Reset {Format.DayTime(window.ResetsAtTime, now)}."
-            : $"Dein {label} ist bei {Format.Percent(value.Value)} %.";
+            ? Strings.LimitUsedUp(session, Format.DayTime(window.ResetsAtTime, now))
+            : Strings.LimitReached(session, Strings.Percent(Format.Percent(value.Value)));
         ShowNotification("Claudius", text);
     }
 
@@ -376,6 +377,7 @@ public partial class App : Application
     public void ApplySettings(bool save)
     {
         if (save) SaveSettings();
+        if (Settings.Language != Strings.Current) ApplyLanguage();
         SyncSessionHooks();
         ApplySessions();
         ApplyPetColor();
@@ -385,6 +387,15 @@ public partial class App : Application
         if (Settings.StartWithWindows != Autostart.IsEnabled()) Autostart.Set(Settings.StartWithWindows);
         SyncUpdateChecks();
         Evaluate(initial: true);
+    }
+
+    /// <summary>Menus that stay around are built again in the new language; windows pick it up when opened.</summary>
+    private void ApplyLanguage()
+    {
+        Strings.Use(Settings.Language!);
+        _pet.PetImage.ContextMenu = BuildContextMenu();
+        _pet.ApplyLanguage();
+        _tray?.BuildMenu();
     }
 
     /// <summary>Keeps Claude Code's theme in line with <see cref="AppSettings.ClaudeMascotColor"/>.</summary>
@@ -421,7 +432,7 @@ public partial class App : Application
                                        or System.Text.Json.JsonException)
         {
             Log.Write("Claude-Code-Theme konnte nicht geschrieben werden: " + ex);
-            ShowNotification("Claudius", "Claude-Code-Theme konnte nicht geschrieben werden: " + ex.Message);
+            ShowNotification("Claudius", Strings.ThemeNotWritten + ex.Message);
         }
     }
 
@@ -496,11 +507,7 @@ public partial class App : Application
         if (!Settings.VoiceChat) return;
         if (!ClaudeCodeSetup.IsVoiceEnabled())
         {
-            var answer = MessageBox.Show(
-                "Für den Sprachchat wird das Sprachdiktat von Claude Code eingeschaltet " +
-                $"(voice.enabled in {ClaudeCodeSetup.SettingsPath}, eine Sicherung wird angelegt).\n\n" +
-                "Voraussetzungen: Anmeldung mit einem claude.ai-Konto und Mikrofonzugriff für die Konsole " +
-                "(Windows-Einstellungen → Datenschutz → Mikrofon).\n\nEinschalten?",
+            var answer = MessageBox.Show(Strings.VoiceEnableQuestion(ClaudeCodeSetup.SettingsPath),
                 "Claudius", MessageBoxButton.YesNo, MessageBoxImage.Question);
             if (answer != MessageBoxResult.Yes) return;
             try
@@ -510,7 +517,7 @@ public partial class App : Application
             catch (Exception ex)
             {
                 Log.Write("Sprachdiktat konnte nicht eingeschaltet werden: " + ex);
-                MessageBox.Show("Fehler beim Schreiben der Claude-Code-Einstellungen:\n" + ex.Message, "Claudius",
+                MessageBox.Show(Strings.ClaudeSettingsError + ex.Message, "Claudius",
                     MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
@@ -554,9 +561,8 @@ public partial class App : Application
             catch (OperationCanceledException) { return; }
             if (process.ExitCode == 0) return;
         }
-        const string message = "Claude Desktop konnte nicht geöffnet werden. Ist die Desktop-App installiert und Claude Code aktuell (claude update)?";
-        Log.Write(message);
-        MessageBox.Show(message, "Claudius", MessageBoxButton.OK, MessageBoxImage.Error);
+        Log.Write(Strings.DesktopFailed);
+        MessageBox.Show(Strings.DesktopFailed, "Claudius", MessageBoxButton.OK, MessageBoxImage.Error);
     }
 
     private void OnGhostDropped(string? folder, bool overShell)
@@ -567,7 +573,7 @@ public partial class App : Application
 
     private void ChooseAndLaunch(bool voice)
     {
-        var dialog = new Microsoft.Win32.OpenFolderDialog { Title = "In welchem Ordner soll Claude starten?" };
+        var dialog = new Microsoft.Win32.OpenFolderDialog { Title = Strings.ChooseLaunchFolder };
         if (Settings.ReposPath != null) dialog.InitialDirectory = Settings.ReposPath;
         if (dialog.ShowDialog() == true) LaunchClaude(dialog.FolderName, voice);
     }
@@ -575,7 +581,7 @@ public partial class App : Application
     /// <summary>Asks for the folder containing all projects. Returns false if cancelled.</summary>
     private bool ChooseReposFolder()
     {
-        var dialog = new Microsoft.Win32.OpenFolderDialog { Title = "Ordner mit deinen Projekten wählen" };
+        var dialog = new Microsoft.Win32.OpenFolderDialog { Title = Strings.ChooseReposFolder };
         if (Settings.ReposPath != null) dialog.InitialDirectory = Settings.ReposPath;
         if (dialog.ShowDialog() != true) return false;
         Settings.ReposPath = dialog.FolderName;
@@ -599,19 +605,18 @@ public partial class App : Application
         switch (status)
         {
             case SetupStatus.Connected:
-                MessageBox.Show("Claude Code ist bereits mit Claudius verbunden.", title,
+                MessageBox.Show(Strings.AlreadyConnected, title,
                     MessageBoxButton.OK, MessageBoxImage.Information);
                 return;
             case SetupStatus.BridgeMissing:
-                MessageBox.Show($"ClaudePetBridge.exe wurde nicht gefunden:\n{ClaudeCodeSetup.BridgePath}", title,
+                MessageBox.Show(Strings.BridgeNotFound(ClaudeCodeSetup.BridgePath), title,
                     MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
         }
 
         string question = status == SetupStatus.OtherStatusLine
-            ? $"In {path} ist bereits eine statusLine eingetragen:\n\n{ClaudeCodeSetup.CurrentCommand()}\n\n" +
-              "Durch Claudius ersetzen? (Eine Sicherung wird angelegt.)"
-            : $"Claudius trägt sich als statusLine in\n{path}\nein. Fortfahren?";
+            ? Strings.ReplaceStatusLine(path, ClaudeCodeSetup.CurrentCommand())
+            : Strings.AddStatusLine(path);
         var answer = owner != null
             ? MessageBox.Show(owner, question, title, MessageBoxButton.YesNo, MessageBoxImage.Question)
             : MessageBox.Show(question, title, MessageBoxButton.YesNo, MessageBoxImage.Question);
@@ -620,14 +625,12 @@ public partial class App : Application
         try
         {
             ClaudeCodeSetup.Install(hooks: Settings.SessionMarks);
-            MessageBox.Show("Verbunden! Die Usage-Werte erscheinen nach der nächsten Antwort in Claude Code " +
-                            "(laufende Sessions übernehmen die Änderung automatisch).", title,
-                MessageBoxButton.OK, MessageBoxImage.Information);
+            MessageBox.Show(Strings.Connected, title, MessageBoxButton.OK, MessageBoxImage.Information);
         }
         catch (Exception ex)
         {
             Log.Write("Claude Code konnte nicht verbunden werden: " + ex);
-            MessageBox.Show("Fehler beim Schreiben der Claude-Code-Einstellungen:\n" + ex.Message, title,
+            MessageBox.Show(Strings.ClaudeSettingsError + ex.Message, title,
                 MessageBoxButton.OK, MessageBoxImage.Error);
         }
         Evaluate(initial: false);
@@ -671,7 +674,7 @@ public partial class App : Application
             Settings.NotifiedUpdate = update.VersionText;
             SaveSettings();
             if (Settings.SpeechBubbles) Say("Update");
-            else ShowNotification("Claudius", $"Version {update.VersionText} ist verfügbar (Rechtsklick aufs Pet).");
+            else ShowNotification("Claudius", Strings.UpdateNotification(update.VersionText));
         }
         return AvailableUpdate;
     }
@@ -690,8 +693,7 @@ public partial class App : Application
         }
 
         const string title = "Claudius – Update";
-        string question = $"Version {update.VersionText} installieren?\n\n" +
-                          "Claudius wird dafür kurz geschlossen und danach automatisch neu gestartet.";
+        string question = Strings.InstallUpdateQuestion(update.VersionText);
         var answer = owner != null
             ? MessageBox.Show(owner, question, title, MessageBoxButton.YesNo, MessageBoxImage.Question)
             : MessageBox.Show(question, title, MessageBoxButton.YesNo, MessageBoxImage.Question);
@@ -707,7 +709,7 @@ public partial class App : Application
         catch (Exception ex)
         {
             Log.Write("Update fehlgeschlagen: " + ex);
-            MessageBox.Show("Das Update konnte nicht installiert werden:\n" + ex.Message, title,
+            MessageBox.Show(Strings.UpdateFailed + ex.Message, title,
                 MessageBoxButton.OK, MessageBoxImage.Error);
         }
         finally
@@ -718,7 +720,7 @@ public partial class App : Application
 
     /// <summary>Menu text for the available update, depending on whether it can be installed in place.</summary>
     public string UpdateMenuText => AvailableUpdate is not { } update ? ""
-        : Updater.IsInstalled ? $"Update auf {update.VersionText} installieren…" : $"Version {update.VersionText} herunterladen…";
+        : Updater.IsInstalled ? Strings.InstallUpdateMenu(update.VersionText) : Strings.DownloadVersionMenu(update.VersionText);
 
     public static void OpenUrl(string url) =>
         System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(url) { UseShellExecute = true });
@@ -742,26 +744,26 @@ public partial class App : Application
             return item;
         }
 
-        Item("Usage anzeigen", ShowUsage);
-        Item("Claude öffnen…", ShowProjectMenu);
-        var voice = Item("Sprachchat starten…", StartVoiceChat);
-        Item("Hallo sagen", () =>
+        Item(Strings.ShowUsage, ShowUsage);
+        Item(Strings.OpenClaude, ShowProjectMenu);
+        var voice = Item(Strings.StartVoiceChat, StartVoiceChat);
+        Item(Strings.SayHello, () =>
         {
             _pet.Cheer(TimeSpan.FromSeconds(2));
             if (Settings.SpeechBubbles) Say("Poke");
         });
         menu.Items.Add(new Separator());
-        var onTop = Item("Immer im Vordergrund", ToggleAlwaysOnTop);
+        var onTop = Item(Strings.AlwaysOnTop, ToggleAlwaysOnTop);
         onTop.IsCheckable = true;
-        var walk = Item("Herumlaufen", ToggleWalkAround);
+        var walk = Item(Strings.WalkAround, ToggleWalkAround);
         walk.IsCheckable = true;
-        Item("In den Tray minimieren", () => _pet.Hide());
+        Item(Strings.MinimizeToTray, () => _pet.Hide());
         menu.Items.Add(new Separator());
         var update = Item("", () => InstallUpdate());
-        Item("Claude Code verbinden…", () => ConnectClaudeCode(null));
-        Item("Einstellungen…", ShowSettings);
+        Item(Strings.ConnectMenu, () => ConnectClaudeCode(null));
+        Item(Strings.SettingsMenu, ShowSettings);
         menu.Items.Add(new Separator());
-        Item("Beenden", Quit);
+        Item(Strings.Quit, Quit);
 
         menu.Opened += (_, _) =>
         {

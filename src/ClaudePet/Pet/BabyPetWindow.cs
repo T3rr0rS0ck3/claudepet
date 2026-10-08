@@ -96,13 +96,7 @@ public sealed class BabyPetWindow : Window
         _image.Source = Sprite.Render(frame with { Mark = mark });
     }
 
-    private void UpdateToolTip() => ToolTip = _session.State switch
-    {
-        SessionStates.Question => $"{_session.Folder}: Claude wartet auf dich",
-        SessionStates.Done => $"{_session.Folder}: Claude ist fertig",
-        SessionStates.Working => $"{_session.Folder}: Claude arbeitet",
-        _ => _session.Folder,
-    };
+    private void UpdateToolTip() => ToolTip = Strings.SessionTip(_session.Folder, _session.State);
 
     private const int GWL_EXSTYLE = -20;
     private const int WS_EX_TOOLWINDOW = 0x00000080;

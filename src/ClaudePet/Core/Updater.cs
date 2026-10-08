@@ -68,7 +68,7 @@ public static class Updater
     /// </summary>
     public static async Task InstallAsync(UpdateInfo update)
     {
-        if (update.ChecksumUrl == null) throw new InvalidOperationException("Das Release enthält keine SHA256SUMS.txt.");
+        if (update.ChecksumUrl == null) throw new InvalidOperationException(Strings.NoChecksums);
 
         string dir = Path.Combine(Path.GetTempPath(), "ClaudePet-Update");
         Directory.CreateDirectory(dir);
@@ -77,7 +77,7 @@ public static class Updater
 
         string sums = await Http.GetStringAsync(update.ChecksumUrl);
         string expected = ExpectedHash(sums, fileName)
-                          ?? throw new InvalidOperationException($"Keine Prüfsumme für {fileName} gefunden.");
+                          ?? throw new InvalidOperationException(Strings.NoChecksumFor(fileName));
 
         await using (var download = await Http.GetStreamAsync(update.SetupUrl))
         await using (var file = File.Create(setup))
@@ -89,7 +89,7 @@ public static class Updater
         if (!actual.Equals(expected, StringComparison.OrdinalIgnoreCase))
         {
             File.Delete(setup);
-            throw new InvalidOperationException("Die Prüfsumme des Downloads stimmt nicht – Update abgebrochen.");
+            throw new InvalidOperationException(Strings.ChecksumMismatch);
         }
 
         Process.Start(new ProcessStartInfo(setup, "/VERYSILENT /SUPPRESSMSGBOXES /NORESTART /RESTARTAPP=1")

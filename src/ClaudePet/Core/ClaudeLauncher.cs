@@ -32,7 +32,7 @@ public static class ClaudeLauncher
         if (!Directory.Exists(folder)) throw new DirectoryNotFoundException(folder);
         var env = UserEnvironment();
         string claude = FindClaude(env)
-            ?? throw new FileNotFoundException("Claude Code wurde nicht gefunden (claude ist nicht im PATH).");
+            ?? throw new FileNotFoundException(Strings.ClaudeNotFound);
 
         var terminal = settings.Terminal;
         string? wt = FindWindowsTerminal(env);
@@ -74,7 +74,7 @@ public static class ClaudeLauncher
         catch (Win32Exception ex)
         {
             throw new InvalidOperationException((terminal == TerminalKind.Desktop
-                ? "Claude Desktop konnte nicht geöffnet werden: " : "Konsole konnte nicht gestartet werden: ") + ex.Message, ex);
+                ? Strings.DesktopOpenFailed : Strings.ConsoleStartFailed) + ex.Message, ex);
         }
 
         Remember(settings, folder);
