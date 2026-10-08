@@ -47,22 +47,12 @@
         <desktop:Extension Category="windows.startupTask" Executable="ClaudePet.exe" EntryPoint="Windows.FullTrustApplication">
           <desktop:StartupTask TaskId="ClaudePetStartup" Enabled="false" DisplayName="Claudius - Claude Usage App" />
         </desktop:Extension>
-      </Extensions>
-    </Application>
-
-    <!--
-      Claude Code runs the bridge for its statusLine and hooks. The install folder changes with every
-      update and is closed to other programs, so it gets a stable alias in %LOCALAPPDATA%\Microsoft\WindowsApps.
-    -->
-    <Application Id="Bridge" Executable="ClaudePetBridge.exe" EntryPoint="Windows.FullTrustApplication">
-      <uap:VisualElements
-        DisplayName="Claudius Bridge"
-        Description="Passes Claude Code's usage to the pet"
-        BackgroundColor="transparent"
-        Square150x150Logo="Assets\Square150x150Logo.png"
-        Square44x44Logo="Assets\Square44x44Logo.png"
-        AppListEntry="none" />
-      <Extensions>
+        <!--
+          Claude Code runs the bridge for its statusLine and hooks. The install folder changes with every
+          update and is closed to other programs, so the bridge gets a stable alias in
+          %LOCALAPPDATA%\Microsoft\WindowsApps. It hangs off the main app: the Store rejects a second
+          app without UI (AppListEntry="none").
+        -->
         <uap3:Extension Category="windows.appExecutionAlias" Executable="ClaudePetBridge.exe" EntryPoint="Windows.FullTrustApplication">
           <uap3:AppExecutionAlias>
             <desktop:ExecutionAlias Alias="ClaudePetBridge.exe" />
