@@ -15,14 +15,14 @@ public sealed class SessionMonitor
 {
     private DateTime _lastWrite;
     private Dictionary<string, SessionInfo> _stored = new();
-    private Dictionary<string, string> _shown = new();
+    private Dictionary<string, (string State, string? Model)> _shown = new();
     private bool _loaded;
 
     public IReadOnlyList<SessionView> Sessions { get; private set; } = [];
 
     /// <summary>A session just started asking (state = question) or finished (state = done).</summary>
     public event Action<SessionView>? Attention;
-    /// <summary>The list or a state changed.</summary>
+    /// <summary>The list, a state or a model changed.</summary>
     public event Action? Changed;
 
     /// <summary>Called once a second; cheap when nothing changed.</summary>
@@ -47,7 +47,7 @@ public sealed class SessionMonitor
             .Select(s => new SessionView(s.Key, s.Value.Folder, EffectiveState(s.Value), s.Value.IsDesktop, s.Value))
             .ToList();
 
-        var shown = sessions.ToDictionary(s => s.Id, s => s.State);
+        var shown = sessions.ToDictionary(s => s.Id, s => (s.State, s.Info.Model));
         bool changed = shown.Count != _shown.Count || shown.Any(s => !_shown.TryGetValue(s.Key, out var old) || old != s.Value);
         if (!changed) return;
 
@@ -55,7 +55,7 @@ public sealed class SessionMonitor
         {
             foreach (var session in sessions)
             {
-                bool entered = !_shown.TryGetValue(session.Id, out var old) || old != session.State;
+                bool entered = !_shown.TryGetValue(session.Id, out var old) || old.State != session.State;
                 if (entered && session.State is SessionStates.Question or SessionStates.Done) Attention?.Invoke(session);
             }
         }

@@ -10,8 +10,8 @@ namespace ClaudePet.Pet;
 
 /// <summary>
 /// A small pet for one Claude Code session. It trots after the big pet and shows that session's
-/// "?" while a question waits; the tooltip names the folder and its state. A click brings the
-/// session's window to the front.
+/// "?" while a question waits and wears the outfit for that session's model; the tooltip names the folder
+/// and its state. A click brings the session's window to the front.
 /// </summary>
 public sealed class BabyPetWindow : Window
 {
@@ -19,6 +19,7 @@ public sealed class BabyPetWindow : Window
 
     private readonly Image _image = new() { Stretch = Stretch.Fill };
     private SessionView _session;
+    private Outfit _outfit;
     private Motion _motion = Motion.Idle;
     private int _direction = 1;
 
@@ -29,9 +30,10 @@ public sealed class BabyPetWindow : Window
     /// <summary>Left click on the baby: the user wants to go to its session.</summary>
     public event Action<SessionView>? Clicked;
 
-    public BabyPetWindow(SessionView session, double petScale, bool topmost)
+    public BabyPetWindow(SessionView session, Outfit outfit, double petScale, bool topmost)
     {
         _session = session;
+        _outfit = outfit;
         WindowStyle = WindowStyle.None;
         AllowsTransparency = true;
         Background = Brushes.Transparent;
@@ -62,9 +64,10 @@ public sealed class BabyPetWindow : Window
         Height = _image.Height = Sprite.Height * petScale * SizeFactor;
     }
 
-    public void SetSession(SessionView session)
+    public void SetSession(SessionView session, Outfit outfit)
     {
         _session = session;
+        _outfit = outfit;
         Title = "Claudius – " + session.Folder;
         UpdateToolTip();
     }
@@ -99,7 +102,7 @@ public sealed class BabyPetWindow : Window
         var mark = _session.State == SessionStates.Question ? Mark.Question : Mark.None;
         bool working = _session.State == SessionStates.Working;
         var frame = PetAnimator.Frame(mood, working && _motion == Motion.Idle, false, t, _motion, _direction);
-        _image.Source = Sprite.Render(frame with { Mark = mark });
+        _image.Source = Sprite.Render(frame with { Mark = mark, Outfit = _outfit });
     }
 
     private void UpdateToolTip() => ToolTip = Strings.SessionTip(_session.Folder, _session.State);

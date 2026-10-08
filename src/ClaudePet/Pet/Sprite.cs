@@ -13,6 +13,8 @@ public enum Mark
     Heart1, Heart2, Cookie, Crumbs, Ball1, Ball2, Ball3,
 }
 public enum Tint { Normal, Hot, Pale, Ghost }
+/// <summary>Something the pet wears, drawn over the body: so far one per Claude model (Opus, Sonnet, Haiku).</summary>
+public enum Outfit { None, Crown, Sunglasses, Flower, WizardHat }
 
 /// <summary>Everything that describes one rendered frame of the pet.</summary>
 public readonly record struct SpriteFrame(
@@ -25,7 +27,8 @@ public readonly record struct SpriteFrame(
     Mark Mark = Mark.None,
     int Sweat = 0,
     bool Blush = false,
-    Tint Tint = Tint.Normal);
+    Tint Tint = Tint.Normal,
+    Outfit Outfit = Outfit.None);
 
 /// <summary>
 /// Procedural pixel-art renderer for the Claude-inspired pet: a chunky orange block
@@ -49,6 +52,15 @@ public static class Sprite
     private const uint BallColor = 0xFF5B9BE0;
     private const uint MicColor = 0xFFC9CAD4;
     private const uint HandleColor = 0xFF3A3A42;
+    private const uint GoldColor = 0xFFF2C14E;
+    private const uint GoldShade = 0xFFC48A2C;
+    private const uint JewelColor = 0xFFE5484D;
+    private const uint LensColor = 0xFF22232B;
+    private const uint GlintColor = 0xFF8FA6CC;
+    private const uint PetalColor = 0xFFFFFFFF;
+    private const uint LeafColor = 0xFF5FAE4E;
+    private const uint HatColor = 0xFF7B5CC4;
+    private const uint HatShade = 0xFF5A3F9A;
 
     /// <summary>Claude orange, the default body color.</summary>
     public const uint DefaultBodyColor = 0xFFD97757;
@@ -78,6 +90,18 @@ public static class Sprite
         Cache.Clear();
         Version++;
     }
+
+    /// <summary>
+    /// The outfit for a Claude model, by name ("Opus 4.1") or id ("claude-sonnet-4-5"): Opus wears a crown,
+    /// Sonnet sunglasses, Haiku a flower, Fable a wizard's hat; unknown models nothing.
+    /// </summary>
+    public static Outfit OutfitFor(string? model) =>
+        model == null ? Outfit.None
+        : model.Contains("opus", StringComparison.OrdinalIgnoreCase) ? Outfit.Crown
+        : model.Contains("sonnet", StringComparison.OrdinalIgnoreCase) ? Outfit.Sunglasses
+        : model.Contains("haiku", StringComparison.OrdinalIgnoreCase) ? Outfit.Flower
+        : model.Contains("fable", StringComparison.OrdinalIgnoreCase) ? Outfit.WizardHat
+        : Outfit.None;
 
     public static BitmapSource Render(SpriteFrame frame)
     {
@@ -177,8 +201,12 @@ public static class Sprite
                     Set(ex, by + 2, EyeColor); Set(ex, by + 3, EyeColor); break;
             }
         }
-        Eye(c0 + 3, -1);
-        Eye(c0 + 10, 1);
+        // Behind sunglasses the eyes stay hidden, even where looking up or down would peek past the lenses
+        if (f.Outfit != Outfit.Sunglasses)
+        {
+            Eye(c0 + 3, -1);
+            Eye(c0 + 10, 1);
+        }
 
         // Mouth
         switch (f.Mouth)
@@ -211,6 +239,35 @@ public static class Sprite
         {
             Set(c0 + 1, by + 4, BlushColor); Set(c0 + 2, by + 4, BlushColor);
             Set(c0 + 11, by + 4, BlushColor); Set(c0 + 12, by + 4, BlushColor);
+        }
+
+        // Outfit; headwear sits on the left half of the head, out of the way of the marks above its middle and right
+        switch (f.Outfit)
+        {
+            // Opus: a golden crown with a red jewel, sitting on the head
+            case Outfit.Crown:
+                Glyph(c0, GoldColor, by - 3, "X.X.X", "XXXXX", "XXXXX");
+                Glyph(c0, GoldShade, by - 3, ".....", ".....", "XXXXX");
+                Set(c0 + 2, by - 2, JewelColor);
+                break;
+            // Sonnet: dark sunglasses over both eyes, with a glint on each lens
+            case Outfit.Sunglasses:
+                Glyph(c0, LensColor, by + 1, "XXXXXXXXXXXXXX", ".XXXXX..XXXXX.", "..XXX....XXX..");
+                Set(c0 + 2, by + 2, GlintColor);
+                Set(c0 + 9, by + 2, GlintColor);
+                break;
+            // Haiku: a little daisy tucked onto the head
+            case Outfit.Flower:
+                Glyph(c0 + 1, PetalColor, by - 3, ".X.", "X.X", ".X.");
+                Set(c0 + 2, by - 2, GoldColor);
+                Set(c0 + 3, by - 1, LeafColor);
+                break;
+            // Fable: a pointed wizard's hat with a little star, its tip bent to the side
+            case Outfit.WizardHat:
+                Glyph(c0 - 1, HatColor, by - 5, "....X.", "...XX.", "..XXX.", ".XXXX.");
+                Glyph(c0 - 1, HatShade, by - 1, "XXXXXX");
+                Set(c0 + 2, by - 3, GoldColor);
+                break;
         }
 
         // Sweat drops next to the head

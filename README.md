@@ -27,6 +27,7 @@ until the limit resets.
   (can be turned off). Optionally it also walks or hops over to the neighbouring monitor, following how your
   monitors are arranged in Windows
 - 🎨 **Your color** — pick any color for the pet; the usage overlay, menus and speech bubbles use it as accent color
+- 👑 **Dressed for the model** — a crown for Opus, sunglasses for Sonnet, a little flower for Haiku, a wizard's hat for Fable (can be turned off)
 - 📊 **Usage overlay** — click the pet to see session and weekly usage, reset times and a forecast
 - 🎭 **7 moods** with their own animations, based on the higher of the two usage values
 - 💬 **Speech bubbles** when thresholds are crossed, e.g. *"90 %! 😰"* — not constantly chattering
@@ -162,7 +163,8 @@ Once Claude Code is connected, the pet also registers a few [hooks](https://code
 - When a session finished its turn, a bubble like *"my-project: Claude is done!"* pops up; no mark stays on the pet.
 - With several sessions the "?" stays as long as any of them waits for an answer.
 - *A baby pet for each Claude session* (settings): a small pet per running session follows the pet and shows that
-  session's "?"; its tooltip names the folder and whether the session works, waits or is done.
+  session's "?" and wears the outfit for that session's model; its tooltip names the folder and whether the
+  session works, waits or is done.
 - **Jump to a session**: clicking the "?" brings the window of the session that asked to the front, clicking a baby pet
   that of its session: the console window, the Windows Terminal window with the right tab selected, or Claude Desktop.
   The hook notes the window when the session starts and asks; sessions from before that are looked for by folder name.
@@ -183,7 +185,7 @@ Desktop app as well. The normal Desktop chat offers no hooks and is not supporte
 ## Configuration
 
 Most options are available via right-click → **Settings…**: language, repo folder, console, ghost drag,
-voice chat, size, pet color, always on top, animations, walking around, crossing monitors, emotes, autostart, update checks, update interval, warning thresholds, mood thresholds,
+voice chat, size, pet color, always on top, animations, walking around, crossing monitors, emotes, model outfits, autostart, update checks, update interval, warning thresholds, mood thresholds,
 speech bubbles, notifications and your name.
 
 Everything lives in `%LOCALAPPDATA%\ClaudePet\settings.json`, and manual edits are picked up live.

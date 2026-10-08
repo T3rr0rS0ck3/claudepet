@@ -34,6 +34,7 @@ public partial class SettingsWindow : Window
         WalkAroundBox.IsChecked = settings.WalkAround;
         CrossMonitorsBox.IsChecked = settings.CrossMonitors;
         EmotesBox.IsChecked = settings.Emotes;
+        ModelOutfitsBox.IsChecked = settings.ModelOutfits;
         UpdatesBox.IsChecked = settings.CheckForUpdates;
         VersionText.Text = Strings.InstalledVersion(Updater.Format(Updater.CurrentVersion))
             + (Updater.IsDevBuild ? Strings.DevBuildSuffix : Updater.IsInstalled ? "" : Strings.PortableSuffix);
@@ -249,6 +250,7 @@ public partial class SettingsWindow : Window
             _settings.WalkAround = WalkAroundBox.IsChecked == true;
             _settings.CrossMonitors = CrossMonitorsBox.IsChecked == true;
             _settings.Emotes = EmotesBox.IsChecked == true;
+            _settings.ModelOutfits = ModelOutfitsBox.IsChecked == true;
             _settings.CheckForUpdates = UpdatesBox.IsChecked == true;
             _settings.SessionMarks = SessionMarksBox.IsChecked == true;
             _settings.SessionPets = SessionPetsBox.IsChecked == true;

@@ -56,6 +56,7 @@ public partial class PetWindow : Window
     private bool _petOnTop;
     private bool _listening;
     private Mark _sessionMark = Mark.None;
+    private Outfit _outfit = Outfit.None;
     private IReadOnlyList<SessionView> _sessions = [];
     private readonly Dictionary<string, BabyPetWindow> _babies = new();
     private readonly DispatcherTimer _babyTimer = new() { Interval = TimeSpan.FromMilliseconds(1000.0 / 30) };
@@ -187,6 +188,14 @@ public partial class PetWindow : Window
         Render();
     }
 
+    /// <summary>What the pet wears, e.g. the outfit for the Claude model in use.</summary>
+    public void SetOutfit(Outfit outfit)
+    {
+        if (outfit == _outfit) return;
+        _outfit = outfit;
+        Render();
+    }
+
     /// <summary>Short happy animation, e.g. after a reset.</summary>
     public void Cheer(TimeSpan duration)
     {
@@ -223,9 +232,9 @@ public partial class PetWindow : Window
 
     /// <summary>
     /// Shows "?" while a session waits for an answer and, if enabled, a baby pet per session that
-    /// trots after the pet.
+    /// trots after the pet, with <paramref name="outfits"/> dressed for its session's model.
     /// </summary>
-    public void SetSessions(IReadOnlyList<SessionView> sessions, string? overall, bool marks, bool babies)
+    public void SetSessions(IReadOnlyList<SessionView> sessions, string? overall, bool marks, bool babies, bool outfits)
     {
         _sessions = sessions;
         var mark = marks && overall == SessionStates.Question ? Mark.Question : Mark.None;
@@ -243,12 +252,13 @@ public partial class PetWindow : Window
         }
         foreach (var session in wanted)
         {
+            var outfit = outfits ? Sprite.OutfitFor(session.Info.Model) : Outfit.None;
             if (_babies.TryGetValue(session.Id, out var baby))
             {
-                baby.SetSession(session);
+                baby.SetSession(session, outfit);
                 continue;
             }
-            _babies[session.Id] = baby = new BabyPetWindow(session, _scale, _topmost);
+            _babies[session.Id] = baby = new BabyPetWindow(session, outfit, _scale, _topmost);
             baby.Clicked += s => SessionClicked?.Invoke(s);
             if (IsVisible) baby.Show();
         }
@@ -341,7 +351,7 @@ public partial class PetWindow : Window
             long et = (long)((DateTime.Now - _emoteStart).TotalSeconds * PetAnimator.TicksPerSecond);
             if (et < PetAnimator.EmoteTicks(emote))
             {
-                PetImage.Source = Sprite.Render(PetAnimator.EmoteFrame(emote, et));
+                PetImage.Source = Sprite.Render(PetAnimator.EmoteFrame(emote, et) with { Outfit = _outfit });
                 return;
             }
             _emote = null;
@@ -352,7 +362,7 @@ public partial class PetWindow : Window
         var frame = PetAnimator.Frame(_mood, _working, cheering, t, _pose.Motion, _pose.Direction, _listening);
         if (_lookAt is { } eyes) frame = frame with { Eyes = eyes };
         if (_sessionMark != Mark.None) frame = frame with { Mark = _sessionMark };
-        PetImage.Source = Sprite.Render(frame);
+        PetImage.Source = Sprite.Render(frame with { Outfit = _outfit });
     }
 
     // ---------------------------------------------------------------- walking around

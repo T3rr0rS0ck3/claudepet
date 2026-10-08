@@ -42,16 +42,16 @@ static string Run()
     var previous = UsageStore.TryRead(DataPaths.UsageFile);
 
     RateWindow? fiveHour = null, sevenDay = null;
-    string? model = null;
+    string? model = null, sessionId = null;
 
     if (!string.IsNullOrWhiteSpace(input))
     {
         using var doc = JsonDocument.Parse(input);
         var root = doc.RootElement;
 
-        if (root.TryGetProperty("model", out var m) && m.ValueKind == JsonValueKind.Object &&
-            m.TryGetProperty("display_name", out var name) && name.ValueKind == JsonValueKind.String)
-            model = name.GetString();
+        model = ModelName(root);
+        if (root.TryGetProperty("session_id", out var id) && id.ValueKind == JsonValueKind.String)
+            sessionId = id.GetString();
 
         if (root.TryGetProperty("rate_limits", out var limits) && limits.ValueKind == JsonValueKind.Object)
         {
@@ -59,6 +59,8 @@ static string Run()
             sevenDay = ParseWindow(limits, "seven_day");
         }
     }
+
+    RememberModel(sessionId, model);
 
     if (fiveHour != null || sevenDay != null)
     {
@@ -90,6 +92,39 @@ static string Run()
     return previous != null
         ? Format(previous, model, now)
         : (model != null ? $"[{model}] " : "") + (German() ? "Claudius: warte auf Usage-Daten" : "Claudius: waiting for usage data");
+}
+
+// The model's display name ("Opus 4.1"), else its id; hook input may carry it as a plain string.
+static string? ModelName(JsonElement root)
+{
+    if (!root.TryGetProperty("model", out var m)) return null;
+    if (m.ValueKind == JsonValueKind.String) return m.GetString() is { Length: > 0 } plain ? plain : null;
+    if (m.ValueKind != JsonValueKind.Object) return null;
+    foreach (var key in new[] { "display_name", "id" })
+    {
+        if (m.TryGetProperty(key, out var v) && v.ValueKind == JsonValueKind.String && v.GetString() is { Length: > 0 } name)
+            return name;
+    }
+    return null;
+}
+
+// Stores the session's model for its baby pet's outfit. The status line runs often, so sessions.json is
+// only written when the model changed; sessions the hooks do not know (yet) are left alone.
+static void RememberModel(string? id, string? model)
+{
+    if (id is not { Length: > 0 } || model == null) return;
+    try
+    {
+        if (!SessionStore.Read().TryGetValue(id, out var known) || known.Model == model) return;
+        SessionStore.Update(sessions =>
+        {
+            if (sessions.TryGetValue(id, out var info)) info.Model = model;
+        });
+    }
+    catch (Exception ex)
+    {
+        Log(ex.ToString()); // the status line itself must still be printed
+    }
 }
 
 // The app's UI language; English unless settings.json says German (saved before the choice existed: German too).
@@ -166,6 +201,7 @@ static void RunHook()
         info.UpdatedAt = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
         info.Transcript = transcript ?? info.Transcript;
         info.TranscriptLength = length;
+        info.Model = ModelName(root) ?? info.Model;
         if (host.Window != IntPtr.Zero)
         {
             info.Window = (long)host.Window;
