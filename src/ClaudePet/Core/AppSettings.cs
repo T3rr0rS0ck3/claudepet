@@ -33,9 +33,9 @@ public sealed class AppSettings
     public bool Animations { get; set; } = true;
     /// <summary>Walk around on the taskbar and on top of open windows.</summary>
     public bool WalkAround { get; set; } = true;
-    /// <summary>"?" when a Claude Code session asks something, "!" when it is done (via Claude Code hooks).</summary>
+    /// <summary>"?" when a Claude Code session asks something, a bubble when it is done (via Claude Code hooks).</summary>
     public bool SessionMarks { get; set; } = true;
-    /// <summary>A small pet per running Claude Code session, showing that session's ?/!.</summary>
+    /// <summary>A small pet per running Claude Code session, showing that session's "?".</summary>
     public bool SessionPets { get; set; }
     public bool StartWithWindows { get; set; }
     /// <summary>Body color as "#RRGGBB"; shade and mood tints are derived from it.</summary>

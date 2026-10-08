@@ -65,11 +65,9 @@ public sealed class SessionMonitor
         Changed?.Invoke();
     }
 
-    /// <summary>The most urgent state over all sessions: a question beats done.</summary>
+    /// <summary>Question while any session waits for an answer, otherwise null.</summary>
     public string? Overall =>
-        Sessions.Any(s => s.State == SessionStates.Question) ? SessionStates.Question
-        : Sessions.Any(s => s.State == SessionStates.Done) ? SessionStates.Done
-        : null;
+        Sessions.Any(s => s.State == SessionStates.Question) ? SessionStates.Question : null;
 
     /// <summary>
     /// Some session is working and showed signs of life lately. Lets the pet look busy without status
