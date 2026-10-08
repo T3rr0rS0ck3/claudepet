@@ -39,6 +39,7 @@ public partial class SettingsWindow : Window
         TerminalBox.SelectedValuePath = "Key";
         TerminalBox.SelectedValue = settings.Terminal;
         GhostDragBox.IsChecked = settings.GhostDrag;
+        VoiceBox.IsChecked = settings.VoiceChat;
 
         string? claude = ClaudeLauncher.FindClaude();
         ClaudeStatusText.Text = claude != null
@@ -118,7 +119,21 @@ public partial class SettingsWindow : Window
             string reposPath = ReposPathBox.Text.Trim().Trim('"');
             if (reposPath.Length > 0 && !Directory.Exists(reposPath))
                 throw new FormatException("Repo-Ordner existiert nicht.");
-            for (int i = 1; i < moods.Count; i++)
+
+            // Switching voice chat off also switches Claude Code's dictation off again. That setting lives in
+            // Claude Code's own settings.json, so write it first: if it fails, nothing is applied.
+            if (_settings.VoiceChat && VoiceBox.IsChecked != true)
+            {
+                try
+                {
+                    ClaudeCodeSetup.SetVoiceEnabled(false);
+                }
+                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidDataException
+                                               or System.Text.Json.JsonException)
+                {
+                    throw new FormatException("Claude-Code-Einstellungen konnten nicht geschrieben werden: " + ex.Message);
+                }
+            }            for (int i = 1; i < moods.Count; i++)
                 if (moods[i] < moods[i - 1]) throw new FormatException("Zustandsgrenzen müssen aufsteigend sein.");
 
             _settings.PetScale = ScaleSlider.Value;
@@ -141,6 +156,7 @@ public partial class SettingsWindow : Window
             _settings.ReposPath = reposPath.Length > 0 ? reposPath : null;
             _settings.Terminal = TerminalBox.SelectedValue is TerminalKind terminal ? terminal : TerminalKind.Auto;
             _settings.GhostDrag = GhostDragBox.IsChecked == true;
+            _settings.VoiceChat = VoiceBox.IsChecked == true;
 
             _app.ApplySettings(save: true);
             Close();

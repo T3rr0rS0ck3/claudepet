@@ -81,6 +81,30 @@ public static class ClaudeCodeSetup
         Save(root);
     }
 
+    /// <summary>Whether Claude Code's voice dictation (<c>voice.enabled</c>) is switched on.</summary>
+    public static bool IsVoiceEnabled()
+    {
+        try
+        {
+            return Load()?["voice"]?["enabled"]?.GetValue<bool>() == true;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    /// <summary>Sets <c>voice.enabled</c>; other voice options (e.g. the mode) are kept.</summary>
+    public static void SetVoiceEnabled(bool enabled)
+    {
+        if (IsVoiceEnabled() == enabled) return;
+        var root = Load() ?? new JsonObject();
+        Backup();
+        if (root["voice"] is not JsonObject voice) root["voice"] = voice = new JsonObject();
+        voice["enabled"] = enabled;
+        Save(root);
+    }
+
     private static JsonObject? Load()
     {
         if (!File.Exists(SettingsPath)) return null;
