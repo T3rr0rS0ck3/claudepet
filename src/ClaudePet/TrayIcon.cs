@@ -7,52 +7,60 @@ namespace ClaudePet;
 /// <summary>Notification-area icon (WinForms, since WPF has none).</summary>
 public sealed class TrayIcon : IDisposable
 {
+    private readonly App _app;
     private readonly Forms.NotifyIcon _icon = new();
-    private readonly Forms.ToolStripMenuItem _petVisible;
-    private readonly Forms.ToolStripMenuItem _alwaysOnTop;
-    private readonly Forms.ToolStripMenuItem _walkAround;
     private readonly Dictionary<PetMood, System.Drawing.Icon> _icons = new();
     private PetMood? _mood;
     private int _spriteVersion = Sprite.Version;
 
     public TrayIcon(App app)
     {
-        var menu = new Forms.ContextMenuStrip();
-        menu.Items.Add("Usage anzeigen", null, (_, _) => app.ShowUsage());
-        menu.Items.Add("Claude öffnen…", null, (_, _) => app.ShowProjectMenu());
-        var voice = new Forms.ToolStripMenuItem("Sprachchat starten…", null, (_, _) => app.StartVoiceChat());
-        menu.Items.Add(voice);
-        _petVisible = new Forms.ToolStripMenuItem("Pet anzeigen", null, (_, _) => app.TogglePetVisible());
-        _alwaysOnTop = new Forms.ToolStripMenuItem("Immer im Vordergrund", null, (_, _) => app.ToggleAlwaysOnTop());
-        _walkAround = new Forms.ToolStripMenuItem("Herumlaufen", null, (_, _) => app.ToggleWalkAround());
-        menu.Items.Add(_petVisible);
-        menu.Items.Add(_alwaysOnTop);
-        menu.Items.Add(_walkAround);
-        menu.Items.Add(new Forms.ToolStripSeparator());
-        var update = new Forms.ToolStripMenuItem("", null, (_, _) => app.InstallUpdate());
-        menu.Items.Add(update);
-        menu.Items.Add("Claude Code verbinden…", null, (_, _) => app.ConnectClaudeCode(null));
-        menu.Items.Add("Einstellungen…", null, (_, _) => app.ShowSettings());
-        menu.Items.Add(new Forms.ToolStripSeparator());
-        menu.Items.Add("Beenden", null, (_, _) => app.Quit());
-        menu.Opening += (_, _) =>
-        {
-            _petVisible.Checked = app.PetVisible;
-            _alwaysOnTop.Checked = app.Settings.AlwaysOnTop;
-            _walkAround.Checked = app.Settings.WalkAround;
-            voice.Visible = app.Settings.VoiceChat;
-            update.Text = app.UpdateMenuText;
-            update.Visible = app.AvailableUpdate != null;
-        };
-
-        _icon.ContextMenuStrip = menu;
+        _app = app;
+        BuildMenu();
         _icon.MouseClick += (_, e) =>
         {
             if (e.Button == Forms.MouseButtons.Left) app.ShowUsage();
         };
         _icon.Text = "Claudius";
-        Update(PetMood.Unknown, "Claudius – warte auf Daten");
+        Update(PetMood.Unknown, Strings.TrayWaiting);
         _icon.Visible = true;
+    }
+
+    /// <summary>Builds the right-click menu, again after the language changed.</summary>
+    public void BuildMenu()
+    {
+        var app = _app;
+        var menu = new Forms.ContextMenuStrip();
+        menu.Items.Add(Strings.ShowUsage, null, (_, _) => app.ShowUsage());
+        menu.Items.Add(Strings.OpenClaude, null, (_, _) => app.ShowProjectMenu());
+        var voice = new Forms.ToolStripMenuItem(Strings.StartVoiceChat, null, (_, _) => app.StartVoiceChat());
+        menu.Items.Add(voice);
+        var petVisible = new Forms.ToolStripMenuItem(Strings.ShowPet, null, (_, _) => app.TogglePetVisible());
+        var alwaysOnTop = new Forms.ToolStripMenuItem(Strings.AlwaysOnTop, null, (_, _) => app.ToggleAlwaysOnTop());
+        var walkAround = new Forms.ToolStripMenuItem(Strings.WalkAround, null, (_, _) => app.ToggleWalkAround());
+        menu.Items.Add(petVisible);
+        menu.Items.Add(alwaysOnTop);
+        menu.Items.Add(walkAround);
+        menu.Items.Add(new Forms.ToolStripSeparator());
+        var update = new Forms.ToolStripMenuItem("", null, (_, _) => app.InstallUpdate());
+        menu.Items.Add(update);
+        menu.Items.Add(Strings.ConnectMenu, null, (_, _) => app.ConnectClaudeCode(null));
+        menu.Items.Add(Strings.SettingsMenu, null, (_, _) => app.ShowSettings());
+        menu.Items.Add(new Forms.ToolStripSeparator());
+        menu.Items.Add(Strings.Quit, null, (_, _) => app.Quit());
+        menu.Opening += (_, _) =>
+        {
+            petVisible.Checked = app.PetVisible;
+            alwaysOnTop.Checked = app.Settings.AlwaysOnTop;
+            walkAround.Checked = app.Settings.WalkAround;
+            voice.Visible = app.Settings.VoiceChat;
+            update.Text = app.UpdateMenuText;
+            update.Visible = app.AvailableUpdate != null;
+        };
+
+        var old = _icon.ContextMenuStrip;
+        _icon.ContextMenuStrip = menu;
+        old?.Dispose();
     }
 
     public void Update(PetMood mood, string tooltip)

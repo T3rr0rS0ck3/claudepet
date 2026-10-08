@@ -15,6 +15,9 @@ Claude Pro und Max haben ein rollierendes **5-Stunden-Session-Limit** und ein **
 öffnen musst. Je höher der Verbrauch, desto mehr ändert sich seine Stimmung: entspannt → nachdenklich → nervös →
 Panik → schläft bis zum Reset.
 
+> Die Oberfläche gibt es auf Englisch und Deutsch. Neu installiert startet Claudius auf Englisch; umstellen unter
+> *Settings → Language*. Bestehende Installationen bleiben auf Deutsch.
+
 ## Funktionen
 
 - 🟠 **Desktop-Pet**: transparent, randlos, frei verschiebbar, optional immer im Vordergrund
@@ -157,7 +160,7 @@ Ist Claude Code verbunden, trägt das Pet zusätzlich ein paar [Hooks](https://c
 
 - **„?“** (gelb) erscheint, wenn eine Session eine Berechtigung braucht, per *AskUserQuestion* fragt oder auf eine
   Eingabe wartet, dazu eine Sprechblase wie *„mein-projekt: Claude hat eine Frage.“*
-- Ist eine Session mit ihrer Antwort fertig, erscheint eine Sprechblase wie *„mein-projekt ist fertig!“*; am Pet bleibt
+- Ist eine Session mit ihrer Antwort fertig, erscheint eine Sprechblase wie *„mein-projekt: Claude ist fertig!“*; am Pet bleibt
   kein Zeichen stehen.
 - Bei mehreren Sessions bleibt das „?“, solange irgendeine davon auf eine Antwort wartet.
 - *Baby-Pet für jede Claude-Session* (Einstellungen): ein kleines Pet pro laufender Session folgt dem Pet und zeigt
@@ -170,12 +173,13 @@ Hooks wieder. Sprechblasentexte: `Question`, `Done` (mit `{folder}`).
 
 ## Konfiguration
 
-Die meisten Optionen gibt es unter Rechtsklick → **Einstellungen…**: Repo-Ordner, Konsole, Geist ziehen, Sprachchat,
+Die meisten Optionen gibt es unter Rechtsklick → **Einstellungen…**: Sprache, Repo-Ordner, Konsole, Geist ziehen, Sprachchat,
 Größe, Farbe, Vordergrund, Animationen, Herumlaufen, Monitorwechsel, Emotes, Autostart, Update-Suche, Aktualisierungsintervall, Warn- und Zustandsschwellen, Sprechblasen,
 Benachrichtigungen und dein Name.
 
 Alles liegt in `%LOCALAPPDATA%\ClaudePet\settings.json`. Handänderungen werden sofort übernommen.
-Die Sprechblasentexte stehen unter `Texts`. Pro Ereignis kann es mehrere Varianten geben, eine wird zufällig gewählt:
+`Language` ist `en` oder `de`. Die Sprechblasentexte stehen unter `Texts`; ein Sprachwechsel in den Einstellungen setzt
+sie auf die Standardtexte der neuen Sprache zurück. Pro Ereignis kann es mehrere Varianten geben, eine wird zufällig gewählt:
 
 ```json
 "Texts": {
@@ -276,7 +280,6 @@ installer/             Inno-Setup-Skript
 
 ## Roadmap
 
-- Englische Oberfläche / Sprachauswahl
 - Limits pro Modell (z. B. Opus / Sonnet), sobald die Daten zuverlässig verfügbar sind
 - Verbrauchshistorie und Statistik
 - Weitere Charaktere, Skins und Soundeffekte

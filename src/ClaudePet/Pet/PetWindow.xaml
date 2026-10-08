@@ -72,10 +72,11 @@
         <StackPanel x:Name="EmoteBar" Grid.Row="0" Orientation="Horizontal" VerticalAlignment="Bottom"
                     HorizontalAlignment="Center" Margin="0,0,0,4" Visibility="Collapsed"
                     Panel.ZIndex="1" MouseLeave="Emotes_MouseLeave">
-            <Button Style="{StaticResource EmoteButton}" Content="🍪" ToolTip="Füttern" Tag="Feed" Click="Emote_Click" />
-            <Button Style="{StaticResource EmoteButton}" Content="❤" ToolTip="Streicheln" Tag="Pat" Click="Emote_Click" />
-            <Button Style="{StaticResource EmoteButton}" Content="⚽" ToolTip="Spielen" Tag="Play" Click="Emote_Click" />
-            <Button Style="{StaticResource EmoteButton}" Content="🪶" ToolTip="Kitzeln" Tag="Tickle" Click="Emote_Click" />
+            <!-- Tooltips come from ApplyLanguage -->
+            <Button Style="{StaticResource EmoteButton}" Content="🍪" Tag="Feed" Click="Emote_Click" />
+            <Button Style="{StaticResource EmoteButton}" Content="❤" Tag="Pat" Click="Emote_Click" />
+            <Button Style="{StaticResource EmoteButton}" Content="⚽" Tag="Play" Click="Emote_Click" />
+            <Button Style="{StaticResource EmoteButton}" Content="🪶" Tag="Tickle" Click="Emote_Click" />
         </StackPanel>
 
         <Image x:Name="PetImage" Grid.Row="1" HorizontalAlignment="Center" Stretch="Fill"

@@ -103,6 +103,14 @@ public partial class PetWindow : Window
             Clicked?.Invoke(_clickedAt);
         };
         SourceInitialized += (_, _) => HideFromAltTab();
+        ApplyLanguage();
+    }
+
+    /// <summary>Tooltips of the emote buttons in the current language.</summary>
+    public void ApplyLanguage()
+    {
+        foreach (var button in EmoteBar.Children.OfType<Button>())
+            if (button.Tag is string tag && Enum.TryParse(tag, out Emote emote)) button.ToolTip = Strings.EmoteName(emote);
     }
 
     public void ApplySettings(AppSettings settings, bool initial = false)

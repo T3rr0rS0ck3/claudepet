@@ -35,13 +35,13 @@ public partial class SettingsWindow : Window
         CrossMonitorsBox.IsChecked = settings.CrossMonitors;
         EmotesBox.IsChecked = settings.Emotes;
         UpdatesBox.IsChecked = settings.CheckForUpdates;
-        VersionText.Text = "Installierte Version: " + Updater.Format(Updater.CurrentVersion)
-            + (Updater.IsDevBuild ? " (selbst gebaut, keine Updates)" : Updater.IsInstalled ? "" : " (portabel)");
+        VersionText.Text = Strings.InstalledVersion(Updater.Format(Updater.CurrentVersion))
+            + (Updater.IsDevBuild ? Strings.DevBuildSuffix : Updater.IsInstalled ? "" : Strings.PortableSuffix);
         CheckUpdateButton.IsEnabled = !Updater.IsDevBuild;
         ShowUpdate(app.AvailableUpdate);
         if (AppPackage.IsPackaged)
         {
-            VersionText.Text = $"Version {Updater.Format(Updater.CurrentVersion)} – Updates kommen über den Microsoft Store.";
+            VersionText.Text = Strings.StoreVersion(Updater.Format(Updater.CurrentVersion));
             UpdatesBox.Visibility = UpdateButtons.Visibility = UpdateStatusText.Visibility = Visibility.Collapsed;
         }
         SessionMarksBox.IsChecked = settings.SessionMarks;
@@ -60,7 +60,11 @@ public partial class SettingsWindow : Window
         NameBox.Text = settings.UserName;
         NotificationsBox.IsChecked = settings.Notifications;
         ReposPathBox.Text = settings.ReposPath ?? "";
-        TerminalBox.ItemsSource = TerminalChoices;
+        LanguageBox.ItemsSource = LanguageChoices;
+        LanguageBox.DisplayMemberPath = "Value";
+        LanguageBox.SelectedValuePath = "Key";
+        LanguageBox.SelectedValue = settings.Language;
+        TerminalBox.ItemsSource = TerminalChoices();
         TerminalBox.DisplayMemberPath = "Value";
         TerminalBox.SelectedValuePath = "Key";
         TerminalBox.SelectedValue = settings.Terminal;
@@ -68,25 +72,30 @@ public partial class SettingsWindow : Window
         VoiceBox.IsChecked = settings.VoiceChat;
 
         string? claude = ClaudeLauncher.FindClaude();
-        ClaudeStatusText.Text = claude != null
-            ? "Claude Code gefunden: " + claude
-            : "⚠ Claude Code wurde nicht gefunden (claude ist nicht im PATH).";
+        ClaudeStatusText.Text = claude != null ? Strings.ClaudeFound(claude) : "⚠ " + Strings.ClaudeNotFound;
 
         RefreshSetupStatus();
     }
 
-    private static readonly KeyValuePair<TerminalKind, string>[] TerminalChoices =
+    // Each language in its own name.
+    private static readonly KeyValuePair<string, string>[] LanguageChoices =
     [
-        new(TerminalKind.Auto, ClaudeLauncher.HasWindowsTerminal ? "Automatisch (Windows Terminal)" : "Automatisch (cmd)"),
+        new(Strings.English, "English"),
+        new(Strings.German, "Deutsch"),
+    ];
+
+    private static KeyValuePair<TerminalKind, string>[] TerminalChoices() =>
+    [
+        new(TerminalKind.Auto, Strings.TerminalAuto(ClaudeLauncher.HasWindowsTerminal)),
         new(TerminalKind.WindowsTerminal, "Windows Terminal"),
-        new(TerminalKind.Cmd, "Eingabeaufforderung (cmd)"),
+        new(TerminalKind.Cmd, Strings.TerminalCmd),
         new(TerminalKind.PowerShell, "PowerShell"),
-        new(TerminalKind.Desktop, "Claude Desktop (Code-Tab)"),
+        new(TerminalKind.Desktop, Strings.TerminalDesktop),
     ];
 
     private void BrowseRepos_Click(object sender, RoutedEventArgs e)
     {
-        var dialog = new OpenFolderDialog { Title = "Ordner mit deinen Projekten wählen" };
+        var dialog = new OpenFolderDialog { Title = Strings.ChooseReposFolder };
         if (Directory.Exists(ReposPathBox.Text)) dialog.InitialDirectory = ReposPathBox.Text;
         if (dialog.ShowDialog(this) == true) ReposPathBox.Text = dialog.FolderName;
     }
@@ -127,10 +136,10 @@ public partial class SettingsWindow : Window
         var status = ClaudeCodeSetup.GetStatus();
         SetupStatusText.Text = status switch
         {
-            SetupStatus.Connected => "✔ Verbunden – ClaudePetBridge ist als statusLine eingetragen.",
-            SetupStatus.OtherStatusLine => "Es ist bereits eine andere statusLine eingetragen:\n" + ClaudeCodeSetup.CurrentCommand(),
-            SetupStatus.BridgeMissing => "ClaudePetBridge.exe wurde nicht gefunden (muss neben ClaudePet.exe liegen).",
-            _ => "Nicht verbunden.",
+            SetupStatus.Connected => Strings.SetupConnected,
+            SetupStatus.OtherStatusLine => Strings.SetupOtherStatusLine + ClaudeCodeSetup.CurrentCommand(),
+            SetupStatus.BridgeMissing => Strings.SetupBridgeMissing,
+            _ => Strings.SetupNotConnected,
         };
         ConnectButton.IsEnabled = status is SetupStatus.NotConfigured or SetupStatus.OtherStatusLine;
         DisconnectButton.IsEnabled = status == SetupStatus.Connected;
@@ -164,17 +173,17 @@ public partial class SettingsWindow : Window
     private async void CheckUpdate_Click(object sender, RoutedEventArgs e)
     {
         CheckUpdateButton.IsEnabled = false;
-        UpdateStatusText.Text = "Suche…";
+        UpdateStatusText.Text = Strings.Checking;
         UpdateStatusText.Visibility = Visibility.Visible;
         try
         {
             var update = await _app.CheckForUpdateAsync(silent: false);
             ShowUpdate(update);
-            if (update == null) UpdateStatusText.Text = "✔ Du hast die neueste Version.";
+            if (update == null) UpdateStatusText.Text = Strings.UpToDate;
         }
         catch (Exception ex)
         {
-            UpdateStatusText.Text = "Suche fehlgeschlagen: " + ex.Message;
+            UpdateStatusText.Text = Strings.CheckFailed + ex.Message;
         }
         finally
         {
@@ -186,8 +195,8 @@ public partial class SettingsWindow : Window
     {
         InstallUpdateButton.Visibility = update != null ? Visibility.Visible : Visibility.Collapsed;
         if (update == null) return;
-        InstallUpdateButton.Content = Updater.IsInstalled ? "Installieren" : "Herunterladen";
-        UpdateStatusText.Text = $"Version {update.VersionText} ist verfügbar.";
+        InstallUpdateButton.Content = Updater.IsInstalled ? Strings.Install : Strings.Download;
+        UpdateStatusText.Text = Strings.VersionAvailable(update.VersionText);
         UpdateStatusText.Visibility = Visibility.Visible;
     }
 
@@ -196,23 +205,23 @@ public partial class SettingsWindow : Window
     private void InstallUpdate_Click(object sender, RoutedEventArgs e) => _app.InstallUpdate(this);
 
     private void TestNotification_Click(object sender, RoutedEventArgs e) =>
-        _app.ShowNotification("Claudius", "So sehen Warnungen aus. 🟠");
+        _app.ShowNotification("Claudius", Strings.TestNotificationText);
 
     private void Save_Click(object sender, RoutedEventArgs e)
     {
         try
         {
-            int interval = ParseInt(IntervalBox.Text, "Aktualisierungsintervall");
+            int interval = ParseInt(IntervalBox.Text, Strings.IntervalField);
             double duration = double.Parse(BubbleDurationBox.Text.Replace(',', '.'), CultureInfo.InvariantCulture);
-            var sessionWarn = ParseList(SessionWarnBox.Text, "Session-Warnschwellen");
-            var weekWarn = ParseList(WeekWarnBox.Text, "Wochen-Warnschwellen");
-            var moods = ParseList(MoodThresholdsBox.Text, "Zustandsgrenzen");
-            if (moods.Count != 6) throw new FormatException("Zustandsgrenzen: genau 6 Werte angeben.");
+            var sessionWarn = ParseList(SessionWarnBox.Text, Strings.SessionWarnField);
+            var weekWarn = ParseList(WeekWarnBox.Text, Strings.WeekWarnField);
+            var moods = ParseList(MoodThresholdsBox.Text, Strings.MoodField);
+            if (moods.Count != 6) throw new FormatException(Strings.MoodCountError);
             if (!Sprite.TryParseColor(ColorBox.Text, out uint petColor))
-                throw new FormatException("Farbe: bitte als #RRGGBB angeben, z. B. #D97757.");
+                throw new FormatException(Strings.ColorError);
             string reposPath = ReposPathBox.Text.Trim().Trim('"');
             if (reposPath.Length > 0 && !Directory.Exists(reposPath))
-                throw new FormatException("Repo-Ordner existiert nicht.");
+                throw new FormatException(Strings.ReposFolderMissing);
 
             // Switching voice chat off also switches Claude Code's dictation off again. That setting lives in
             // Claude Code's own settings.json, so write it first: if it fails, nothing is applied.
@@ -225,12 +234,13 @@ public partial class SettingsWindow : Window
                 catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidDataException
                                                or System.Text.Json.JsonException)
                 {
-                    throw new FormatException("Claude-Code-Einstellungen konnten nicht geschrieben werden: " + ex.Message);
+                    throw new FormatException(Strings.ClaudeSettingsNotWritten + ex.Message);
                 }
             }
             for (int i = 1; i < moods.Count; i++)
-                if (moods[i] < moods[i - 1]) throw new FormatException("Zustandsgrenzen müssen aufsteigend sein.");
+                if (moods[i] < moods[i - 1]) throw new FormatException(Strings.MoodOrderError);
 
+            if (LanguageBox.SelectedValue is string language) _settings.SetLanguage(language);
             _settings.PetScale = ScaleSlider.Value;
             _settings.PetColor = Sprite.ToHex(petColor);
             _settings.ClaudeMascotColor = ClaudeMascotBox.IsChecked == true;
@@ -285,7 +295,7 @@ public partial class SettingsWindow : Window
     private static int ParseInt(string text, string field) =>
         int.TryParse(text.Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture, out int value)
             ? value
-            : throw new FormatException($"{field}: ungültige Zahl.");
+            : throw new FormatException(Strings.InvalidNumber(field));
 
     private static List<int> ParseList(string text, string field) =>
         text.Split([',', ';', ' '], StringSplitOptions.RemoveEmptyEntries)

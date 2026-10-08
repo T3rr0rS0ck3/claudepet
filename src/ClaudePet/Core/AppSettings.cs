@@ -25,6 +25,12 @@ public sealed class AppSettings
 {
     public const string DefaultPetColor = "#D97757";
 
+    /// <summary>
+    /// UI language, <see cref="Strings.English"/> or <see cref="Strings.German"/>. New installs start in
+    /// English; settings saved before there was a choice were German and stay so.
+    /// </summary>
+    public string? Language { get; set; }
+
     // Pet
     public double PetScale { get; set; } = 5;
     public double? PositionX { get; set; }
@@ -67,10 +73,10 @@ public sealed class AppSettings
     /// <summary>Used for the {name} / {NAME} placeholders.</summary>
     public string UserName { get; set; } = Capitalize(Environment.UserName);
     /// <summary>
-    /// Bubble texts per event; one variant is picked at random.
-    /// Placeholders: {name}, {NAME}, {percent}, {session}, {week}.
+    /// Bubble texts per event in the UI language; one variant is picked at random.
+    /// Placeholders: {name}, {NAME}, {percent}, {session}, {week}, {folder}, {version}.
     /// </summary>
-    public Dictionary<string, List<string>> Texts { get; set; } = DefaultTexts();
+    public Dictionary<string, List<string>> Texts { get; set; } = [];
     /// <summary>Which rewordings of the default texts have been applied, see <see cref="RewordedTexts"/>.</summary>
     public int TextsVersion { get; set; }
 
@@ -86,10 +92,47 @@ public sealed class AppSettings
     public List<string> RecentProjects { get; set; } = [];
     /// <summary>Dragging the pet with the left mouse button onto an Explorer window opens Claude there.</summary>
     public bool GhostDrag { get; set; } = true;
-    /// <summary>Offers "Sprachchat starten…" (Claude Code voice dictation) in the menus.</summary>
+    /// <summary>Offers "Start voice chat…" (Claude Code voice dictation) in the menus.</summary>
     public bool VoiceChat { get; set; }
 
-    public static Dictionary<string, List<string>> DefaultTexts() => new()
+    /// <summary>Switches the UI language; the bubble texts start over with that language's defaults.</summary>
+    public void SetLanguage(string language)
+    {
+        if (language == Language) return;
+        Language = language;
+        Texts = DefaultTexts(language);
+    }
+
+    public static Dictionary<string, List<string>> DefaultTexts(string? language) =>
+        language == Strings.German ? GermanTexts() : EnglishTexts();
+
+    private static Dictionary<string, List<string>> EnglishTexts() => new()
+    {
+        ["Greeting"] = ["Hi {name}! Session {session}%, week {week}%."],
+        ["NoData"] = ["Waiting for data from Claude Code…\n(Right-click → Connect Claude Code)"],
+        ["Normal"] = ["All relaxed so far."],
+        ["Attentive"] = ["We're getting busy..."],
+        ["Nervous"] = ["Uhm... we should start being careful."],
+        ["Worried"] = ["{percent}%! 😰"],
+        ["Panic"] = ["{NAME}. ALMOST EMPTY."],
+        ["Exhausted"] = ["Okay... I'll sleep until the reset."],
+        ["Reset"] = ["Fresh quota! Let's go!", "Well rested. Let's carry on!"],
+        ["Poke"] = ["Hey!", "I'm keeping watch, promise.", "Session {session}%, week {week}%."],
+        ["Launch"] = ["Have fun in {folder}!", "Off we go: {folder}"],
+        ["NoFolder"] = ["There's no folder here I can open…"],
+        ["Voice"] = ["Hold the space bar and talk to Claude 🎤"],
+        // Relayed from Claude Code: Claude is the one asking or done, the pet only passes it on.
+        ["Question"] = ["{folder}: Claude has a question.", "Psst, Claude is waiting for you in {folder}."],
+        ["Done"] = ["{folder}: Claude is done!", "Claude is done in {folder}."],
+        ["Feed"] = ["Mmm, yummy! 🍪", "Cookies are the best token food.", "*munch munch*"],
+        ["Pat"] = ["Aww, that's nice ❤", "More of that!", "You're the best, {name}."],
+        ["Play"] = ["Catch! ⚽", "Again, again!", "I'm a pro juggler."],
+        ["Update"] = ["Version {version} is out! Right-click → Install update.", "Psst, {name}: there's a new version ({version})."],
+        ["Updating"] = ["Downloading the update… see you soon!"],
+        ["Tickle"] = ["Hehehe! Stop it! 😆", "Not there, I'm ticklish!", "Hahaha… mercy!"],
+    };
+
+    private static Dictionary<string, List<string>> GermanTexts() => new()
     {
         ["Greeting"] = ["Hi {name}! Session {session} %, Woche {week} %."],
         ["NoData"] = ["Ich warte auf Daten von Claude Code…\n(Rechtsklick → Claude Code verbinden)"],
@@ -120,9 +163,15 @@ public sealed class AppSettings
         AppSettings settings;
         try
         {
-            settings = File.Exists(DataPaths.SettingsFile)
-                ? JsonSerializer.Deserialize<AppSettings>(File.ReadAllText(DataPaths.SettingsFile), JsonOptions) ?? new()
-                : new();
+            if (File.Exists(DataPaths.SettingsFile))
+            {
+                settings = JsonSerializer.Deserialize<AppSettings>(File.ReadAllText(DataPaths.SettingsFile), JsonOptions) ?? new();
+                settings.Language ??= Strings.German; // saved before the language could be chosen
+            }
+            else
+            {
+                settings = new();
+            }
         }
         catch (Exception ex) when (ex is JsonException or IOException)
         {
@@ -153,7 +202,8 @@ public sealed class AppSettings
         RecentProjects ??= [];
         if (string.IsNullOrWhiteSpace(ReposPath)) ReposPath = null;
         PetColor = Sprite.TryParseColor(PetColor, out uint color) ? Sprite.ToHex(color) : DefaultPetColor;
-        var defaults = DefaultTexts();
+        Language = Language == Strings.German ? Strings.German : Strings.English;
+        var defaults = DefaultTexts(Language);
         foreach (var (version, keys) in RewordedTexts)
         {
             if (TextsVersion >= version) continue;

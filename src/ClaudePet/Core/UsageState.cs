@@ -56,16 +56,4 @@ public sealed class UsageState
         if (w.ResetsAt > 0 && now >= w.ResetsAtTime) return (0, true);
         return (Math.Clamp(w.UsedPercentage, 0, 100), false);
     }
-
-    public static string MoodLabel(PetMood mood) => mood switch
-    {
-        PetMood.Relaxed => "Claudius ist entspannt",
-        PetMood.Normal => "Claudius ist gut drauf",
-        PetMood.Attentive => "Claudius ist aufmerksam",
-        PetMood.Nervous => "Claudius wird nervös",
-        PetMood.Worried => "Claudius ist besorgt",
-        PetMood.Panic => "Claudius ist in Panik!",
-        PetMood.Exhausted => "Claudius schläft bis zum Reset",
-        _ => "Claudius wartet auf Daten",
-    };
 }
