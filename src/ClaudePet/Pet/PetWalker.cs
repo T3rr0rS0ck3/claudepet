@@ -31,6 +31,7 @@ public sealed class PetWalker
     };
 
     private const double FallOffChance = 0.6;
+    private const double EdgeJumpChance = 0.5;
     private const double ClimbChance = 0.6;
     private const double HangChance = 0.75;
     /// <summary>Feet below the top of the screen while hanging, in pet heights (arms reach up to row 6 of 16).</summary>
@@ -119,6 +120,10 @@ public sealed class PetWalker
         {
             StandOn(next);
             X = nx;
+        }
+        else if (!Occluded(nx) && _random.NextDouble() < EdgeJumpChance && TryEdgeJump(surfaces, petWidth, petHeight))
+        {
+            return;
         }
         else if (!Occluded(nx) && HasPlatformBelow(surfaces, nx) && _random.NextDouble() < FallOffChance)
         {
@@ -330,18 +335,40 @@ public sealed class PetWalker
         if (targets.Count == 0) return false;
 
         var target = targets[_random.Next(targets.Count)];
-        double tx = X < target.X1 ? target.X1 + petWidth * 0.5 : target.X2 - petWidth * 0.5;
+        JumpTo(X < target.X1 ? target.X1 + petWidth * 0.5 : target.X2 - petWidth * 0.5, target.Y, petHeight);
+        return true;
+    }
+
+    /// <summary>At the edge of a window: hop across to the next window ahead, a bit higher or lower.</summary>
+    private bool TryEdgeJump(DesktopSurfaces surfaces, double petWidth, double petHeight)
+    {
+        double reach = petWidth * 3;
+        var target = surfaces.Platforms
+            .Where(p => !p.IsFloor && p.Window != _ground && p.X2 - p.X1 >= petWidth
+                        && p.Y >= Y - petHeight * 2.5 && p.Y <= Y + petHeight * 4
+                        && (Direction > 0 ? p.X1 > X && p.X1 - X <= reach : p.X2 < X && X - p.X2 <= reach)
+                        && IsThere(p))
+            .OrderBy(p => Direction > 0 ? p.X1 - X : X - p.X2)
+            .Cast<Platform?>()
+            .FirstOrDefault();
+        if (target is not { } t) return false;
+
+        JumpTo(Direction > 0 ? t.X1 + petWidth * 0.5 : t.X2 - petWidth * 0.5, t.Y, petHeight);
+        return true;
+    }
+
+    /// <summary>Jumps in an arc that peaks half a pet height above the higher of start and target.</summary>
+    private void JumpTo(double targetX, double targetY, double petHeight)
+    {
         double g = Gravity(petHeight);
-        double overshoot = petHeight * 0.5;
-        double rise = Y - target.Y + overshoot;
-        _vy = -Math.Sqrt(2 * g * rise);
-        double time = -_vy / g + Math.Sqrt(2 * overshoot / g);
-        _vx = (tx - X) / time;
+        double apex = Math.Min(Y, targetY) - petHeight * 0.5;
+        _vy = -Math.Sqrt(2 * g * (Y - apex));
+        double time = -_vy / g + Math.Sqrt(2 * (targetY - apex) / g);
+        _vx = (targetX - X) / time;
         Direction = _vx < 0 ? -1 : 1;
         _airborne = true;
         _ground = IntPtr.Zero;
         Motion = Motion.Jump;
-        return true;
     }
 
     private void StartFall(double vx)
