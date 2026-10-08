@@ -9,6 +9,7 @@ using System.Windows.Media.Animation;
 using System.Windows.Threading;
 using ClaudePet.Core;
 using ClaudePet.Shared;
+using Forms = System.Windows.Forms;
 
 namespace ClaudePet.Pet;
 
@@ -128,6 +129,7 @@ public partial class PetWindow : Window
 
         PetImage.Width = petWidth;
         PetImage.Height = petHeight;
+        if (_petOnTop) SetPetOnTop(true); // the bubble below the pet moves with its size
 
         if (_animations) _animationTimer.Start();
         else _animationTimer.Stop();
@@ -168,6 +170,8 @@ public partial class PetWindow : Window
     {
         BubbleText.Text = text;
         Bubble.Visibility = Visibility.Visible;
+        UpdateLayout();
+        UpdateBubblePlacement();
         Bubble.BeginAnimation(OpacityProperty, new DoubleAnimation(1, TimeSpan.FromMilliseconds(180)));
         _bubbleTimer.Stop();
         _bubbleTimer.Interval = TimeSpan.FromSeconds(seconds);
@@ -180,7 +184,9 @@ public partial class PetWindow : Window
         var fade = new DoubleAnimation(0, TimeSpan.FromMilliseconds(250));
         fade.Completed += (_, _) =>
         {
-            if (!_bubbleTimer.IsEnabled) Bubble.Visibility = Visibility.Collapsed;
+            if (_bubbleTimer.IsEnabled) return;
+            Bubble.Visibility = Visibility.Collapsed;
+            UpdateBubblePlacement();
         };
         Bubble.BeginAnimation(OpacityProperty, fade);
     }
@@ -309,12 +315,50 @@ public partial class PetWindow : Window
 
     // ---------------------------------------------------------------- walking around
 
+    /// <summary>
+    /// Pet at the top of the window, with the speech bubble hanging below it, or at the bottom with the
+    /// bubble above it. Does not move the window.
+    /// </summary>
     private void SetPetOnTop(bool onTop)
     {
         _petOnTop = onTop;
         Grid.SetRow(PetImage, onTop ? 0 : 1);
         PetImage.VerticalAlignment = onTop ? VerticalAlignment.Top : VerticalAlignment.Stretch;
+        Bubble.VerticalAlignment = onTop ? VerticalAlignment.Top : VerticalAlignment.Bottom;
+        Bubble.Margin = onTop ? new Thickness(0, PetImage.Height + 2, 0, 0) : new Thickness(0, 0, 0, 2);
+        BubbleTailUp.Visibility = onTop ? Visibility.Visible : Visibility.Collapsed;
+        BubbleTailDown.Visibility = onTop ? Visibility.Collapsed : Visibility.Visible;
         UpdateLayout();
+    }
+
+    /// <summary>
+    /// Climbing, hanging and falling from the top, or too close to the top of the screen for the speech
+    /// bubble above the pet: the pet goes to the top of the window and the bubble below it. Physical pixels.
+    /// </summary>
+    private bool WantsPetOnTop(double feetX, double feetY, double petHeight)
+    {
+        if (_walking && _walker.Motion is Motion.Climb or Motion.Hang or Motion.Fall) return true;
+        if (Bubble.Visibility != Visibility.Visible) return false;
+        double bubbleHeight = (Bubble.ActualHeight + 2) * VisualTreeHelper.GetDpi(this).DpiScaleY;
+        var screen = Forms.Screen.FromPoint(new System.Drawing.Point((int)feetX, (int)feetY - 1));
+        return feetY - petHeight - bubbleHeight < screen.WorkingArea.Top;
+    }
+
+    /// <summary>Moves the bubble below the pet or back above it if needed, keeping the pet where it is.</summary>
+    private void UpdateBubblePlacement()
+    {
+        // While carried the window follows the cursor; moving it here would make the pet jump away from it.
+        if (_dragging) return;
+        var hwnd = new WindowInteropHelper(this).Handle;
+        if (hwnd == IntPtr.Zero || !IsVisible || !GetWindowRect(hwnd, out var rect)) return;
+        double petHeight = PetImage.Height * VisualTreeHelper.GetDpi(this).DpiScaleY;
+        double feetX = (rect.Left + rect.Right) / 2.0;
+        double feetY = _petOnTop ? rect.Top + petHeight : rect.Bottom;
+        bool onTop = WantsPetOnTop(feetX, feetY, petHeight);
+        if (onTop == _petOnTop) return;
+        SetPetOnTop(onTop);
+        int y = (int)Math.Round(feetY - (onTop ? petHeight : rect.Bottom - rect.Top));
+        SetWindowPos(hwnd, IntPtr.Zero, rect.Left, y, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
     }
 
     private void Walk()
@@ -349,7 +393,7 @@ public partial class PetWindow : Window
         double width = rect.Right - rect.Left, height = rect.Bottom - rect.Top;
         if (_needsPlace)
         {
-            _walker.Place(rect.Left + width / 2, rect.Bottom);
+            _walker.Place(rect.Left + width / 2, _petOnTop ? rect.Top + petHeight : rect.Bottom);
             _needsPlace = false;
         }
 
@@ -358,7 +402,7 @@ public partial class PetWindow : Window
 
         // Climbing, hanging and falling from the top: pet at the top of the window, so the
         // (transparent) speech bubble area does not stick out above the screen.
-        bool petOnTop = _walker.Motion is Motion.Climb or Motion.Hang or Motion.Fall;
+        bool petOnTop = WantsPetOnTop(_walker.X, _walker.Y, petHeight);
         if (petOnTop != _petOnTop) SetPetOnTop(petOnTop);
         double feetToTop = petOnTop ? petHeight : height;
         int x = (int)Math.Round(_walker.X - width / 2), y = (int)Math.Round(_walker.Y - feetToTop);
@@ -506,6 +550,7 @@ public partial class PetWindow : Window
         Render();
         _needsPlace = true; // let go: fall down from here
         ClampToScreen();
+        UpdateBubblePlacement();
         Moved?.Invoke();
     }
 
