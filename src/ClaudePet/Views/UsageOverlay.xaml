@@ -34,13 +34,13 @@
         </Style>
     </Window.Resources>
 
-    <Border Margin="10" Background="#262624" BorderBrush="#D97757" BorderThickness="2" CornerRadius="12" Padding="16,12,16,14">
+    <Border Margin="10" Background="#262624" BorderBrush="{DynamicResource AccentBrush}" BorderThickness="2" CornerRadius="12" Padding="16,12,16,14">
         <Border.Effect>
             <DropShadowEffect BlurRadius="12" ShadowDepth="2" Opacity="0.4" />
         </Border.Effect>
         <StackPanel>
             <Grid Margin="0,0,0,10">
-                <TextBlock Text="CLAUDE USAGE" Foreground="#D97757" FontWeight="Bold" FontSize="14"
+                <TextBlock Text="CLAUDE USAGE" Foreground="{DynamicResource AccentBrush}" FontWeight="Bold" FontSize="14"
                            FontFamily="Consolas" HorizontalAlignment="Center" />
                 <TextBlock x:Name="CloseButton" Text="✕" Foreground="#77736B" FontSize="12" Cursor="Hand"
                            HorizontalAlignment="Right" VerticalAlignment="Center"

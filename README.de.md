@@ -18,8 +18,9 @@ desto mehr ändert sich seine Stimmung: entspannt → nachdenklich → nervös �
 
 - 🟠 **Desktop-Pet**: transparent, randlos, frei verschiebbar, optional immer im Vordergrund
 - 🚶 **Läuft herum**: bummelt über die Taskleiste und die Oberkanten offener Fenster, springt auf Fenster,
-  klettert an den Bildschirmrändern hoch und fällt runter, wenn ein Fenster verschwindet; das Tempo hängt
-  von der Stimmung ab (abschaltbar)
+  klettert an den Bildschirmrändern hoch, hangelt sich am oberen Rand entlang, bis es runterfällt, und fällt
+  runter, wenn ein Fenster verschwindet; das Tempo hängt von der Stimmung ab (abschaltbar)
+- 🎨 **Deine Farbe**: das Pet in beliebiger Farbe; Usage-Fenster, Menüs und Sprechblasen übernehmen sie als Akzentfarbe
 - 📊 **Usage-Fenster**: Klick aufs Pet zeigt Session- und Wochenverbrauch, Reset-Zeiten und Prognose
 - 🎭 **7 Stimmungen** mit eigenen Animationen, abhängig vom höheren der beiden Werte
 - 💬 **Sprechblasen** beim Überschreiten von Schwellen, z. B. *„90 %! 😰“*, ohne Dauergequatsche
@@ -61,7 +62,7 @@ Danach Rechtsklick aufs Pet → *Claude Code verbinden…*
 |---|---|
 | Linksklick aufs Pet | Usage-Fenster öffnen/schließen |
 | Doppelklick aufs Pet | Projektliste: Claude Code in einem deiner Projekte öffnen |
-| Pet ziehen | Verschieben (Position wird gespeichert); beim Herumlaufen fällt es von dort herunter |
+| Pet ziehen | Verschieben (Position wird gespeichert); es strampelt beim Tragen und fällt beim Herumlaufen von dort herunter |
 | Pet mit rechter Maustaste auf ein Explorer-Fenster ziehen | Claude Code in diesem Ordner öffnen (siehe [Claude Code öffnen](#claude-code-öffnen)) |
 | Rechtsklick aufs Pet | Menü: Usage, Claude öffnen, Sprachchat, Hallo sagen, Vordergrund, Herumlaufen, in den Tray, Claude Code verbinden, Einstellungen, Beenden |
 | Linksklick aufs Tray-Icon | Usage-Fenster öffnen |
@@ -133,7 +134,7 @@ vorbei ist, zählen als 0 %. Es wird nichts von claude.ai ausgelesen und es werd
 ## Konfiguration
 
 Die meisten Optionen gibt es unter Rechtsklick → **Einstellungen…**: Repo-Ordner, Konsole, Geist ziehen, Sprachchat,
-Größe, Vordergrund, Animationen, Herumlaufen, Autostart, Aktualisierungsintervall, Warn- und Zustandsschwellen, Sprechblasen,
+Größe, Farbe, Vordergrund, Animationen, Herumlaufen, Autostart, Aktualisierungsintervall, Warn- und Zustandsschwellen, Sprechblasen,
 Benachrichtigungen und dein Name.
 
 Alles liegt in `%LOCALAPPDATA%\ClaudePet\settings.json`. Handänderungen werden sofort übernommen.
