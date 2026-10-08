@@ -1,4 +1,5 @@
 using System.Windows.Media;
+using ClaudePet.Pet;
 
 namespace ClaudePet.Core;
 
@@ -17,6 +18,13 @@ public static class Palette
         PetMood.Nervous => Orange,
         _ => Red,
     };
+
+    /// <summary>Accent brush for UI chrome, following the pet's body color ("#RRGGBB").</summary>
+    public static Brush Accent(string petColor)
+    {
+        if (!Sprite.TryParseColor(petColor, out uint argb)) argb = Sprite.DefaultBodyColor;
+        return Make((byte)(argb >> 16), (byte)(argb >> 8), (byte)argb);
+    }
 
     private static Brush Make(byte r, byte g, byte b)
     {
