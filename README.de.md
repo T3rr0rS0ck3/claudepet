@@ -28,6 +28,9 @@ Panik → schläft bis zum Reset.
   passend zur Monitoranordnung in Windows
 - 🎨 **Deine Farbe**: das Pet in beliebiger Farbe; Usage-Fenster, Menüs und Sprechblasen übernehmen sie als Akzentfarbe
 - 👑 **Passend zum Modell gekleidet**: eine Krone bei Opus, eine Sonnenbrille bei Sonnet, eine kleine Blume bei Haiku, ein Zauberhut bei Fable (abschaltbar)
+- 🎃 **Saisonale Kopfbedeckung**: Hexenhut und Kürbis im Oktober, Weihnachtsmütze bis Weihnachten, Hasenohren an Ostern und ein Partyhut
+  an Silvester und deinem Geburtstag; sie ersetzen die Kopfbedeckung des Modells (abschaltbar)
+- 🌙 **Nachtmodus**: zwischen 23 und 6 Uhr (einstellbar) trägt das Pet eine Schlafmütze, läuft langsamer, gähnt und sagt gute Nacht
 - 📊 **Usage-Fenster**: Klick aufs Pet zeigt Session- und Wochenverbrauch, Reset-Zeiten und Prognose
 - 🎭 **7 Stimmungen** mit eigenen Animationen, abhängig vom höheren der beiden Werte
 - 💬 **Sprechblasen** beim Überschreiten von Schwellen, z. B. *„90 %! 😰“*, ohne Dauergequatsche
@@ -192,7 +195,7 @@ Desktop-Chat bietet keine Hooks und wird nicht unterstützt.
 ## Konfiguration
 
 Die meisten Optionen gibt es unter Rechtsklick → **Einstellungen…**: Sprache, Repo-Ordner, Konsole, Geist ziehen, Sprachchat,
-Größe, Farbe, Vordergrund, Animationen, Herumlaufen, Monitorwechsel, Emotes, Modell-Outfits, Autostart, Update-Suche, Aktualisierungsintervall, Warn- und Zustandsschwellen, Sprechblasen,
+Größe, Farbe, Vordergrund, Animationen, Herumlaufen, Monitorwechsel, Emotes, Modell-Outfits, saisonale Kopfbedeckung und Geburtstag, Nachtmodus und Nachtzeit, Autostart, Update-Suche, Aktualisierungsintervall, Warn- und Zustandsschwellen, Sprechblasen,
 Benachrichtigungen und dein Name.
 
 Alles liegt in `%LOCALAPPDATA%\Claudius\settings.json`. Handänderungen werden sofort übernommen.
@@ -209,12 +212,16 @@ sie auf die Standardtexte der neuen Sprache zurück. Pro Ereignis kann es mehrer
 ```
 
 Ereignisse: `Greeting`, `NoData`, `Normal`, `Attentive`, `Nervous`, `Worried`, `Panic`, `Exhausted`, `Reset`, `Poke`,
-`Launch` (Assistent geöffnet), `NoFolder` (Geist dort losgelassen, wo kein Ordner ist), `Voice` (Sprachchat gestartet).
+`Launch` (Assistent geöffnet), `NoFolder` (Geist dort losgelassen, wo kein Ordner ist), `Voice` (Sprachchat gestartet),
+`GoodNight` (die Nacht beginnt).
 Platzhalter: `{name}`, `{NAME}` (Großbuchstaben), `{percent}` (höherer Wert), `{session}`, `{week}`,
 `{folder}` (Name des geöffneten Ordners, bei `Launch` und `Voice`).
 
 Weitere Schlüssel zum Öffnen des Assistenten: `ReposPath`, `Terminal` (`Auto`, `WindowsTerminal`, `Cmd`, `PowerShell`, `Desktop`),
 `GhostDrag`, `VoiceChat` und `RecentProjects` (die letzten 10 geöffneten Ordner).
+
+Saisonale Kopfbedeckung und Nacht: `SeasonalAccessories`, `Birthday` (`"MM-dd"`, z. B. `"03-14"`), `NightMode`, `NightStart` und
+`NightEnd` (`"HH:mm"`, die Nacht darf über Mitternacht gehen). Mit `CLAUDIUS_FAKE_NOW` (z. B. `2026-12-24T22:59`) lassen sie sich an einem anderen Datum ausprobieren.
 
 ## Fehlerbehebung
 

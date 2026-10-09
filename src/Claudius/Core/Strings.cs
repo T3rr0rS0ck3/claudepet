@@ -101,6 +101,18 @@ public static class Strings
     public static string ModelOutfitsTip => L(
         "Opus wears a crown, Sonnet sunglasses, Haiku a flower, Fable a wizard's hat. Baby pets dress for their own session's model.",
         "Opus trägt eine Krone, Sonnet eine Sonnenbrille, Haiku eine Blume, Fable einen Zauberhut. Baby-Pets ziehen sich für das Modell ihrer Session an.");
+    public static string SeasonalAccessories => L("Seasonal headwear", "Saisonale Kopfbedeckung");
+    public static string SeasonalAccessoriesTip => L(
+        "A witch's hat in October, a Santa hat until Christmas, bunny ears at Easter and a party hat on New Year's Eve and your birthday. It takes the place of the model's headwear.",
+        "Hexenhut im Oktober, Weihnachtsmütze bis Weihnachten, Hasenohren an Ostern und Partyhut an Silvester und deinem Geburtstag. Ersetzt die Kopfbedeckung des Modells.");
+    public static string Birthday => L("Birthday", "Geburtstag");
+    public static string BirthdayInvalid => L("This birthday does not exist.", "Diesen Geburtstag gibt es nicht.");
+    public static string NightMode => L("Night mode: nightcap and a sleepy pet", "Nachtmodus: Schlafmütze und müdes Pet");
+    public static string NightModeTip => L(
+        "Between these times the pet wears a nightcap, walks slower, yawns and says good night.",
+        "Zwischen diesen Uhrzeiten trägt das Pet eine Schlafmütze, läuft langsamer, gähnt und sagt gute Nacht.");
+    public static string NightFrom => L("from", "von");
+    public static string NightTo => L("to", "bis");
     public static string StartWithWindows => L("Start with Windows", "Mit Windows starten");
     public static string AutostartBlocked => L("Switched off in Windows –", "In Windows ausgeschaltet –");
     public static string OpenStartupSettings => L("Open startup settings", "Autostart-Einstellungen öffnen");

@@ -28,6 +28,9 @@ until the limit resets.
   monitors are arranged in Windows
 - 🎨 **Your color** — pick any color for the pet; the usage overlay, menus and speech bubbles use it as accent color
 - 👑 **Dressed for the model** — a crown for Opus, sunglasses for Sonnet, a little flower for Haiku, a wizard's hat for Fable (can be turned off)
+- 🎃 **Seasonal headwear** — a witch's hat and a pumpkin in October, a Santa hat until Christmas, bunny ears at Easter and a party hat
+  on New Year's Eve and your birthday; they take the place of the model's headwear (can be turned off)
+- 🌙 **Night mode** — between 23:00 and 06:00 (adjustable) the pet wears a nightcap, walks slower, yawns and says good night
 - 📊 **Usage overlay** — click the pet to see session and weekly usage, reset times and a forecast
 - 🎭 **7 moods** with their own animations, based on the higher of the two usage values
 - 💬 **Speech bubbles** when thresholds are crossed, e.g. *"90 %! 😰"* — not constantly chattering
@@ -188,7 +191,7 @@ desktop app as well. The normal desktop chat offers no hooks and is not supporte
 ## Configuration
 
 Most options are available via right-click → **Settings…**: language, repo folder, console, ghost drag,
-voice chat, size, pet color, always on top, animations, walking around, crossing monitors, emotes, model outfits, autostart, update checks, update interval, warning thresholds, mood thresholds,
+voice chat, size, pet color, always on top, animations, walking around, crossing monitors, emotes, model outfits, seasonal headwear and birthday, night mode and night hours, autostart, update checks, update interval, warning thresholds, mood thresholds,
 speech bubbles, notifications and your name.
 
 Everything lives in `%LOCALAPPDATA%\Claudius\settings.json`, and manual edits are picked up live.
@@ -205,12 +208,16 @@ to that language's defaults. Each event can have several variants; one is picked
 ```
 
 Events: `Greeting`, `NoData`, `Normal`, `Attentive`, `Nervous`, `Worried`, `Panic`, `Exhausted`, `Reset`, `Poke`,
-`Launch` (assistant opened), `NoFolder` (ghost dropped where there is no folder), `Voice` (voice chat started).
+`Launch` (assistant opened), `NoFolder` (ghost dropped where there is no folder), `Voice` (voice chat started),
+`GoodNight` (the night starts).
 Placeholders: `{name}`, `{NAME}` (upper case), `{percent}` (the higher value), `{session}`, `{week}`,
 `{folder}` (name of the opened folder, for `Launch` and `Voice`).
 
 Other keys for opening the assistant: `ReposPath`, `Terminal` (`Auto`, `WindowsTerminal`, `Cmd`, `PowerShell`, `Desktop`),
 `GhostDrag`, `VoiceChat` and `RecentProjects` (the last 10 opened folders).
+
+Seasonal headwear and night: `SeasonalAccessories`, `Birthday` (`"MM-dd"`, e.g. `"03-14"`), `NightMode`, `NightStart` and
+`NightEnd` (`"HH:mm"`, a night may span midnight). Set `CLAUDIUS_FAKE_NOW` (e.g. `2026-12-24T22:59`) to try them at another date and time.
 
 ## Troubleshooting
 

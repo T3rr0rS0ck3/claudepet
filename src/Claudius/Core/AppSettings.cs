@@ -25,6 +25,8 @@ public enum TerminalKind { Auto, WindowsTerminal, Cmd, PowerShell, Desktop }
 public sealed class AppSettings
 {
     public const string DefaultPetColor = "#D97757";
+    public const string DefaultNightStart = "23:00";
+    public const string DefaultNightEnd = "06:00";
 
     /// <summary>
     /// UI language, <see cref="Strings.English"/> or <see cref="Strings.German"/>. New installs start in
@@ -46,13 +48,21 @@ public sealed class AppSettings
     public bool Emotes { get; set; } = true;
     /// <summary>Dress for the AI model in use: crown for Opus, sunglasses for Sonnet, a flower for Haiku.</summary>
     public bool ModelOutfits { get; set; } = true;
+    /// <summary>Headwear for Halloween, Christmas, New Year's Eve, Easter and the birthday.</summary>
+    public bool SeasonalAccessories { get; set; } = true;
+    /// <summary>"MM-dd": a party hat on that day; null for none.</summary>
+    public string? Birthday { get; set; }
+    /// <summary>A nightcap and a sleepy pet from <see cref="NightStart"/> to <see cref="NightEnd"/> ("HH:mm").</summary>
+    public bool NightMode { get; set; } = true;
+    public string NightStart { get; set; } = DefaultNightStart;
+    public string NightEnd { get; set; } = DefaultNightEnd;
     /// <summary>Look for new releases on GitHub at start and once a day.</summary>
     public bool CheckForUpdates { get; set; } = true;
     /// <summary>The last version the pet announced, so each update is mentioned only once.</summary>
     public string? NotifiedUpdate { get; set; }
     /// <summary>"?" when an assistant session asks something, a bubble when it is done (via the assistant's hooks).</summary>
     public bool SessionMarks { get; set; } = true;
-    /// <summary>A small pet per running the assistant session, showing that session's "?".</summary>
+    /// <summary>A small pet per running assistant session, showing that session's "?".</summary>
     public bool SessionPets { get; set; }
     public bool StartWithWindows { get; set; }
     /// <summary>Body color as "#RRGGBB"; shade and mood tints are derived from it.</summary>
@@ -134,6 +144,7 @@ public sealed class AppSettings
         ["Update"] = ["Version {version} is out! Right-click → Install update.", "Psst, {name}: there's a new version ({version})."],
         ["Updating"] = ["Downloading the update… see you soon!"],
         ["Tickle"] = ["Hehehe! Stop it! 😆", "Not there, I'm ticklish!", "Hahaha… mercy!"],
+        ["GoodNight"] = ["Good night, {name}… 🌙", "*yawn* Getting late."],
     };
 
     private static Dictionary<string, List<string>> GermanTexts() => new()
@@ -161,6 +172,7 @@ public sealed class AppSettings
         ["Update"] = ["Version {version} ist da! Rechtsklick → Update installieren.", "Psst, {name}: Es gibt eine neue Version ({version})."],
         ["Updating"] = ["Lade das Update… bis gleich!"],
         ["Tickle"] = ["Hihihi! Aufhören! 😆", "Nicht da, da bin ich kitzlig!", "Hahaha… Gnade!"],
+        ["GoodNight"] = ["Gute Nacht, {name}… 🌙", "*gähn* Schon spät."],
     };
 
     public static AppSettings Load()
@@ -208,6 +220,9 @@ public sealed class AppSettings
         Texts ??= [];
         RecentProjects ??= [];
         if (string.IsNullOrWhiteSpace(ReposPath)) ReposPath = null;
+        if (!Occasions.TryParseTime(NightStart, out _)) NightStart = DefaultNightStart;
+        if (!Occasions.TryParseTime(NightEnd, out _)) NightEnd = DefaultNightEnd;
+        if (!Occasions.TryParseDay(Birthday, out _)) Birthday = null;
         PetColor = Sprite.TryParseColor(PetColor, out uint color) ? Sprite.ToHex(color) : DefaultPetColor;
         Language = Language == Strings.German ? Strings.German : Strings.English;
         var defaults = DefaultTexts(Language);

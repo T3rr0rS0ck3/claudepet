@@ -57,6 +57,8 @@ public partial class PetWindow : Window
     private bool _listening;
     private Mark _sessionMark = Mark.None;
     private Outfit _outfit = Outfit.None;
+    private Accessory _accessory = Accessory.None;
+    private bool _night;
     private IReadOnlyList<SessionView> _sessions = [];
     private readonly Dictionary<string, BabyPetWindow> _babies = new();
     private readonly DispatcherTimer _babyTimer = new() { Interval = TimeSpan.FromMilliseconds(1000.0 / 30) };
@@ -196,6 +198,25 @@ public partial class PetWindow : Window
         Render();
     }
 
+    /// <summary>Headwear for the season or the night; the babies wear it too.</summary>
+    public void SetAccessory(Accessory accessory)
+    {
+        if (accessory == _accessory) return;
+        _accessory = accessory;
+        Render();
+        RenderBabies();
+    }
+
+    /// <summary>Night: calm moods get sleepy and walk slower.</summary>
+    public void SetNight(bool night)
+    {
+        if (night == _night) return;
+        _night = night;
+        _walker.Sleepy = night;
+        Render();
+        RenderBabies();
+    }
+
     /// <summary>Short happy animation, e.g. after a reset.</summary>
     public void Cheer(TimeSpan duration)
     {
@@ -315,7 +336,7 @@ public partial class PetWindow : Window
     private void RenderBabies()
     {
         long t = _animations ? _tick : 1;
-        foreach (var baby in _babies.Values) baby.Render(_mood, t);
+        foreach (var baby in _babies.Values) baby.Render(_mood, t, _accessory, _night);
     }
 
     /// <summary>The user is dictating to the assistant: stand still and listen.</summary>
@@ -351,7 +372,7 @@ public partial class PetWindow : Window
             long et = (long)((DateTime.Now - _emoteStart).TotalSeconds * PetAnimator.TicksPerSecond);
             if (et < PetAnimator.EmoteTicks(emote))
             {
-                PetImage.Source = Sprite.Render(PetAnimator.EmoteFrame(emote, et) with { Outfit = _outfit });
+                PetImage.Source = Sprite.Render(PetAnimator.EmoteFrame(emote, et) with { Outfit = _outfit, Accessory = _accessory });
                 return;
             }
             _emote = null;
@@ -359,10 +380,10 @@ public partial class PetWindow : Window
         }
         bool cheering = DateTime.Now < _cheerUntil;
         long t = _animations ? _tick : 1;
-        var frame = PetAnimator.Frame(_mood, _working, cheering, t, _pose.Motion, _pose.Direction, _listening);
+        var frame = PetAnimator.Frame(_mood, _working, cheering, t, _pose.Motion, _pose.Direction, _listening, _night);
         if (_lookAt is { } eyes) frame = frame with { Eyes = eyes };
         if (_sessionMark != Mark.None) frame = frame with { Mark = _sessionMark };
-        PetImage.Source = Sprite.Render(frame with { Outfit = _outfit });
+        PetImage.Source = Sprite.Render(frame with { Outfit = _outfit, Accessory = _accessory });
     }
 
     // ---------------------------------------------------------------- walking around
