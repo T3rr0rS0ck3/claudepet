@@ -1,0 +1,14 @@
+<Application x:Class="Claudius.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             ShutdownMode="OnExplicitShutdown">
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="Views/MenuStyles.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+            <!-- Accent color of overlay, menus and speech bubble; follows the pet's color (App.ApplyPetColor) -->
+            <SolidColorBrush x:Key="AccentBrush" Color="#D97757" />
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>

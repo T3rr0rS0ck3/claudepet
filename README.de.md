@@ -57,12 +57,12 @@ Eine .NET-Installation ist nicht nötig, der Installer bringt alles mit.
 Das Pet kommt in den **Microsoft Store** als *Claudius - KI Usage Pet* (von Microsoft signiert, Updates über den Store).
 Bis es dort gelistet ist, oder wenn du GitHub bevorzugst:
 
-1. **`ClaudePet-Setup-x.y.z.exe`** aus dem [neuesten Release](https://github.com/T3rr0rS0ck3/claudepet/releases/latest) herunterladen.
-2. Ausführen. Admin-Rechte sind nicht nötig (Installation nach `%LOCALAPPDATA%\Programs\ClaudePet`).
+1. **`Claudius-Setup-x.y.z.exe`** aus dem [neuesten Release](https://github.com/T3rr0rS0ck3/claudepet/releases/latest) herunterladen.
+2. Ausführen. Admin-Rechte sind nicht nötig (Installation nach `%LOCALAPPDATA%\Programs\Claudius`).
 3. **„Mit Claude Code verbinden“** angehakt lassen. Damit wird das Pet als `statusLine` in Claude Code eingetragen, aber nur, wenn noch keine existiert.
 4. In Claude Code eine Nachricht senden. Nach der ersten Antwort kennt das Pet deinen Verbrauch.
 
-Ohne Installer: `portable.zip` aus dem Release entpacken und `ClaudePet.exe` starten.
+Ohne Installer: `portable.zip` aus dem Release entpacken und `Claudius.exe` starten.
 Danach Rechtsklick aufs Pet → *Claude Code verbinden…*
 
 > **Windows SmartScreen** warnt eventuell vor einem unbekannten Herausgeber, weil der Installer nicht signiert ist.
@@ -86,7 +86,7 @@ zur Release-Seite. In den Einstellungen (*Updates*) lässt sich die Suche abscha
 | Mit der Maus übers Pet fahren | Emote-Knöpfe: füttern 🍪, streicheln ❤, spielen ⚽ und kitzeln 🪶, jeweils mit eigener Reaktion (abschaltbar) |
 | Rechtsklick aufs Pet | Menü: Usage, Claude öffnen, Sprachchat, Hallo sagen, Vordergrund, Herumlaufen, in den Tray, Claude Code verbinden, Einstellungen, Beenden |
 | Linksklick aufs Tray-Icon | Usage-Fenster öffnen |
-| `ClaudePet.exe` erneut starten | Holt das laufende Pet zurück und öffnet das Usage-Fenster |
+| `Claudius.exe` erneut starten | Holt das laufende Pet zurück und öffnet das Usage-Fenster |
 
 ## Claude Code öffnen
 
@@ -137,15 +137,15 @@ Solange Claude Code gerade Daten liefert, „tippt“ ein ruhiges Pet mit. Nach 
 ## Funktionsweise
 
 ```text
-Claude Code ── statusLine-JSON (stdin) ──▶ ClaudePetBridge.exe ──▶ %LOCALAPPDATA%\ClaudePet\usage.json
+Claude Code ── statusLine-JSON (stdin) ──▶ ClaudiusBridge.exe ──▶ %LOCALAPPDATA%\Claudius\usage.json
                                                   │                                  ▲
                                                   │                                  │ liest
-                                                  └── gibt die Statuszeile aus  ClaudePet.exe (das Pet)
+                                                  └── gibt die Statuszeile aus  Claudius.exe (das Pet)
 ```
 
 Claude Code führt nach jeder Antwort den konfigurierten [statusLine-Befehl](https://code.claude.com/docs/en/statusline)
 aus und übergibt Sitzungsdaten inklusive `rate_limits.five_hour` und `rate_limits.seven_day` als JSON.
-`ClaudePetBridge.exe` ist dieser Befehl. Sie speichert die Werte lokal und gibt eine kompakte Statuszeile an Claude Code zurück:
+`ClaudiusBridge.exe` ist dieser Befehl. Sie speichert die Werte lokal und gibt eine kompakte Statuszeile an Claude Code zurück:
 
 ```text
 [Opus] Session 73% (↻ 2h 14m) · Woche 61%
@@ -182,7 +182,7 @@ Die meisten Optionen gibt es unter Rechtsklick → **Einstellungen…**: Sprache
 Größe, Farbe, Vordergrund, Animationen, Herumlaufen, Monitorwechsel, Emotes, Modell-Outfits, Autostart, Update-Suche, Aktualisierungsintervall, Warn- und Zustandsschwellen, Sprechblasen,
 Benachrichtigungen und dein Name.
 
-Alles liegt in `%LOCALAPPDATA%\ClaudePet\settings.json`. Handänderungen werden sofort übernommen.
+Alles liegt in `%LOCALAPPDATA%\Claudius\settings.json`. Handänderungen werden sofort übernommen.
 `Language` ist `en` oder `de`. Die Sprechblasentexte stehen unter `Texts`; ein Sprachwechsel in den Einstellungen setzt
 sie auf die Standardtexte der neuen Sprache zurück. Pro Ereignis kann es mehrere Varianten geben, eine wird zufällig gewählt:
 
@@ -211,7 +211,7 @@ Limit-Daten kommen erst nach der ersten Antwort einer Session und nur bei Pro/Ma
 
 **Ich hatte schon eine eigene Statuszeile.**
 Der Installer überschreibt sie nie. Beim Verbinden aus der App wird vorher gefragt und eine Sicherung unter
-`~/.claude/settings.json.claudepet-backup` angelegt. Es kann nur ein statusLine-Befehl aktiv sein.
+`~/.claude/settings.json.claudius-backup` angelegt. Es kann nur ein statusLine-Befehl aktiv sein.
 
 **Beim Öffnen kommt „Claude Code wurde nicht gefunden“.**
 Das Pet sucht `claude` im `PATH` und in `%USERPROFILE%\.local\bin`. Im Einstellungsfenster steht, welches `claude`
@@ -225,12 +225,12 @@ Mikrofonfreigabe für die Konsole prüfen und ob Claude Code mit einem claude.ai
 `/voice` in Claude Code zeigt den Status.
 
 **Irgendwas stimmt nicht.**
-Schau in `%LOCALAPPDATA%\ClaudePet\log.txt`. Die Datei `usage.json` im selben Ordner zeigt die zuletzt empfangenen Werte.
+Schau in `%LOCALAPPDATA%\Claudius\log.txt`. Die Datei `usage.json` im selben Ordner zeigt die zuletzt empfangenen Werte.
 
 ## Deinstallation
 
 Über Windows-Einstellungen → Apps *Claudius - KI Usage Pet* deinstallieren. Dabei werden auch der statusLine-Eintrag in Claude Code
-und der Autostart entfernt. Die Einstellungen bleiben in `%LOCALAPPDATA%\ClaudePet`. Diesen Ordner löschen, wenn alles weg soll.
+und der Autostart entfernt. Die Einstellungen bleiben in `%LOCALAPPDATA%\Claudius`. Diesen Ordner löschen, wenn alles weg soll.
 
 **Store-Version:** Store-Apps können beim Deinstallieren nichts ausführen. Deshalb vorher in den Einstellungen des Pets
 auf *Trennen* klicken, sonst ruft Claude Code weiter die entfernte Bridge auf.
@@ -241,13 +241,13 @@ Benötigt das .NET 8 SDK (oder neuer).
 
 ```powershell
 git clone https://github.com/T3rr0rS0ck3/claudepet.git
-cd claudepet
-.\build.ps1                        # Build mit vorausgesetzter .NET-Runtime → dist\ClaudePet
+cd claudius
+.\build.ps1                        # Build mit vorausgesetzter .NET-Runtime → dist\Claudius
 .\build.ps1 -SelfContained -Version 1.2.3
-.\dist\ClaudePet\ClaudePet.exe
+.\dist\Claudius\Claudius.exe
 ```
 
-Mit `CLAUDEPET_DATA_DIR` lassen sich App und Bridge auf einen anderen Datenordner umlenken, z. B. zum Testen mit eigenen `usage.json`-Dateien.
+Mit `CLAUDIUS_DATA_DIR` lassen sich App und Bridge auf einen anderen Datenordner umlenken, z. B. zum Testen mit eigenen `usage.json`-Dateien.
 
 ### Releases
 
@@ -255,7 +255,7 @@ Ein Tag wie `v1.2.3` startet den [Release-Workflow](.github/workflows/release.ym
 erstellt den Inno-Setup-Installer und eine portable ZIP und veröffentlicht ein GitHub-Release. Tags mit Suffix
 (`v1.2.3-beta`) werden Pre-Releases. Bestehende Tags lassen sich über *Actions → Release → Run workflow* neu bauen.
 
-Für den **Microsoft Store** baut der Workflow zusätzlich ein unsigniertes `ClaudePet-1.2.3.msix` ([packaging/](packaging/))
+Für den **Microsoft Store** baut der Workflow zusätzlich ein unsigniertes `Claudius-1.2.3.msix` ([packaging/](packaging/))
 und hängt es an den Lauf und das Release (so nicht installierbar). Das wird im Partner Center hochgeladen, der Store signiert es. Lokal testen
 (Entwicklermodus an): `.\build.ps1 -SelfContained -Version 1.2.3; .\packaging\build-msix.ps1 -Version 1.2.3 -Register`.
 Datenschutzerklärung für den Store-Eintrag: [PRIVACY.md](PRIVACY.md).
@@ -275,11 +275,11 @@ Nach der ersten, von Hand im Partner Center gemachten Einreichung kann der Workf
 
 ```text
 src/Shared/            Datenmodell und Dateizugriff (App und Bridge)
-src/ClaudePet.Bridge/  Der statusLine-Befehl
-src/ClaudePet/Core/    Einstellungen, Stimmungslogik, Prognose, Autostart, Claude-Code-Setup,
+src/Claudius.Bridge/  Der statusLine-Befehl
+src/Claudius/Core/    Einstellungen, Stimmungslogik, Prognose, Autostart, Claude-Code-Setup,
                        Claude Code starten, Explorer-Ordner unter dem Mauszeiger finden
-src/ClaudePet/Pet/     Prozedurales Pixel-Sprite, Animationen, Pet-Fenster, Geist-Fenster
-src/ClaudePet/Views/   Usage-Fenster, Einstellungen, Projektliste
+src/Claudius/Pet/     Prozedurales Pixel-Sprite, Animationen, Pet-Fenster, Geist-Fenster
+src/Claudius/Views/   Usage-Fenster, Einstellungen, Projektliste
 installer/             Inno-Setup-Skript
 ```
 

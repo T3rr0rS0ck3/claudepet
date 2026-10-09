@@ -1,0 +1,306 @@
+using System.Diagnostics;
+using System.Globalization;
+using System.IO;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Media;
+using Microsoft.Win32;
+using Claudius.Core;
+using Claudius.Pet;
+using Claudius.Shared;
+using Forms = System.Windows.Forms;
+
+namespace Claudius.Views;
+
+public partial class SettingsWindow : Window
+{
+    private readonly AppSettings _settings;
+    private readonly App _app;
+
+    public SettingsWindow(App app, AppSettings settings)
+    {
+        InitializeComponent();
+        // Scroll instead of growing past the screen; Escape closes like a normal dialog.
+        MaxHeight = SystemParameters.WorkArea.Height - 20;
+        PreviewKeyDown += (_, e) => { if (e.Key == System.Windows.Input.Key.Escape) Close(); };
+        _app = app;
+        _settings = settings;
+
+        ScaleSlider.Value = settings.PetScale;
+        ColorBox.Text = settings.PetColor;
+        TerminalMascotBox.IsChecked = settings.TerminalMascotColor;
+        AlwaysOnTopBox.IsChecked = settings.AlwaysOnTop;
+        AnimationsBox.IsChecked = settings.Animations;
+        WalkAroundBox.IsChecked = settings.WalkAround;
+        CrossMonitorsBox.IsChecked = settings.CrossMonitors;
+        EmotesBox.IsChecked = settings.Emotes;
+        ModelOutfitsBox.IsChecked = settings.ModelOutfits;
+        UpdatesBox.IsChecked = settings.CheckForUpdates;
+        VersionText.Text = Strings.InstalledVersion(Updater.Format(Updater.CurrentVersion))
+            + (Updater.IsDevBuild ? Strings.DevBuildSuffix : Updater.IsInstalled ? "" : Strings.PortableSuffix);
+        CheckUpdateButton.IsEnabled = !Updater.IsDevBuild;
+        ShowUpdate(app.AvailableUpdate);
+        if (AppPackage.IsPackaged)
+        {
+            VersionText.Text = Strings.StoreVersion(Updater.Format(Updater.CurrentVersion));
+            UpdatesBox.Visibility = UpdateButtons.Visibility = UpdateStatusText.Visibility = Visibility.Collapsed;
+        }
+        SessionMarksBox.IsChecked = settings.SessionMarks;
+        SessionPetsBox.IsChecked = settings.SessionPets;
+        AutostartBox.IsChecked = settings.StartWithWindows;
+        // Store version: switched off under Settings → Apps → Startup, only the user can switch it on there.
+        if (Autostart.BlockedByUser) AutostartBlockedPanel.Visibility = Visibility.Visible;
+        IntervalBox.Text = settings.PollIntervalSeconds.ToString(CultureInfo.InvariantCulture);
+        SessionWarnBox.Text = string.Join(", ", settings.SessionWarnThresholds);
+        WeekWarnBox.Text = string.Join(", ", settings.WeekWarnThresholds);
+        var t = settings.Thresholds;
+        MoodThresholdsBox.Text = string.Join(", ", t.Normal, t.Attentive, t.Nervous, t.Worried, t.Panic, t.Exhausted);
+        ForecastBox.IsChecked = settings.ShowForecast;
+        BubblesBox.IsChecked = settings.SpeechBubbles;
+        BubbleDurationBox.Text = settings.BubbleDurationSeconds.ToString(CultureInfo.InvariantCulture);
+        NameBox.Text = settings.UserName;
+        NotificationsBox.IsChecked = settings.Notifications;
+        ReposPathBox.Text = settings.ReposPath ?? "";
+        LanguageBox.ItemsSource = LanguageChoices;
+        LanguageBox.DisplayMemberPath = "Value";
+        LanguageBox.SelectedValuePath = "Key";
+        LanguageBox.SelectedValue = settings.Language;
+        TerminalBox.ItemsSource = TerminalChoices();
+        TerminalBox.DisplayMemberPath = "Value";
+        TerminalBox.SelectedValuePath = "Key";
+        TerminalBox.SelectedValue = settings.Terminal;
+        GhostDragBox.IsChecked = settings.GhostDrag;
+        VoiceBox.IsChecked = settings.VoiceChat;
+
+        string? assistant = AssistantLauncher.FindAssistant();
+        AssistantStatusText.Text = assistant != null ? Strings.AssistantFound(assistant) : "⚠ " + Strings.AssistantNotFound;
+
+        RefreshSetupStatus();
+    }
+
+    // Each language in its own name.
+    private static readonly KeyValuePair<string, string>[] LanguageChoices =
+    [
+        new(Strings.English, "English"),
+        new(Strings.German, "Deutsch"),
+    ];
+
+    private static KeyValuePair<TerminalKind, string>[] TerminalChoices() =>
+    [
+        new(TerminalKind.Auto, Strings.TerminalAuto(AssistantLauncher.HasWindowsTerminal)),
+        new(TerminalKind.WindowsTerminal, "Windows Terminal"),
+        new(TerminalKind.Cmd, Strings.TerminalCmd),
+        new(TerminalKind.PowerShell, "PowerShell"),
+        new(TerminalKind.Desktop, Strings.TerminalDesktop),
+    ];
+
+    private void BrowseRepos_Click(object sender, RoutedEventArgs e)
+    {
+        var dialog = new OpenFolderDialog { Title = Strings.ChooseReposFolder };
+        if (Directory.Exists(ReposPathBox.Text)) dialog.InitialDirectory = ReposPathBox.Text;
+        if (dialog.ShowDialog(this) == true) ReposPathBox.Text = dialog.FolderName;
+    }
+
+    private void ColorBox_TextChanged(object sender, TextChangedEventArgs e)
+    {
+        bool valid = Sprite.TryParseColor(ColorBox.Text, out uint argb);
+        ColorPreview.Background = valid ? new SolidColorBrush(ToColor(argb)) : Brushes.Transparent;
+        // Show the color on the pet right away; closing without saving goes back to the saved one.
+        if (valid && IsLoaded) _app.PreviewPetColor(argb);
+    }
+
+    protected override void OnClosed(EventArgs e)
+    {
+        base.OnClosed(e);
+        _app.PreviewPetColor(null);
+    }
+
+    private void PickColor_Click(object sender, RoutedEventArgs e)
+    {
+        if (!Sprite.TryParseColor(ColorBox.Text, out uint argb)) argb = Sprite.DefaultBodyColor;
+        using var dialog = new Forms.ColorDialog
+        {
+            FullOpen = true,
+            Color = System.Drawing.Color.FromArgb(unchecked((int)argb)),
+        };
+        if (dialog.ShowDialog() == Forms.DialogResult.OK)
+            ColorBox.Text = Sprite.ToHex(unchecked((uint)dialog.Color.ToArgb()));
+    }
+
+    private void DefaultColor_Click(object sender, RoutedEventArgs e) => ColorBox.Text = AppSettings.DefaultPetColor;
+
+    private static Color ToColor(uint argb) =>
+        Color.FromRgb((byte)(argb >> 16), (byte)(argb >> 8), (byte)argb);
+
+    private void RefreshSetupStatus()
+    {
+        var status = AssistantSetup.GetStatus();
+        SetupStatusText.Text = status switch
+        {
+            SetupStatus.Connected => Strings.SetupConnected,
+            SetupStatus.OtherStatusLine => Strings.SetupOtherStatusLine + AssistantSetup.CurrentCommand(),
+            SetupStatus.BridgeMissing => Strings.SetupBridgeMissing,
+            _ => Strings.SetupNotConnected,
+        };
+        ConnectButton.IsEnabled = status is SetupStatus.NotConfigured or SetupStatus.OtherStatusLine;
+        DisconnectButton.IsEnabled = status == SetupStatus.Connected;
+    }
+
+    private void Connect_Click(object sender, RoutedEventArgs e)
+    {
+        _app.ConnectAssistant(this);
+        RefreshSetupStatus();
+    }
+
+    private void Disconnect_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            AssistantSetup.Uninstall();
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(this, ex.Message, "Claudius", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+        RefreshSetupStatus();
+    }
+
+    private void EditTexts_Click(object sender, RoutedEventArgs e)
+    {
+        _settings.Save();
+        Process.Start(new ProcessStartInfo(DataPaths.SettingsFile) { UseShellExecute = true });
+    }
+
+    private async void CheckUpdate_Click(object sender, RoutedEventArgs e)
+    {
+        CheckUpdateButton.IsEnabled = false;
+        UpdateStatusText.Text = Strings.Checking;
+        UpdateStatusText.Visibility = Visibility.Visible;
+        try
+        {
+            var update = await _app.CheckForUpdateAsync(silent: false);
+            ShowUpdate(update);
+            if (update == null) UpdateStatusText.Text = Strings.UpToDate;
+        }
+        catch (Exception ex)
+        {
+            UpdateStatusText.Text = Strings.CheckFailed + ex.Message;
+        }
+        finally
+        {
+            CheckUpdateButton.IsEnabled = true;
+        }
+    }
+
+    private void ShowUpdate(UpdateInfo? update)
+    {
+        InstallUpdateButton.Visibility = update != null ? Visibility.Visible : Visibility.Collapsed;
+        if (update == null) return;
+        InstallUpdateButton.Content = Updater.IsInstalled ? Strings.Install : Strings.Download;
+        UpdateStatusText.Text = Strings.VersionAvailable(update.VersionText);
+        UpdateStatusText.Visibility = Visibility.Visible;
+    }
+
+    private void StartupSettings_Click(object sender, RoutedEventArgs e) => App.OpenUrl("ms-settings:startupapps");
+
+    private void InstallUpdate_Click(object sender, RoutedEventArgs e) => _app.InstallUpdate(this);
+
+    private void TestNotification_Click(object sender, RoutedEventArgs e) =>
+        _app.ShowNotification("Claudius", Strings.TestNotificationText);
+
+    private void Save_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            int interval = ParseInt(IntervalBox.Text, Strings.IntervalField);
+            double duration = double.Parse(BubbleDurationBox.Text.Replace(',', '.'), CultureInfo.InvariantCulture);
+            var sessionWarn = ParseList(SessionWarnBox.Text, Strings.SessionWarnField);
+            var weekWarn = ParseList(WeekWarnBox.Text, Strings.WeekWarnField);
+            var moods = ParseList(MoodThresholdsBox.Text, Strings.MoodField);
+            if (moods.Count != 6) throw new FormatException(Strings.MoodCountError);
+            if (!Sprite.TryParseColor(ColorBox.Text, out uint petColor))
+                throw new FormatException(Strings.ColorError);
+            string reposPath = ReposPathBox.Text.Trim().Trim('"');
+            if (reposPath.Length > 0 && !Directory.Exists(reposPath))
+                throw new FormatException(Strings.ReposFolderMissing);
+
+            // Switching voice chat off also switches the assistant's dictation off again. That setting lives in
+            // The assistant's own settings.json, so write it first: if it fails, nothing is applied.
+            if (_settings.VoiceChat && VoiceBox.IsChecked != true)
+            {
+                try
+                {
+                    AssistantSetup.SetVoiceEnabled(false);
+                }
+                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidDataException
+                                               or System.Text.Json.JsonException)
+                {
+                    throw new FormatException(Strings.AssistantSettingsNotWritten + ex.Message);
+                }
+            }
+            for (int i = 1; i < moods.Count; i++)
+                if (moods[i] < moods[i - 1]) throw new FormatException(Strings.MoodOrderError);
+
+            if (LanguageBox.SelectedValue is string language) _settings.SetLanguage(language);
+            _settings.PetScale = ScaleSlider.Value;
+            _settings.PetColor = Sprite.ToHex(petColor);
+            _settings.TerminalMascotColor = TerminalMascotBox.IsChecked == true;
+            _settings.AlwaysOnTop = AlwaysOnTopBox.IsChecked == true;
+            _settings.Animations = AnimationsBox.IsChecked == true;
+            _settings.WalkAround = WalkAroundBox.IsChecked == true;
+            _settings.CrossMonitors = CrossMonitorsBox.IsChecked == true;
+            _settings.Emotes = EmotesBox.IsChecked == true;
+            _settings.ModelOutfits = ModelOutfitsBox.IsChecked == true;
+            _settings.CheckForUpdates = UpdatesBox.IsChecked == true;
+            _settings.SessionMarks = SessionMarksBox.IsChecked == true;
+            _settings.SessionPets = SessionPetsBox.IsChecked == true;
+            _settings.StartWithWindows = AutostartBox.IsChecked == true;
+            _settings.PollIntervalSeconds = Math.Clamp(interval, 1, 300);
+            _settings.SessionWarnThresholds = sessionWarn;
+            _settings.WeekWarnThresholds = weekWarn;
+            _settings.Thresholds = new MoodThresholds
+            {
+                Normal = moods[0], Attentive = moods[1], Nervous = moods[2],
+                Worried = moods[3], Panic = moods[4], Exhausted = moods[5],
+            };
+            _settings.ShowForecast = ForecastBox.IsChecked == true;
+            _settings.SpeechBubbles = BubblesBox.IsChecked == true;
+            _settings.BubbleDurationSeconds = Math.Clamp(duration, 1, 60);
+            _settings.UserName = NameBox.Text.Trim();
+            _settings.Notifications = NotificationsBox.IsChecked == true;
+            _settings.ReposPath = reposPath.Length > 0 ? reposPath : null;
+            _settings.Terminal = TerminalBox.SelectedValue is TerminalKind terminal ? terminal : TerminalKind.Auto;
+            _settings.GhostDrag = GhostDragBox.IsChecked == true;
+            _settings.VoiceChat = VoiceBox.IsChecked == true;
+
+            _app.ApplySettings(save: true);
+            Close();
+        }
+        catch (FormatException ex)
+        {
+            ErrorText.Text = ex.Message;
+            ErrorText.Visibility = Visibility.Visible;
+        }
+    }
+
+    // Borderless like the usage overlay: drag by the title, close with the ✕.
+    private void Title_MouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+    {
+        try { DragMove(); } catch (InvalidOperationException) { }
+    }
+
+    private void Close_Click(object sender, System.Windows.Input.MouseButtonEventArgs e) => Close();
+
+    // IsCancel only closes modal dialogs; this window is shown non-modally.
+    private void Cancel_Click(object sender, RoutedEventArgs e) => Close();
+
+    private static int ParseInt(string text, string field) =>
+        int.TryParse(text.Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture, out int value)
+            ? value
+            : throw new FormatException(Strings.InvalidNumber(field));
+
+    private static List<int> ParseList(string text, string field) =>
+        text.Split([',', ';', ' '], StringSplitOptions.RemoveEmptyEntries)
+            .Select(part => Math.Clamp(ParseInt(part, field), 0, 100))
+            .ToList();
+}

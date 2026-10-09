@@ -57,12 +57,12 @@ No .NET installation needed — the installer is self-contained.
 The pet is coming to the **Microsoft Store** as *Claudius - KI Usage Pet* (signed by Microsoft, updated by the Store).
 Until it is listed, or if you prefer GitHub:
 
-1. Download **`ClaudePet-Setup-x.y.z.exe`** from the [latest release](https://github.com/T3rr0rS0ck3/claudepet/releases/latest).
-2. Run it. No admin rights required (installs to `%LOCALAPPDATA%\Programs\ClaudePet`).
+1. Download **`Claudius-Setup-x.y.z.exe`** from the [latest release](https://github.com/T3rr0rS0ck3/claudepet/releases/latest).
+2. Run it. No admin rights required (installs to `%LOCALAPPDATA%\Programs\Claudius`).
 3. Keep **"Connect to Claude Code"** checked. This adds the pet as Claude Code's `statusLine` (only if you don't have one yet).
 4. Send any message in Claude Code — after the first response the pet knows your usage.
 
-Prefer no installer? Grab the `portable.zip` from the release, extract it anywhere and start `ClaudePet.exe`.
+Prefer no installer? Grab the `portable.zip` from the release, extract it anywhere and start `Claudius.exe`.
 Then right-click the pet → *Connect Claude Code…*.
 
 > **Windows SmartScreen** may warn about an unknown publisher because the installer isn't code-signed.
@@ -86,7 +86,7 @@ release page. You can switch the check off or run it by hand in the settings (*U
 | Hover the pet | Emote buttons: feed 🍪, pat ❤, play ⚽ and tickle 🪶 it, each with its own reaction (can be turned off) |
 | Right-click the pet | Menu: usage, open Claude, voice chat, say hello, always on top, walk around, minimize to tray, connect Claude Code, settings, quit |
 | Left-click the tray icon | Open the usage overlay |
-| Start `ClaudePet.exe` again | Brings the running pet back and opens the overlay |
+| Start `Claudius.exe` again | Brings the running pet back and opens the overlay |
 
 ## Opening Claude Code
 
@@ -136,15 +136,15 @@ While Claude Code is actively sending data, a calm pet "types" along. After a re
 ## How it works
 
 ```text
-Claude Code ── status line JSON (stdin) ──▶ ClaudePetBridge.exe ──▶ %LOCALAPPDATA%\ClaudePet\usage.json
+Claude Code ── status line JSON (stdin) ──▶ ClaudiusBridge.exe ──▶ %LOCALAPPDATA%\Claudius\usage.json
                                                    │                                  ▲
                                                    │                                  │ polls
-                                                   └── prints the status line   ClaudePet.exe (the pet)
+                                                   └── prints the status line   Claudius.exe (the pet)
 ```
 
 Claude Code runs its configured [status line command](https://code.claude.com/docs/en/statusline) after each response
 and passes session data — including `rate_limits.five_hour` and `rate_limits.seven_day` — as JSON on stdin.
-`ClaudePetBridge.exe` is that command: it stores the values locally and prints a compact status line back into Claude Code:
+`ClaudiusBridge.exe` is that command: it stores the values locally and prints a compact status line back into Claude Code:
 
 ```text
 [Opus] Session 73% (↻ 2h 14m) · Week 61%
@@ -188,7 +188,7 @@ Most options are available via right-click → **Settings…**: language, repo f
 voice chat, size, pet color, always on top, animations, walking around, crossing monitors, emotes, model outfits, autostart, update checks, update interval, warning thresholds, mood thresholds,
 speech bubbles, notifications and your name.
 
-Everything lives in `%LOCALAPPDATA%\ClaudePet\settings.json`, and manual edits are picked up live.
+Everything lives in `%LOCALAPPDATA%\Claudius\settings.json`, and manual edits are picked up live.
 `Language` is `en` or `de`. Speech bubble texts are under `Texts`; switching the language in the settings resets them
 to that language's defaults. Each event can have several variants; one is picked at random:
 
@@ -217,7 +217,7 @@ Rate-limit data only arrives after the first response of a session and only for 
 
 **I already had a custom status line.**
 The installer never overwrites it. Connecting from the app asks first and saves a backup as
-`~/.claude/settings.json.claudepet-backup`. Only one status line command can be active.
+`~/.claude/settings.json.claudius-backup`. Only one status line command can be active.
 
 **Opening Claude Code fails with "Claude Code wurde nicht gefunden".**
 The pet looks for `claude` on the `PATH` and in `%USERPROFILE%\.local\bin`. The settings window shows which
@@ -231,12 +231,12 @@ Check the microphone permission for your console and that Claude Code is signed 
 Run `/voice` in Claude Code to see its status.
 
 **Something seems off.**
-Look at `%LOCALAPPDATA%\ClaudePet\log.txt`. `usage.json` there shows the last values received from Claude Code.
+Look at `%LOCALAPPDATA%\Claudius\log.txt`. `usage.json` there shows the last values received from Claude Code.
 
 ## Uninstall
 
 Uninstall *Claudius - KI Usage Pet* via Windows Settings → Apps. This also removes the status line entry from Claude Code and
-the autostart entry. Your settings stay in `%LOCALAPPDATA%\ClaudePet` — delete that folder for a clean slate.
+the autostart entry. Your settings stay in `%LOCALAPPDATA%\Claudius` — delete that folder for a clean slate.
 
 **Store version:** Store apps can't run anything on uninstall, so first open the pet's settings and click *Trennen*
 (disconnect). Otherwise Claude Code keeps calling the removed bridge.
@@ -247,13 +247,13 @@ Requires the .NET 8 SDK (or newer).
 
 ```powershell
 git clone https://github.com/T3rr0rS0ck3/claudepet.git
-cd claudepet
-.\build.ps1                        # framework-dependent build → dist\ClaudePet
+cd claudius
+.\build.ps1                        # framework-dependent build → dist\Claudius
 .\build.ps1 -SelfContained -Version 1.2.3
-.\dist\ClaudePet\ClaudePet.exe
+.\dist\Claudius\Claudius.exe
 ```
 
-Set `CLAUDEPET_DATA_DIR` to point the app and bridge at a different data folder, e.g. for testing with fake `usage.json` files.
+Set `CLAUDIUS_DATA_DIR` to point the app and bridge at a different data folder, e.g. for testing with fake `usage.json` files.
 
 ### Releases
 
@@ -261,7 +261,7 @@ Pushing a tag like `v1.2.3` runs the [release workflow](.github/workflows/releas
 version, packs the Inno Setup installer and a portable zip, and publishes a GitHub release. Tags with a suffix
 (`v1.2.3-beta`) become pre-releases. Existing tags can be rebuilt via *Actions → Release → Run workflow*.
 
-For the **Microsoft Store**, the workflow also builds an unsigned `ClaudePet-1.2.3.msix` ([packaging/](packaging/)) and
+For the **Microsoft Store**, the workflow also builds an unsigned `Claudius-1.2.3.msix` ([packaging/](packaging/)) and
 attaches it to the run and the release (it is not installable as is). Upload it in Partner Center; the Store signs it. To try the package locally
 (Developer Mode on): `.\build.ps1 -SelfContained -Version 1.2.3; .\packaging\build-msix.ps1 -Version 1.2.3 -Register`.
 Privacy policy for the listing: [PRIVACY.md](PRIVACY.md).
@@ -281,11 +281,11 @@ After the first submission was done by hand in Partner Center, the workflow can 
 
 ```text
 src/Shared/            Data model and file access shared by app and bridge
-src/ClaudePet.Bridge/  The status line command
-src/ClaudePet/Core/    Settings, mood logic, forecast, autostart, Claude Code setup,
+src/Claudius.Bridge/  The status line command
+src/Claudius/Core/    Settings, mood logic, forecast, autostart, Claude Code setup,
                        launching Claude Code, finding the Explorer folder under the cursor
-src/ClaudePet/Pet/     Procedural pixel sprite, animations, pet window, ghost window
-src/ClaudePet/Views/   Usage overlay, settings window, project menu
+src/Claudius/Pet/     Procedural pixel sprite, animations, pet window, ghost window
+src/Claudius/Views/   Usage overlay, settings window, project menu
 installer/             Inno Setup script
 ```
 
