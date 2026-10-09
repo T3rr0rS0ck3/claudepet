@@ -23,7 +23,7 @@ until the limit resets.
 - 🟠 **Desktop pet** — transparent, borderless, draggable, optionally always on top
 - 🚶 **Walks around** — strolls along the taskbar and the tops of open windows, jumps up onto windows,
   climbs the screen edges, swings along the top of the screen until it drops, and falls off when a window
-  moves away; after a long fall it lands with a splat and pulls itself back into shape. Its mood sets the pace
+  moves away; after a long fall it splats into a puddle, drops flying off, and pulls itself back together. Its mood sets the pace
   (can be turned off). Optionally it also walks or hops over to the neighbouring monitor, following how your
   monitors are arranged in Windows
 - 🐭 **Chases the pointer** — now and then, when calm, it eyes the mouse pointer nearby and runs after it; hold the pointer

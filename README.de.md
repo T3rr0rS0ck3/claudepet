@@ -23,7 +23,7 @@ Panik → schläft bis zum Reset.
 - 🟠 **Desktop-Pet**: transparent, randlos, frei verschiebbar, optional immer im Vordergrund
 - 🚶 **Läuft herum**: bummelt über die Taskleiste und die Oberkanten offener Fenster, springt auf Fenster,
   klettert an den Bildschirmrändern hoch, hangelt sich am oberen Rand entlang, bis es runterfällt, und fällt
-  runter, wenn ein Fenster verschwindet; nach einem tiefen Sturz klatscht es platt auf und formt sich wieder.
+  runter, wenn ein Fenster verschwindet; nach einem tiefen Sturz zerläuft es zur Pfütze, Tropfen spritzen weg, und es baut sich wieder zusammen.
   Das Tempo hängt von der Stimmung ab (abschaltbar). Auf Wunsch läuft oder hüpft es auch zum Nachbarmonitor,
   passend zur Monitoranordnung in Windows
 - 🐭 **Jagt den Mauszeiger**: ab und zu fixiert es in ruhiger Stimmung den Zeiger in seiner Nähe und rennt ihm hinterher; hält man
