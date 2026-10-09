@@ -305,4 +305,4 @@ This is an independent project. The pixel character is an original drawing.
 
 ## License
 
-[MIT](LICENSE) © Robin Wessel
+[MIT](LICENSE) © T3rr0rS0ck3

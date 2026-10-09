@@ -311,4 +311,4 @@ Unabhängiges Projekt. Der Pixel-Charakter ist eine eigene Zeichnung.
 
 ## Lizenz
 
-[MIT](LICENSE) © Robin Wessel
+[MIT](LICENSE) © T3rr0rS0ck3
