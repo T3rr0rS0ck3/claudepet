@@ -45,7 +45,7 @@ public sealed class PetWalker
     /// <summary>A fall at least this deep, in pet heights, squashes the pet flat on landing.</summary>
     private const double SplatHeight = 3;
     /// <summary>How long the pet lies flat and pulls itself together again, in seconds.</summary>
-    public const double SplatSeconds = 0.9;
+    public const double SplatSeconds = 1.4;
 
     private readonly Random _random = new();
     private bool _airborne = true;

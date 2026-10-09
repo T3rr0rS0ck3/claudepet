@@ -72,6 +72,8 @@ public partial class PetWindow : Window
     /// <summary>Night: the pet goes to bed (on the taskbar, or right where it is if it does not walk around).</summary>
     private bool _bedtime;
     private bool _shownInBed;
+    private DateTime _splatStart;
+    private int _squashShown;
     private BedWindow? _bedWindow;
     private double _lastPetWidth;
     /// <summary>Picked up while asleep: by the blanket the bed comes along, by the head the pet comes out.</summary>
@@ -166,7 +168,8 @@ public partial class PetWindow : Window
         double petWidth = Sprite.Width * settings.PetScale;
         double petHeight = Sprite.Height * settings.PetScale;
         double tearsWidth = (Sprite.Width + 2 * Sprite.TearMargin) * settings.PetScale;
-        double newWidth = Math.Max(MinWidth_, tearsWidth + 20);
+        double splatWidth = (Sprite.Width + 2 * Sprite.SplatMargin) * settings.PetScale;
+        double newWidth = Math.Max(MinWidth_, Math.Max(tearsWidth, splatWidth) + 20);
         double newHeight = BubbleArea + petHeight;
 
         if (initial)
@@ -192,6 +195,8 @@ public partial class PetWindow : Window
         PetImage.Height = petHeight;
         TearsImage.Width = tearsWidth;
         TearsImage.Height = petHeight;
+        SplatImage.Width = splatWidth;
+        SplatImage.Height = petHeight;
         BedBackImage.Width = BedFrontImage.Width = petWidth;
         BedBackImage.Height = BedFrontImage.Height = petHeight;
         if (_petOnTop) SetPetOnTop(true); // the bubble below the pet moves with its size
@@ -521,6 +526,12 @@ public partial class PetWindow : Window
         TearsImage.Source = _sad ? Sprite.RenderTears((int)(t % 3), frame.Bob) : null;
         TearsImage.Visibility = _sad ? Visibility.Visible : Visibility.Collapsed;
         if (_sessionMark != Mark.None) frame = frame with { Mark = _sessionMark };
+        _squashShown = SquashLevel();
+        bool puddle = _squashShown >= 100;
+        SplatImage.Source = puddle ? Sprite.RenderSplat(_squashShown - 100) : null;
+        SplatImage.Visibility = puddle ? Visibility.Visible : Visibility.Collapsed;
+        PetImage.Opacity = puddle ? 0 : 1;
+        if (_squashShown is not 0 and < 100) frame = frame with { Squash = _squashShown, Mark = Mark.None, Sweat = 0 };
         PetImage.Source = Sprite.Render(frame with { Outfit = _outfit, Accessory = _accessory });
     }
 
@@ -537,6 +548,8 @@ public partial class PetWindow : Window
         PetImage.VerticalAlignment = onTop ? VerticalAlignment.Top : VerticalAlignment.Stretch;
         Grid.SetRow(TearsImage, onTop ? 0 : 1);
         TearsImage.VerticalAlignment = PetImage.VerticalAlignment;
+        Grid.SetRow(SplatImage, onTop ? 0 : 1);
+        SplatImage.VerticalAlignment = PetImage.VerticalAlignment;
         foreach (var bed in new[] { BedBackImage, BedFrontImage })
         {
             Grid.SetRow(bed, onTop ? 0 : 1);
@@ -659,38 +672,28 @@ public partial class PetWindow : Window
         var pose = (_walker.Motion, _walker.Direction);
         if (pose != _pose)
         {
-            if (pose.Motion == Motion.Splat) Squash();
+            if (pose.Motion == Motion.Splat) _splatStart = DateTime.Now;
             _pose = pose;
+            Render();
+        }
+        else if (pose.Motion == Motion.Splat && SquashLevel() != _squashShown)
+        {
             Render();
         }
     }
 
-    /// <summary>Squashes the pet flat onto the ground after a long fall and lets it spring back into shape.</summary>
-    private void Squash()
+    /// <summary>
+    /// After a long fall, over <see cref="PetWalker.SplatSeconds"/>: first a puddle with splashing drops on the
+    /// splat layer (<see cref="Sprite.RenderSplat"/>, returned as 100 + step), then the pet rises back up like
+    /// clay, overshooting into a tall stretch before it settles (<see cref="SpriteFrame.Squash"/> levels); 0 when done.
+    /// </summary>
+    private int SquashLevel()
     {
-        // Spread out as far as the window allows; it is only a little wider than the pet at large sizes.
-        double wide = Math.Min(1.45, ActualWidth / PetImage.Width);
-        var squash = new ScaleTransform();
-        PetImage.RenderTransformOrigin = new Point(0.5, 1); // the feet stay on the ground
-        PetImage.RenderTransform = squash;
-        squash.BeginAnimation(ScaleTransform.ScaleXProperty, SquashCurve(wide));
-        squash.BeginAnimation(ScaleTransform.ScaleYProperty, SquashCurve(0.35));
-    }
-
-    /// <summary>Hits <paramref name="flat"/> on impact, stays there a moment, then wobbles back to 1.</summary>
-    private static DoubleAnimationUsingKeyFrames SquashCurve(double flat)
-    {
-        double seconds = PetWalker.SplatSeconds;
-        return new DoubleAnimationUsingKeyFrames
-        {
-            KeyFrames =
-            {
-                new LinearDoubleKeyFrame(flat, KeyTime.FromTimeSpan(TimeSpan.FromSeconds(0.06))),
-                new LinearDoubleKeyFrame(flat, KeyTime.FromTimeSpan(TimeSpan.FromSeconds(seconds * 0.4))),
-                new EasingDoubleKeyFrame(1, KeyTime.FromTimeSpan(TimeSpan.FromSeconds(seconds)),
-                    new ElasticEase { EasingMode = EasingMode.EaseOut, Oscillations = 2, Springiness = 4 }),
-            },
-        };
+        if (_pose.Motion != Motion.Splat) return 0;
+        double t = (DateTime.Now - _splatStart).TotalSeconds / PetWalker.SplatSeconds;
+        const double puddle = 0.62;
+        if (t < puddle) return 100 + Math.Min(Sprite.SplatSteps - 1, (int)(t / puddle * Sprite.SplatSteps));
+        return t switch { < 0.71 => 2, < 0.79 => 1, < 0.9 => -1, < 0.97 => 1, _ => 0 };
     }
 
     private void ClampToScreen()
@@ -832,7 +835,6 @@ public partial class PetWindow : Window
         _dragging = true;
         UpdateBed(_lastPetWidth);
         PetImage.CaptureMouse();
-        PetImage.RenderTransform = Transform.Identity; // picked up while squashed flat
         _pose = (Motion.Carried, _pose.Direction);
         Render();
     }

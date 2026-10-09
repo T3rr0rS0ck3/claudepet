@@ -33,7 +33,8 @@ public readonly record struct SpriteFrame(
     bool Blush = false,
     Tint Tint = Tint.Normal,
     Outfit Outfit = Outfit.None,
-    Accessory Accessory = Accessory.None);
+    Accessory Accessory = Accessory.None,
+    int Squash = 0);
 
 /// <summary>
 /// Procedural pixel-art renderer for the pet: a chunky orange block
@@ -107,6 +108,7 @@ public static class Sprite
         _hot = Pair(h - 3, Math.Min(1, s + 0.14), l - 0.025);
         _pale = Pair(h + 2, s * 0.67, Math.Min(0.9, l + 0.037));
         Cache.Clear();
+        SplatCache.Clear(); // the puddle has the body's color
         Version++;
     }
 
@@ -154,6 +156,47 @@ public static class Sprite
         int c0 = bx + 2;        // left edge of the body (14 px wide, 9 px tall)
         int Mirror(int x) => 2 * bx + 17 - x;
 
+        if (f.Squash != 0)
+        {
+            // Squashed after a long fall, like clay: the higher Squash (1..4), the wider and flatter, feet on the
+            // ground; -1 is the overshoot, stretched up narrow and tall, before it settles back into shape.
+            var (w, h, legs) = f.Squash switch { 4 => (20, 4, 0), 3 => (18, 5, 0), 2 => (16, 7, 1), 1 => (15, 8, 1), _ => (12, 10, 2) };
+            int left = 11 + f.Shake - w / 2, right = left + w - 1, bottom = Height - 1 - legs, top = bottom - h + 1;
+            for (int y = top; y <= bottom; y++)
+            {
+                int inset = y == top ? 1 : 0; // rounded shoulders
+                for (int x = left + inset; x <= right - inset; x++) Set(x, y, y == bottom ? shade : body);
+            }
+            foreach (int lx in (int[])[left + 1, left + 3, right - 3, right - 1])
+                for (int y = bottom + 1; y <= Height - 1; y++) Set(lx, y, shade);
+
+            int eyeY = top + Math.Max(1, h / 3), eyeL = left + w * 3 / 14, eyeR = right - w * 3 / 14;
+            if (f.Squash >= 3)
+            {
+                // Eyes squeezed into lines
+                Set(eyeL - 1, eyeY, EyeColor); Set(eyeL, eyeY, EyeColor);
+                Set(eyeR, eyeY, EyeColor); Set(eyeR + 1, eyeY, EyeColor);
+            }
+            else if (f.Squash >= 1)
+            {
+                for (int i = -1; i <= 1; i++) { Set(eyeL + i, eyeY, EyeColor); Set(eyeR + i, eyeY, EyeColor); }
+            }
+            else
+            {
+                Set(eyeL, eyeY, EyeColor); Set(eyeL, eyeY + 1, EyeColor);
+                Set(eyeR, eyeY, EyeColor); Set(eyeR, eyeY + 1, EyeColor);
+            }
+            if (h >= 6)
+            {
+                int my = bottom - 2, mx = (left + right) / 2;
+                Set(mx - 1, my, EyeColor); Set(mx, my + 1, EyeColor); Set(mx + 1, my, EyeColor);
+            }
+            // Headwear rides on the squashed head.
+            c0 = left + (w - 14) / 2;
+            by = top;
+        }
+        else
+        {
         // Body
         for (int y = by; y <= by + 8; y++)
             for (int x = c0; x <= c0 + 13; x++)
@@ -260,9 +303,12 @@ public static class Sprite
             Set(c0 + 11, by + 4, BlushColor); Set(c0 + 12, by + 4, BlushColor);
         }
 
+        }
+
         // Outfit; headwear sits on the left half of the head, out of the way of the marks above its middle and right.
         // A seasonal or night accessory takes the head, so only the sunglasses stay with it.
         var outfit = f.Accessory != Accessory.None && f.Outfit != Outfit.Sunglasses ? Outfit.None : f.Outfit;
+        if (f.Squash != 0 && outfit == Outfit.Sunglasses) outfit = Outfit.None; // no face left for them
         switch (outfit)
         {
             // Opus: a golden crown with a red jewel, sitting on the head
@@ -295,11 +341,11 @@ public static class Sprite
         switch (f.Accessory)
         {
             // Halloween: a crooked witch's hat with an orange band, and a broom in the right hand
-            // (put away while the hand holds the microphone)
+            // (put away while the hand holds the microphone or the pet is squashed flat)
             case Accessory.WitchHat:
                 Glyph(c0 - 2, WitchColor, by - 5, "....X...", "...XX...", "..XXX...", "..XXXX..", "XXXXXXXX");
                 Glyph(c0 - 2, BandOrange, by - 2, "..XXXX..");
-                if (f.Arms != Arms.Mic)
+                if (f.Arms != Arms.Mic && f.Squash == 0)
                 {
                     for (int y = by + 1; y <= by + 6; y++) Set(c0 + 16, y, StickColor);
                     Glyph(c0 + 15, BindingColor, by + 7, "XXX");
@@ -400,6 +446,77 @@ public static class Sprite
         }
 
         return px;
+    }
+
+    /// <summary>Extra pixels on each side of the splat layer, for the puddle and the drops splashing off it.</summary>
+    public const int SplatMargin = 14;
+    /// <summary>Steps of the splat drawn on the splat layer; after them the pet rises back up (<see cref="SpriteFrame.Squash"/>).</summary>
+    public const int SplatSteps = 8;
+    private static readonly Dictionary<int, BitmapSource> SplatCache = new();
+
+    /// <summary>
+    /// A long fall turns the pet into a puddle, <see cref="SplatMargin"/> wider on each side than the pet:
+    /// steps 0..3 it spreads out flat while three drops a side splash off in arcs and land, steps 4..7 the drops
+    /// slide back and the puddle pulls itself together, a little higher each step.
+    /// </summary>
+    public static BitmapSource RenderSplat(int step)
+    {
+        if (SplatCache.TryGetValue(step, out var cached)) return cached;
+        int width = Width + 2 * SplatMargin;
+        var px = new uint[width * Height];
+        void Set(int x, int y, uint c)
+        {
+            if (x >= 0 && x < width && y >= 0 && y < Height) px[y * width + x] = c;
+        }
+        var (body, shade) = _normal;
+        int cx = SplatMargin + 11, bottom = Height - 1;
+
+        // The puddle: wide and flat at first, then narrower and taller; its top edge wobbles.
+        int[] widths = [24, 28, 30, 30, 26, 22, 18, 16], heights = [2, 2, 2, 2, 3, 3, 4, 5];
+        int w = widths[step], h = heights[step], left = cx - w / 2, right = left + w - 1;
+        for (int y = bottom - h + 1; y <= bottom; y++)
+        {
+            int fromTop = y - (bottom - h + 1);
+            int inset = fromTop == 0 ? 2 : fromTop == 1 && h > 2 ? 1 : 0;
+            for (int x = left + inset; x <= right - inset; x++)
+            {
+                // A couple of dents in the top edge, moving as it wobbles
+                if (fromTop == 0 && (x - left + step) % 7 == 0) continue;
+                Set(x, y, y == bottom ? shade : body);
+            }
+        }
+        // Eyes peeking out of the puddle
+        int eyeY = bottom - h + 1 + (h > 2 ? 1 : 0), eye = Math.Max(2, w / 6);
+        foreach (int ex in (int[])[cx - eye - 1, cx - eye, cx + eye - 1, cx + eye]) Set(ex, eyeY, EyeColor);
+
+        // Three drops a side: out in arcs (steps 0..3), then sliding back along the ground (4..7).
+        (int Reach, int Peak)[] drops = [(4, 3), (7, 5), (10, 2)];
+        foreach (var (reach, peak) in drops)
+            foreach (int side in (int[])[-1, 1])
+            {
+                int edge = side < 0 ? left : right;
+                double x, y;
+                if (step < 4)
+                {
+                    double t = (step + 1) / 4.0;
+                    x = edge + side * reach * t;
+                    y = bottom - 4 * peak * t * (1 - t);
+                }
+                else
+                {
+                    double r = (step - 3) / 4.0;
+                    int landed = (side < 0 ? cx - widths[3] / 2 : cx - widths[3] / 2 + widths[3] - 1) + side * reach;
+                    x = landed + (edge - landed) * r;
+                    y = bottom;
+                }
+                Set((int)Math.Round(x), (int)Math.Round(y), body);
+            }
+
+        var bitmap = new WriteableBitmap(width, Height, 96, 96, PixelFormats.Bgra32, null);
+        bitmap.WritePixels(new Int32Rect(0, 0, width, Height), px, width * 4, 0);
+        bitmap.Freeze();
+        SplatCache[step] = bitmap;
+        return bitmap;
     }
 
     /// <summary>Extra pixels on each side of the tear layer, so wailing tears can fly out past the pet's picture.</summary>
