@@ -67,8 +67,8 @@ public partial class PetWindow : Window
     private bool _topmost = true;
     private (Motion Motion, int Direction) _pose = (Motion.Idle, 1);
     private Eyes? _lookAt;
-    private int? _gaze;
-    private Eyes? GazeEyes => _gaze switch { < 0 => Eyes.LookLeft, > 0 => Eyes.LookRight, _ => null };
+    private Eyes? _gaze;
+    private bool _sad;
     private bool _emotesEnabled = true;
     private Emote? _emote;
     private DateTime _emoteStart;
@@ -137,7 +137,8 @@ public partial class PetWindow : Window
 
         double petWidth = Sprite.Width * settings.PetScale;
         double petHeight = Sprite.Height * settings.PetScale;
-        double newWidth = Math.Max(MinWidth_, petWidth + 20);
+        double tearsWidth = (Sprite.Width + 2 * Sprite.TearMargin) * settings.PetScale;
+        double newWidth = Math.Max(MinWidth_, tearsWidth + 20);
         double newHeight = BubbleArea + petHeight;
 
         if (initial)
@@ -161,6 +162,8 @@ public partial class PetWindow : Window
 
         PetImage.Width = petWidth;
         PetImage.Height = petHeight;
+        TearsImage.Width = tearsWidth;
+        TearsImage.Height = petHeight;
         if (_petOnTop) SetPetOnTop(true); // the bubble below the pet moves with its size
 
         if (_animations) _animationTimer.Start();
@@ -385,7 +388,16 @@ public partial class PetWindow : Window
         long t = _animations ? _tick : 1;
         var frame = PetAnimator.Frame(_mood, _working, cheering, t, _pose.Motion, _pose.Direction, _listening, _night);
         // Eyes on the ghost being dragged, or on the pointer it is about to chase or chasing.
-        if ((_lookAt ?? GazeEyes) is { } eyes) frame = frame with { Eyes = eyes };
+        if ((_lookAt ?? _gaze) is { } eyes) frame = frame with { Eyes = eyes };
+        // Could not grab the pointer: eyes squeezed shut, wailing with tears spurting out to the sides.
+        else if (_sad)
+            frame = frame with
+            {
+                Eyes = Eyes.Closed, Mouth = Mouth.Wavy, Arms = Arms.Down, Legs = 0,
+                Bob = (int)(t / 3 % 2), Shake = 0, Mark = Mark.None,
+            };
+        TearsImage.Source = _sad ? Sprite.RenderTears((int)(t % 3), frame.Bob) : null;
+        TearsImage.Visibility = _sad ? Visibility.Visible : Visibility.Collapsed;
         if (_sessionMark != Mark.None) frame = frame with { Mark = _sessionMark };
         PetImage.Source = Sprite.Render(frame with { Outfit = _outfit, Accessory = _accessory });
     }
@@ -401,6 +413,8 @@ public partial class PetWindow : Window
         _petOnTop = onTop;
         Grid.SetRow(PetImage, onTop ? 0 : 1);
         PetImage.VerticalAlignment = onTop ? VerticalAlignment.Top : VerticalAlignment.Stretch;
+        Grid.SetRow(TearsImage, onTop ? 0 : 1);
+        TearsImage.VerticalAlignment = PetImage.VerticalAlignment;
         LayoutOverlays();
     }
 
@@ -494,9 +508,10 @@ public partial class PetWindow : Window
         bool canWalk = !_listening && !_surfaces.IsFullscreen(_walker.X, _walker.Y);
         GetCursorPos(out var cursor);
         _walker.Step(dt, _surfaces, _mood, canWalk, petWidth, petHeight, (cursor.X, cursor.Y));
-        if (_walker.Gaze != _gaze)
+        if (_walker.Gaze != _gaze || _walker.Sad != _sad)
         {
             _gaze = _walker.Gaze;
+            _sad = _walker.Sad;
             Render();
         }
 

@@ -26,7 +26,8 @@ until the limit resets.
   moves away; after a long fall it lands with a splat and pulls itself back into shape. Its mood sets the pace
   (can be turned off). Optionally it also walks or hops over to the neighbouring monitor, following how your
   monitors are arranged in Windows
-- 🐭 **Chases the pointer** — now and then, when calm, it eyes the mouse pointer nearby and runs after it (can be turned off)
+- 🐭 **Chases the pointer** — now and then, when calm, it eyes the mouse pointer nearby and runs after it; hold the pointer
+  above it and it hops up to grab it three times, then bursts into tears (can be turned off)
 - 🎨 **Your color** — pick any color for the pet; the usage overlay, menus and speech bubbles use it as accent color
 - 👑 **Dressed for the model** — a crown for Opus, sunglasses for Sonnet, a little flower for Haiku, a wizard's hat for Fable (can be turned off)
 - 🎃 **Seasonal headwear** — a witch's hat and a broom in October, a Santa hat until Christmas, bunny ears at Easter and a party hat

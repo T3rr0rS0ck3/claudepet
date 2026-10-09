@@ -98,8 +98,8 @@ public static class Strings
         "Läuft oder hüpft dort zum Nachbarmonitor, wo sich die Monitore laut Windows-Anordnung berühren.");
     public static string ChaseCursor => L("Chase the mouse pointer now and then", "Ab und zu dem Mauszeiger nachlaufen");
     public static string ChaseCursorTip => L(
-        "When calm, the pet sometimes eyes the pointer nearby and runs after it.",
-        "In ruhiger Stimmung fixiert das Pet manchmal den Zeiger in seiner Nähe und rennt ihm hinterher.");
+        "When calm, the pet sometimes eyes the pointer nearby and runs after it, and hops up at a pointer held above it.",
+        "In ruhiger Stimmung fixiert das Pet manchmal den Zeiger in seiner Nähe und rennt ihm hinterher, und es springt nach einem Zeiger über ihm.");
     public static string Emotes => L("Emotes on hover (feed, pat, …)", "Emotes beim Drüberfahren (Füttern, Streicheln, …)");
     public static string ModelOutfits => L("Outfit for the AI model", "Outfit passend zum KI-Modell");
     public static string ModelOutfitsTip => L(

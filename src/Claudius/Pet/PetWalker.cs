@@ -74,8 +74,8 @@ public sealed class PetWalker
     /// <summary>Now and then, in calm moods, the pet eyes the mouse pointer and then runs after it.</summary>
     public bool ChaseCursor { get; set; }
 
-    /// <summary>While the pet eyes or chases the pointer: -1 when it is to the left, 1 to the right; null otherwise.</summary>
-    public int? Gaze { get; private set; }
+    /// <summary>Where the pet looks while it eyes, chases or grabs at the pointer; null otherwise.</summary>
+    public Eyes? Gaze { get; private set; }
 
     /// <summary>Chance that a pause ends in a chase instead of a walk, if the pointer is close enough.</summary>
     private const double ChaseChance = 0.2;
@@ -86,6 +86,17 @@ public sealed class PetWalker
     private const double ChaseReach = 6;
     private double _stare;
     private double _chase;
+    /// <summary>Hops at a pointer hovering just above the head, a few times, until it goes away and comes back.</summary>
+    private const int GrabHops = 3;
+    private const double GrabPause = 0.45;
+    private int _hops;
+    private double _grabWait;
+    /// <summary>After the last hop missed: a short sulk, then it ignores the pointer until it goes away.</summary>
+    private const double SadSeconds = 2;
+    private double _sad;
+
+    /// <summary>Sulking because it could not grab the pointer.</summary>
+    public bool Sad => _sad > 0;
 
     private Gait GaitFor(PetMood mood)
     {
@@ -112,7 +123,8 @@ public sealed class PetWalker
         _vx = _vy = 0;
         _ground = IntPtr.Zero;
         _crossTo = null;
-        _stare = _chase = 0;
+        _stare = _chase = _sad = 0;
+        _hops = 0;
         Gaze = null;
         Motion = Motion.Fall;
     }
@@ -155,6 +167,42 @@ public sealed class PetWalker
         }
 
         var gait = GaitFor(mood);
+        if (_sad > 0)
+        {
+            _sad -= dt;
+            Motion = Motion.Idle;
+            return;
+        }
+        if (GrabHeight(cursor, mood, petWidth, petHeight) is { } reach)
+        {
+            _stare = _chase = 0;
+            Motion = Motion.Idle;
+            if (_hops >= GrabHops)
+            {
+                // Missed it every time: sulk once (it has landed by now), then leave the pointer be.
+                if (Gaze == Eyes.LookUp) _sad = SadSeconds;
+                Gaze = null;
+                return;
+            }
+            // The pointer hovers just above the head: look up at it, then hop up to grab it.
+            if (_hops == 0 && Gaze != Eyes.LookUp) _grabWait = GrabPause;
+            Gaze = Eyes.LookUp;
+            _grabWait -= dt;
+            if (_hops < GrabHops && _grabWait <= 0)
+            {
+                _hops++;
+                _grabWait = GrabPause;
+                Hop(reach, petHeight);
+            }
+            return;
+        }
+        if (Gaze == Eyes.LookUp)
+        {
+            Gaze = null;
+            _timer = Between(gait.IdleMin, gait.IdleMax);
+        }
+        _hops = 0;
+
         _timer -= dt;
         bool canChase = CanChase(cursor, mood, petWidth, petHeight);
         if (Motion == Motion.Idle)
@@ -167,7 +215,8 @@ public sealed class PetWalker
                     StopChase(gait);
                     return;
                 }
-                Gaze = Direction = cursor!.Value.X < X ? -1 : 1;
+                Direction = cursor!.Value.X < X ? -1 : 1;
+                Gaze = Look(Direction);
                 _stare -= dt;
                 if (_stare <= 0)
                 {
@@ -181,7 +230,8 @@ public sealed class PetWalker
             if (canChase && Math.Abs(cursor!.Value.X - X) > petWidth && _random.NextDouble() < ChaseChance)
             {
                 _stare = StareSeconds;
-                Gaze = Direction = cursor!.Value.X < X ? -1 : 1;
+                Direction = cursor!.Value.X < X ? -1 : 1;
+                Gaze = Look(Direction);
                 return;
             }
             if (_random.NextDouble() < gait.JumpChance && TryJump(surfaces, petWidth, petHeight)) return;
@@ -201,7 +251,8 @@ public sealed class PetWalker
                 StopChase(gait);
                 return;
             }
-            Gaze = Direction = cursor.Value.X < X ? -1 : 1;
+            Direction = cursor.Value.X < X ? -1 : 1;
+            Gaze = Look(Direction);
         }
 
         double speed = (chasing ? Math.Max(gait.Speed * 1.8, 1.4) : gait.Speed) * petWidth;
@@ -583,6 +634,35 @@ public sealed class PetWalker
         && mood is PetMood.Relaxed or PetMood.Normal or PetMood.Attentive
         && Math.Abs(c.X - X) <= ChaseReach * petWidth
         && c.Y > Y - 4 * petHeight && c.Y < Y + petHeight;
+
+    private static Eyes Look(int direction) => direction < 0 ? Eyes.LookLeft : Eyes.LookRight;
+
+    /// <summary>
+    /// How high to hop for a pointer hovering above the head (above the pet's picture, so it is not aiming at
+    /// the pet itself) and at most a few pet heights up; null if it is not there or the pet is not in the mood.
+    /// </summary>
+    private double? GrabHeight((double X, double Y)? cursor, PetMood mood, double petWidth, double petHeight)
+    {
+        if (!ChaseCursor || Sleepy || cursor is not { } c || mood is not (PetMood.Relaxed or PetMood.Normal or PetMood.Attentive))
+            return null;
+        // The gap between the top of the pet's picture and the pointer.
+        double gap = Y - petHeight - c.Y;
+        if (Math.Abs(c.X - X) > petWidth * 0.6 || gap < 0.25 * petHeight || gap > 2.5 * petHeight) return null;
+        // Just short of it: the picture must not reach the pointer, or the pet would count as hovered and flicker
+        // between showing its emote buttons and hopping. It never quite gets there, hence the tears.
+        return Math.Min(gap - 3, 1.5 * petHeight);
+    }
+
+    /// <summary>A hop straight up and back down onto the same spot.</summary>
+    private void Hop(double height, double petHeight)
+    {
+        _vy = -Math.Sqrt(2 * Gravity(petHeight) * height);
+        _vx = 0;
+        _airborne = true;
+        _fallFrom = double.NaN;
+        _ground = IntPtr.Zero;
+        Motion = Motion.Jump;
+    }
 
     private void StopChase(Gait gait)
     {
