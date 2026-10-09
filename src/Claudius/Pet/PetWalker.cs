@@ -73,7 +73,7 @@ public sealed class PetWalker
 
     private Gait GaitFor(PetMood mood)
     {
-        var gait = GaitFor(mood);
+        var gait = For(mood);
         return Sleepy && mood is PetMood.Relaxed or PetMood.Normal or PetMood.Attentive
             ? gait with { Speed = gait.Speed * 0.6, IdleMin = gait.IdleMin * 1.5, IdleMax = gait.IdleMax * 1.5, JumpChance = 0 }
             : gait;
