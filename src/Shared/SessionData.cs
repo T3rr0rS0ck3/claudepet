@@ -7,21 +7,21 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading;
 
-namespace ClaudePet.Shared;
+namespace Claudius.Shared;
 
-/// <summary>What a Claude Code session is doing, as far as its hooks tell.</summary>
+/// <summary>What an assistant session is doing, as far as its hooks tell.</summary>
 public static class SessionStates
 {
     /// <summary>Started, waiting for the first prompt.</summary>
     public const string Idle = "idle";
     public const string Working = "working";
-    /// <summary>Claude asks something or waits for a permission.</summary>
+    /// <summary>The assistant asks something or waits for a permission.</summary>
     public const string Question = "question";
-    /// <summary>Claude finished its turn.</summary>
+    /// <summary>The assistant finished its turn.</summary>
     public const string Done = "done";
 }
 
-/// <summary>One Claude Code session, written by the bridge's hook mode and read by the app.</summary>
+/// <summary>One the assistant session, written by the bridge's hook mode and read by the app.</summary>
 public sealed class SessionInfo
 {
     [JsonPropertyName("cwd")] public string? Cwd { get; set; }
@@ -29,12 +29,12 @@ public sealed class SessionInfo
     /// <summary>Unix epoch seconds of the last hook call.</summary>
     [JsonPropertyName("updated_at")] public long UpdatedAt { get; set; }
     /// <summary>
-    /// Claude Code's conversation log and its size when the state was set. No hook reports an
+    /// The assistant's conversation log and its size when the state was set. No hook reports an
     /// answered permission prompt, so a question counts as answered once the log grows again.
     /// </summary>
     [JsonPropertyName("transcript")] public string? Transcript { get; set; }
     [JsonPropertyName("transcript_length")] public long TranscriptLength { get; set; }
-    /// <summary>Claude Code's CLAUDE_CODE_ENTRYPOINT: "cli" in a terminal, e.g. "claude-desktop" in the Desktop app.</summary>
+    /// <summary>The assistant's <see cref="AssistantCli.EntrypointVariable"/>: "cli" in a terminal, something else in the desktop app.</summary>
     [JsonPropertyName("origin")] public string? Origin { get; set; }
     /// <summary>The session's model as the status line reports it (e.g. "Opus 4.1"), for its baby pet's outfit.</summary>
     [JsonPropertyName("model")] public string? Model { get; set; }
@@ -48,7 +48,7 @@ public sealed class SessionInfo
     [JsonPropertyName("title")] public string? Title { get; set; }
 
     [JsonIgnore] public bool IsDesktop => Origin?.Contains("desktop", StringComparison.OrdinalIgnoreCase) == true;
-    [JsonIgnore] public string Folder => Cwd is { Length: > 0 } cwd ? Path.GetFileName(cwd.TrimEnd('\\', '/')) : "Claude";
+    [JsonIgnore] public string Folder => Cwd is { Length: > 0 } cwd ? Path.GetFileName(cwd.TrimEnd('\\', '/')) : "Session";
 }
 
 /// <summary>sessions.json: session id → state. Several sessions write it, so changes are serialized.</summary>
@@ -57,7 +57,7 @@ public static class SessionStore
     /// <summary>Sessions without a hook call for this long are dropped (closed terminal without SessionEnd).</summary>
     public static readonly TimeSpan MaxAge = TimeSpan.FromHours(12);
 
-    private const string MutexName = "ClaudePet.Sessions.v1";
+    private const string MutexName = "Claudius.Sessions.v1";
 
     private static readonly JsonSerializerOptions Options = new() { WriteIndented = true };
 
@@ -84,7 +84,7 @@ public static class SessionStore
         {
             try { owned = mutex.WaitOne(TimeSpan.FromSeconds(2)); }
             catch (AbandonedMutexException) { owned = true; }
-            if (!owned) return; // never block Claude Code
+            if (!owned) return; // never block the assistant
 
             var sessions = Read();
             change(sessions);

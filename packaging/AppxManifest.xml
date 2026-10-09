@@ -33,10 +33,10 @@
   </Resources>
 
   <Applications>
-    <Application Id="ClaudePet" Executable="ClaudePet.exe" EntryPoint="Windows.FullTrustApplication">
+    <Application Id="Claudius" Executable="Claudius.exe" EntryPoint="Windows.FullTrustApplication">
       <uap:VisualElements
         DisplayName="Claudius - KI Usage Pet"
-        Description="Desktop pet that shows your Claude Code usage"
+        Description="Desktop pet that shows your AI assistant usage"
         BackgroundColor="transparent"
         Square150x150Logo="Assets\Square150x150Logo.png"
         Square44x44Logo="Assets\Square44x44Logo.png">
@@ -44,18 +44,18 @@
       </uap:VisualElements>
       <Extensions>
         <!-- "Mit Windows starten": switched on and off by the app (Core/Autostart.cs). -->
-        <desktop:Extension Category="windows.startupTask" Executable="ClaudePet.exe" EntryPoint="Windows.FullTrustApplication">
-          <desktop:StartupTask TaskId="ClaudePetStartup" Enabled="false" DisplayName="Claudius - KI Usage Pet" />
+        <desktop:Extension Category="windows.startupTask" Executable="Claudius.exe" EntryPoint="Windows.FullTrustApplication">
+          <desktop:StartupTask TaskId="ClaudiusStartup" Enabled="false" DisplayName="Claudius - KI Usage Pet" />
         </desktop:Extension>
         <!--
-          Claude Code runs the bridge for its statusLine and hooks. The install folder changes with every
+          The AI assistant runs the bridge for its statusLine and hooks. The install folder changes with every
           update and is closed to other programs, so the bridge gets a stable alias in
           %LOCALAPPDATA%\Microsoft\WindowsApps. It hangs off the main app: the Store rejects a second
           app without UI (AppListEntry="none").
         -->
-        <uap3:Extension Category="windows.appExecutionAlias" Executable="ClaudePetBridge.exe" EntryPoint="Windows.FullTrustApplication">
+        <uap3:Extension Category="windows.appExecutionAlias" Executable="ClaudiusBridge.exe" EntryPoint="Windows.FullTrustApplication">
           <uap3:AppExecutionAlias>
-            <desktop:ExecutionAlias Alias="ClaudePetBridge.exe" />
+            <desktop:ExecutionAlias Alias="ClaudiusBridge.exe" />
           </uap3:AppExecutionAlias>
         </uap3:Extension>
       </Extensions>

@@ -47,7 +47,7 @@ jobs:
 
       - name: Portable zip
         shell: pwsh
-        run: Compress-Archive -Path dist/ClaudePet/* -DestinationPath dist/ClaudePet-${{ steps.version.outputs.version }}-portable.zip
+        run: Compress-Archive -Path dist/Claudius/* -DestinationPath dist/Claudius-${{ steps.version.outputs.version }}-portable.zip
 
       - name: Build installer
         shell: pwsh
@@ -57,14 +57,19 @@ jobs:
             choco install innosetup -y --no-progress
             if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           }
-          & $iscc /DAppVersion=${{ steps.version.outputs.version }} /DNumericVersion=${{ steps.version.outputs.numeric }} installer/ClaudePet.iss
+          & $iscc /DAppVersion=${{ steps.version.outputs.version }} /DNumericVersion=${{ steps.version.outputs.numeric }} installer/Claudius.iss
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      # Versions from before the rename to Claudius look for the setup under its old name.
+      - name: Setup for older versions
+        shell: pwsh
+        run: Copy-Item dist/Claudius-Setup-${{ steps.version.outputs.version }}.exe dist/ClaudePet-Setup-${{ steps.version.outputs.version }}.exe
 
       # The in-app updater checks the downloaded setup against this file.
       - name: Checksums
         shell: pwsh
         run: |
-          Get-ChildItem dist/ClaudePet-Setup-*.exe, dist/ClaudePet-*-portable.zip |
+          Get-ChildItem dist/Claudius-Setup-*.exe, dist/ClaudePet-Setup-*.exe, dist/Claudius-*-portable.zip |
             ForEach-Object { "$((Get-FileHash $_ -Algorithm SHA256).Hash.ToLower())  $($_.Name)" } |
             Set-Content dist/SHA256SUMS.txt -Encoding ascii
 
@@ -80,7 +85,7 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           # Unzipped: the download is the .msix itself, ready for Partner Center.
-          path: dist/ClaudePet-${{ steps.version.outputs.version }}.msix
+          path: dist/Claudius-${{ steps.version.outputs.version }}.msix
           archive: false
           if-no-files-found: error
 
@@ -92,17 +97,18 @@ jobs:
           prerelease: ${{ steps.version.outputs.prerelease }}
           generate_release_notes: true
           body: |
-            **Installation:** `ClaudePet-Setup-${{ steps.version.outputs.version }}.exe` herunterladen und ausführen (keine Admin-Rechte, kein .NET nötig).
-            Im Setup kann Claudius direkt als statusLine in Claude Code eingetragen werden.
+            **Installation:** `Claudius-Setup-${{ steps.version.outputs.version }}.exe` herunterladen und ausführen (keine Admin-Rechte, kein .NET nötig).
+            Im Setup kann Claudius direkt als statusLine im KI-Assistenten eingetragen werden.
 
-            Alternativ: `ClaudePet-${{ steps.version.outputs.version }}-portable.zip` entpacken und `ClaudePet.exe` starten.
+            Alternativ: `Claudius-${{ steps.version.outputs.version }}-portable.zip` entpacken und `Claudius.exe` starten.
 
-            `ClaudePet-${{ steps.version.outputs.version }}.msix` ist das unsignierte Paket für den Microsoft Store und lässt sich so nicht installieren.
+            `Claudius-${{ steps.version.outputs.version }}.msix` ist das unsignierte Paket für den Microsoft Store und lässt sich so nicht installieren.
           files: |
+            dist/Claudius-Setup-${{ steps.version.outputs.version }}.exe
             dist/ClaudePet-Setup-${{ steps.version.outputs.version }}.exe
-            dist/ClaudePet-${{ steps.version.outputs.version }}-portable.zip
+            dist/Claudius-${{ steps.version.outputs.version }}-portable.zip
             dist/SHA256SUMS.txt
-            dist/ClaudePet-${{ steps.version.outputs.version }}.msix
+            dist/Claudius-${{ steps.version.outputs.version }}.msix
 
       # After the GitHub release, so a Store problem never holds back the release itself.
       - name: Set up Microsoft Store CLI
@@ -122,5 +128,5 @@ jobs:
         run: |
           msstore reconfigure --tenantId $env:TENANT_ID --sellerId $env:SELLER_ID --clientId $env:CLIENT_ID --clientSecret $env:CLIENT_SECRET
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          msstore publish dist -i dist/ClaudePet-${{ steps.version.outputs.version }}.msix -id $env:PRODUCT_ID
+          msstore publish dist -i dist/Claudius-${{ steps.version.outputs.version }}.msix -id $env:PRODUCT_ID
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }

@@ -6,9 +6,9 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading;
 
-namespace ClaudePet.Shared;
+namespace Claudius.Shared;
 
-/// <summary>One rate-limit window as delivered by Claude Code's statusLine JSON.</summary>
+/// <summary>One rate-limit window as delivered by the assistant's statusLine JSON.</summary>
 public sealed class RateWindow
 {
     [JsonPropertyName("used_percentage")] public double UsedPercentage { get; set; }
@@ -43,11 +43,11 @@ public sealed class HistorySample
 
 public static class DataPaths
 {
-    /// <summary>%LOCALAPPDATA%\ClaudePet, overridable via CLAUDEPET_DATA_DIR (useful for testing).</summary>
+    /// <summary>%LOCALAPPDATA%\Claudius, overridable via CLAUDIUS_DATA_DIR (useful for testing).</summary>
     public static string DataDir { get; } =
-        Environment.GetEnvironmentVariable("CLAUDEPET_DATA_DIR") is { Length: > 0 } custom
+        Environment.GetEnvironmentVariable("CLAUDIUS_DATA_DIR") is { Length: > 0 } custom
             ? custom
-            : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "ClaudePet");
+            : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Claudius");
 
     public static string UsageFile => Path.Combine(DataDir, "usage.json");
     public static string HistoryFile => Path.Combine(DataDir, "history.jsonl");
