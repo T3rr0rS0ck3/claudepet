@@ -19,8 +19,8 @@ public sealed record UpdateInfo(Version Version, string SetupUrl, string? Checks
 /// </summary>
 public static class Updater
 {
-    private const string LatestReleaseUrl = "https://api.github.com/repos/T3rr0rS0ck3/claudepet/releases/latest";
-    public const string ReleasesPage = "https://github.com/T3rr0rS0ck3/claudepet/releases/latest";
+    private const string LatestReleaseUrl = "https://api.github.com/repos/T3rr0rS0ck3/claudius/releases/latest";
+    public const string ReleasesPage = "https://github.com/T3rr0rS0ck3/claudius/releases/latest";
 
     /// <summary>The running version; 0.0.0 for self-built copies.</summary>
     public static Version CurrentVersion { get; } = ReadVersion();
