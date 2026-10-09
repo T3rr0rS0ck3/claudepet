@@ -79,6 +79,9 @@
             <Button Style="{StaticResource EmoteButton}" Content="🪶" Tag="Tickle" Click="Emote_Click" />
         </StackPanel>
 
+        <!-- At night the bed is drawn around the pet: head end and pillow behind it, blanket in front. -->
+        <Image x:Name="BedBackImage" Grid.Row="1" HorizontalAlignment="Center" Stretch="Fill"
+               RenderOptions.BitmapScalingMode="NearestNeighbor" IsHitTestVisible="False" Visibility="Collapsed" />
         <Image x:Name="PetImage" Grid.Row="1" HorizontalAlignment="Center" Stretch="Fill"
                RenderOptions.BitmapScalingMode="NearestNeighbor" Cursor="Hand"
                MouseLeftButtonDown="Pet_MouseLeftButtonDown"
@@ -90,6 +93,8 @@
                MouseRightButtonUp="Pet_MouseRightButtonUp"
                LostMouseCapture="Pet_LostMouseCapture"
                ContextMenuOpening="Pet_ContextMenuOpening" />
+        <Image x:Name="BedFrontImage" Grid.Row="1" HorizontalAlignment="Center" Stretch="Fill"
+               RenderOptions.BitmapScalingMode="NearestNeighbor" IsHitTestVisible="False" Visibility="Collapsed" />
         <!-- Wailing tears fly out past the pet's sides; clicks go through to the pet. -->
         <Image x:Name="TearsImage" Grid.Row="1" HorizontalAlignment="Center" Stretch="Fill"
                RenderOptions.BitmapScalingMode="NearestNeighbor" IsHitTestVisible="False" Visibility="Collapsed" />

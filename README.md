@@ -32,7 +32,9 @@ until the limit resets.
 - 👑 **Dressed for the model** — a crown for Opus, sunglasses for Sonnet, a little flower for Haiku, a wizard's hat for Fable (can be turned off)
 - 🎃 **Seasonal headwear** — a witch's hat and a broom in October, a Santa hat until Christmas, bunny ears at Easter and a party hat
   on New Year's Eve and your birthday; they take the place of the model's headwear (can be turned off)
-- 🌙 **Night mode** — between 23:00 and 06:00 (adjustable) the pet wears a nightcap, walks slower, yawns and says good night
+- 🌙 **Night mode** — between 23:00 and 06:00 (adjustable) the pet wears a nightcap and says good night; a bed turns up on the
+  taskbar and it walks over and goes to sleep in it. A click wakes it for a moment; grab it by the head to take it out (it walks
+  back) or by the blanket to move it with its bed. In the morning it stretches, says good morning and the bed goes
 - 📊 **Usage overlay** — click the pet to see session and weekly usage, reset times and a forecast
 - 🎭 **7 moods** with their own animations, based on the higher of the two usage values
 - 💬 **Speech bubbles** when thresholds are crossed, e.g. *"90 %! 😰"* — not constantly chattering
@@ -211,7 +213,7 @@ to that language's defaults. Each event can have several variants; one is picked
 
 Events: `Greeting`, `NoData`, `Normal`, `Attentive`, `Nervous`, `Worried`, `Panic`, `Exhausted`, `Reset`, `Poke`,
 `Launch` (assistant opened), `NoFolder` (ghost dropped where there is no folder), `Voice` (voice chat started),
-`GoodNight` (the night starts).
+`GoodNight` (the night starts), `GoodMorning` (the night ends).
 Placeholders: `{name}`, `{NAME}` (upper case), `{percent}` (the higher value), `{session}`, `{week}`,
 `{folder}` (name of the opened folder, for `Launch` and `Voice`).
 

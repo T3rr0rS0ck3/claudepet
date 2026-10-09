@@ -231,6 +231,7 @@ public partial class App : Application
         _pet.SetAccessory(Occasions.For(time, Settings));
         _pet.SetNight(night);
         if (night && _wasNight == false && !initial) Say("GoodNight");
+        if (!night && _wasNight == true && !initial) Say("GoodMorning");
         _wasNight = night;
     }
 

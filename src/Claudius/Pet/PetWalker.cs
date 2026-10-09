@@ -98,6 +98,26 @@ public sealed class PetWalker
     /// <summary>Sulking because it could not grab the pointer.</summary>
     public bool Sad => _sad > 0;
 
+    /// <summary>Night: where the bed stands on the floor (physical pixels); the pet heads there and gets in.</summary>
+    public double? BedX
+    {
+        get => _bedX;
+        set
+        {
+            _bedX = value;
+            if (value == null) InBed = false;
+        }
+    }
+    private double? _bedX;
+
+    /// <summary>Lying in the bed at <see cref="BedX"/>.</summary>
+    public bool InBed { get; private set; }
+
+    /// <summary>The way down from a window to the bed, kept once chosen so it does not turn on the spot.</summary>
+    private int _descent;
+    /// <summary>Put down together with its bed: the bed lands where the pet lands.</summary>
+    private bool _landInBed;
+
     private Gait GaitFor(PetMood mood)
     {
         var gait = For(mood);
@@ -111,8 +131,11 @@ public sealed class PetWalker
     public int Direction { get; private set; } = 1;
     public Motion Motion { get; private set; }
 
-    /// <summary>Drops the pet at the given position; it falls until it lands on something.</summary>
-    public void Place(double x, double y)
+    /// <summary>
+    /// Drops the pet at the given position; it falls until it lands on something. With
+    /// <paramref name="landInBed"/> it was carried in its bed and stays in it wherever it lands.
+    /// </summary>
+    public void Place(double x, double y, bool landInBed = false)
     {
         X = x;
         Y = y;
@@ -126,6 +149,9 @@ public sealed class PetWalker
         _stare = _chase = _sad = 0;
         _hops = 0;
         Gaze = null;
+        InBed = false;
+        _landInBed = landInBed && _bedX != null;
+        _descent = 0;
         Motion = Motion.Fall;
     }
 
@@ -167,6 +193,14 @@ public sealed class PetWalker
         }
 
         var gait = GaitFor(mood);
+        if (_bedX is { } bed)
+        {
+            _stare = _chase = _sad = 0;
+            _hops = 0;
+            Gaze = null;
+            GoToBed(bed, surfaces, gait, dt, petWidth, petHeight);
+            return;
+        }
         if (_sad > 0)
         {
             _sad -= dt;
@@ -634,6 +668,67 @@ public sealed class PetWalker
         && mood is PetMood.Relaxed or PetMood.Normal or PetMood.Attentive
         && Math.Abs(c.X - X) <= ChaseReach * petWidth
         && c.Y > Y - 4 * petHeight && c.Y < Y + petHeight;
+
+    /// <summary>
+    /// Heads for the bed: down to the floor first if it stands on a window, then along the floor, and gets in.
+    /// A bed it cannot reach on the floor (a gap in between) is moved to where the pet is.
+    /// </summary>
+    private void GoToBed(double bed, DesktopSurfaces surfaces, Gait gait, double dt, double petWidth, double petHeight)
+    {
+        if (_landInBed)
+        {
+            // Landed with the bed, on the floor or on a window: the bed stays here.
+            _landInBed = false;
+            _bedX = X;
+            InBed = true;
+        }
+        if (InBed)
+        {
+            Motion = Motion.Idle;
+            return;
+        }
+        double speed = Math.Max(gait.Speed, 0.8) * petWidth;
+        if (_ground != IntPtr.Zero)
+        {
+            // On a window: along it towards the bed, then down to the floor beside it. With the bed right below,
+            // towards the nearer end of the window.
+            if (_descent == 0)
+                _descent = Math.Abs(bed - X) > petWidth ? Math.Sign(bed - X)
+                    : X - _groundRect.Left < _groundRect.Right - X ? -1 : 1;
+            Direction = _descent;
+            double step = X + Direction * speed * dt;
+            if (Supports(surfaces, _ground, step))
+            {
+                X = step;
+                Motion = Motion.Walk;
+                return;
+            }
+            double tx = X + Direction * petWidth * 0.8;
+            if (surfaces.Platforms.Where(p => p.IsFloor && p.Contains(tx)).Select(p => (double?)p.Y).FirstOrDefault() is { } floor)
+                JumpTo(tx, floor, petHeight);
+            else
+                StartFall(Direction * petWidth);
+            return;
+        }
+        _descent = 0;
+        double dx = bed - X;
+        if (Math.Abs(dx) <= 2)
+        {
+            X = bed;
+            InBed = true;
+            Motion = Motion.Idle;
+            return;
+        }
+        Direction = dx < 0 ? -1 : 1;
+        double nx = X + Direction * Math.Min(Math.Abs(dx), speed * dt);
+        if (!Supports(surfaces, IntPtr.Zero, nx))
+        {
+            _bedX = X;
+            return;
+        }
+        X = nx;
+        Motion = Motion.Walk;
+    }
 
     private static Eyes Look(int direction) => direction < 0 ? Eyes.LookLeft : Eyes.LookRight;
 
