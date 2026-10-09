@@ -25,7 +25,7 @@ Copy-Item "$PSScriptRoot\Assets" "$layout\Assets" -Recurse
 
 if ($Register) {
     Add-AppxPackage -Register "$layout\AppxManifest.xml" -ForceApplicationShutdown
-    Write-Host "`nRegistriert: Claudius - Claude Usage App $packageVersion (aus $layout)"
+    Write-Host "`nRegistriert: Claudius - KI Usage Pet $packageVersion (aus $layout)"
     return
 }
 

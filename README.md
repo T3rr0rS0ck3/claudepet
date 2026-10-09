@@ -1,4 +1,4 @@
-# Claudius - Claude Usage App
+# Claudius - KI Usage Pet
 
 **A tiny pixel-art desktop pet for Windows that keeps an eye on your Claude usage limits — and gets visibly nervous when you're about to run out.**
 
@@ -11,7 +11,7 @@
 ![The pet in different moods: happy after a reset, thinking, panicking, sleeping](docs/moods.png)
 
 Claude Pro and Max plans have a rolling **5-hour session limit** and a **weekly limit**.
-**Claudius - Claude Usage App** sits on your desktop and shows how much of both you've used — at a glance, without
+**Claudius - KI Usage Pet** sits on your desktop and shows how much of both you've used — at a glance, without
 opening anything. The more you use, the more its mood changes: relaxed → thoughtful → nervous → panicking → asleep
 until the limit resets.
 
@@ -54,7 +54,7 @@ No .NET installation needed — the installer is self-contained.
 
 ## Installation
 
-The pet is coming to the **Microsoft Store** as *Claudius - Claude Usage App* (signed by Microsoft, updated by the Store).
+The pet is coming to the **Microsoft Store** as *Claudius - KI Usage Pet* (signed by Microsoft, updated by the Store).
 Until it is listed, or if you prefer GitHub:
 
 1. Download **`ClaudePet-Setup-x.y.z.exe`** from the [latest release](https://github.com/T3rr0rS0ck3/claudepet/releases/latest).
@@ -235,7 +235,7 @@ Look at `%LOCALAPPDATA%\ClaudePet\log.txt`. `usage.json` there shows the last va
 
 ## Uninstall
 
-Uninstall *Claudius - Claude Usage App* via Windows Settings → Apps. This also removes the status line entry from Claude Code and
+Uninstall *Claudius - KI Usage Pet* via Windows Settings → Apps. This also removes the status line entry from Claude Code and
 the autostart entry. Your settings stay in `%LOCALAPPDATA%\ClaudePet` — delete that folder for a clean slate.
 
 **Store version:** Store apps can't run anything on uninstall, so first open the pet's settings and click *Trennen*

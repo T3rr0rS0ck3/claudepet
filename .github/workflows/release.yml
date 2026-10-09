@@ -88,7 +88,7 @@ jobs:
         uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ env.TAG }}
-          name: Claudius - Claude Usage App ${{ steps.version.outputs.version }}
+          name: Claudius - KI Usage Pet ${{ steps.version.outputs.version }}
           prerelease: ${{ steps.version.outputs.prerelease }}
           generate_release_notes: true
           body: |
