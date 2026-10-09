@@ -67,6 +67,8 @@ public partial class PetWindow : Window
     private bool _topmost = true;
     private (Motion Motion, int Direction) _pose = (Motion.Idle, 1);
     private Eyes? _lookAt;
+    private int? _gaze;
+    private Eyes? GazeEyes => _gaze switch { < 0 => Eyes.LookLeft, > 0 => Eyes.LookRight, _ => null };
     private bool _emotesEnabled = true;
     private Emote? _emote;
     private DateTime _emoteStart;
@@ -166,6 +168,7 @@ public partial class PetWindow : Window
 
         _walking = settings.WalkAround && _animations;
         _walker.CrossMonitors = settings.CrossMonitors;
+        _walker.ChaseCursor = settings.ChaseCursor;
         _needsPlace = true;
         if (_walking)
         {
@@ -381,7 +384,8 @@ public partial class PetWindow : Window
         bool cheering = DateTime.Now < _cheerUntil;
         long t = _animations ? _tick : 1;
         var frame = PetAnimator.Frame(_mood, _working, cheering, t, _pose.Motion, _pose.Direction, _listening, _night);
-        if (_lookAt is { } eyes) frame = frame with { Eyes = eyes };
+        // Eyes on the ghost being dragged, or on the pointer it is about to chase or chasing.
+        if ((_lookAt ?? GazeEyes) is { } eyes) frame = frame with { Eyes = eyes };
         if (_sessionMark != Mark.None) frame = frame with { Mark = _sessionMark };
         PetImage.Source = Sprite.Render(frame with { Outfit = _outfit, Accessory = _accessory });
     }
@@ -488,7 +492,13 @@ public partial class PetWindow : Window
         }
 
         bool canWalk = !_listening && !_surfaces.IsFullscreen(_walker.X, _walker.Y);
-        _walker.Step(dt, _surfaces, _mood, canWalk, petWidth, petHeight);
+        GetCursorPos(out var cursor);
+        _walker.Step(dt, _surfaces, _mood, canWalk, petWidth, petHeight, (cursor.X, cursor.Y));
+        if (_walker.Gaze != _gaze)
+        {
+            _gaze = _walker.Gaze;
+            Render();
+        }
 
         // Climbing, hanging and falling from the top: pet at the top of the window, so the
         // (transparent) speech bubble area does not stick out above the screen.
