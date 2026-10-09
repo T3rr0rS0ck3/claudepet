@@ -26,6 +26,8 @@ Panik → schläft bis zum Reset.
   runter, wenn ein Fenster verschwindet; nach einem tiefen Sturz klatscht es platt auf und formt sich wieder.
   Das Tempo hängt von der Stimmung ab (abschaltbar). Auf Wunsch läuft oder hüpft es auch zum Nachbarmonitor,
   passend zur Monitoranordnung in Windows
+- 🐭 **Jagt den Mauszeiger**: ab und zu fixiert es in ruhiger Stimmung den Zeiger in seiner Nähe und rennt ihm hinterher; hält man
+  den Zeiger über das Pet, springt es dreimal danach und bricht dann in Tränen aus (abschaltbar)
 - 🎨 **Deine Farbe**: das Pet in beliebiger Farbe; Usage-Fenster, Menüs und Sprechblasen übernehmen sie als Akzentfarbe
 - 👑 **Passend zum Modell gekleidet**: eine Krone bei Opus, eine Sonnenbrille bei Sonnet, eine kleine Blume bei Haiku, ein Zauberhut bei Fable (abschaltbar)
 - 🎃 **Saisonale Kopfbedeckung**: Hexenhut und Besen im Oktober, Weihnachtsmütze bis Weihnachten, Hasenohren an Ostern und ein Partyhut
@@ -195,7 +197,7 @@ Desktop-Chat bietet keine Hooks und wird nicht unterstützt.
 ## Konfiguration
 
 Die meisten Optionen gibt es unter Rechtsklick → **Einstellungen…**: Sprache, Repo-Ordner, Konsole, Geist ziehen, Sprachchat,
-Größe, Farbe, Vordergrund, Animationen, Herumlaufen, Monitorwechsel, Emotes, Modell-Outfits, saisonale Kopfbedeckung und Geburtstag, Nachtmodus und Nachtzeit, Autostart, Update-Suche, Aktualisierungsintervall, Warn- und Zustandsschwellen, Sprechblasen,
+Größe, Farbe, Vordergrund, Animationen, Herumlaufen, Monitorwechsel, Mauszeiger jagen, Emotes, Modell-Outfits, saisonale Kopfbedeckung und Geburtstag, Nachtmodus und Nachtzeit, Autostart, Update-Suche, Aktualisierungsintervall, Warn- und Zustandsschwellen, Sprechblasen,
 Benachrichtigungen und dein Name.
 
 Alles liegt in `%LOCALAPPDATA%\Claudius\settings.json`. Handänderungen werden sofort übernommen.

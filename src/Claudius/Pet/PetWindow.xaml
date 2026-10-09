@@ -90,5 +90,8 @@
                MouseRightButtonUp="Pet_MouseRightButtonUp"
                LostMouseCapture="Pet_LostMouseCapture"
                ContextMenuOpening="Pet_ContextMenuOpening" />
+        <!-- Wailing tears fly out past the pet's sides; clicks go through to the pet. -->
+        <Image x:Name="TearsImage" Grid.Row="1" HorizontalAlignment="Center" Stretch="Fill"
+               RenderOptions.BitmapScalingMode="NearestNeighbor" IsHitTestVisible="False" Visibility="Collapsed" />
     </Grid>
 </Window>

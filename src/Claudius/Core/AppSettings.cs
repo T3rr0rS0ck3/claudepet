@@ -44,6 +44,8 @@ public sealed class AppSettings
     public bool WalkAround { get; set; } = true;
     /// <summary>While walking around, also walk and hop over to neighbouring monitors.</summary>
     public bool CrossMonitors { get; set; }
+    /// <summary>While walking around, now and then eye the mouse pointer and run after it.</summary>
+    public bool ChaseCursor { get; set; } = true;
     /// <summary>Buttons to feed, pat, play with and tickle the pet while hovering it.</summary>
     public bool Emotes { get; set; } = true;
     /// <summary>Dress for the AI model in use: crown for Opus, sunglasses for Sonnet, a flower for Haiku.</summary>

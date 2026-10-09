@@ -396,6 +396,41 @@ public static class Sprite
         return px;
     }
 
+    /// <summary>Extra pixels on each side of the tear layer, so wailing tears can fly out past the pet's picture.</summary>
+    public const int TearMargin = 6;
+    private static readonly Dictionary<(int Phase, int Bob), BitmapSource> TearCache = new();
+
+    /// <summary>
+    /// Wailing: tears spurting from both eyes in a wide arc out to the sides, on a layer
+    /// <see cref="TearMargin"/> wider on each side than the pet. <paramref name="phase"/> 0..2 moves the
+    /// drops along the arc; <paramref name="bob"/> follows the body like in <see cref="Pixels"/>.
+    /// </summary>
+    public static BitmapSource RenderTears(int phase, int bob)
+    {
+        if (TearCache.TryGetValue((phase, bob), out var cached)) return cached;
+        int width = Width + 2 * TearMargin;
+        var px = new uint[width * Height];
+        void Set(int x, int y)
+        {
+            if (x >= 0 && x < width && y >= 0 && y < Height) px[y * width + x] = SweatColor;
+        }
+        int c0 = TearMargin + 4, by = 5 + bob; // the body's left edge and top, as in Pixels()
+        (int dx, int dy)[] arc = [(3, -1), (1, -3), (-1, -4), (-3, -4), (-5, -3), (-7, -1), (-8, 1), (-9, 3), (-9, 5), (-9, 7), (-9, 9)];
+        for (int i = phase; i < arc.Length; i += 3)
+        {
+            Set(c0 + arc[i].dx, by + arc[i].dy);       // left eye, spraying left
+            Set(c0 + 13 - arc[i].dx, by + arc[i].dy);  // right eye, mirrored
+        }
+        Set(c0 + 3, by + 4);
+        Set(c0 + 10, by + 4);
+
+        var bitmap = new WriteableBitmap(width, Height, 96, 96, PixelFormats.Bgra32, null);
+        bitmap.WritePixels(new Int32Rect(0, 0, width, Height), px, width * 4, 0);
+        bitmap.Freeze();
+        TearCache[(phase, bob)] = bitmap;
+        return bitmap;
+    }
+
     /// <summary>Small tray icon showing the pet for the given frame.</summary>
     public static System.Drawing.Icon CreateIcon(SpriteFrame frame)
     {

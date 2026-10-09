@@ -148,6 +148,9 @@
                 <CheckBox x:Name="CrossMonitorsBox" Content="{x:Static core:Strings.CrossMonitors}"
                           ToolTip="{x:Static core:Strings.CrossMonitorsTip}"
                           IsEnabled="{Binding IsChecked, ElementName=WalkAroundBox}" />
+                <CheckBox x:Name="ChaseCursorBox" Content="{x:Static core:Strings.ChaseCursor}"
+                          ToolTip="{x:Static core:Strings.ChaseCursorTip}"
+                          IsEnabled="{Binding IsChecked, ElementName=WalkAroundBox}" />
                 <CheckBox x:Name="EmotesBox" Content="{x:Static core:Strings.Emotes}" />
                 <CheckBox x:Name="ModelOutfitsBox" Content="{x:Static core:Strings.ModelOutfits}"
                           ToolTip="{x:Static core:Strings.ModelOutfitsTip}" />
