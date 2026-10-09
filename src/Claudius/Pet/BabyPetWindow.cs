@@ -97,12 +97,12 @@ public sealed class BabyPetWindow : Window
             SetWindowPos(hwnd, IntPtr.Zero, x, y, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
     }
 
-    public void Render(PetMood mood, long t)
+    public void Render(PetMood mood, long t, Accessory accessory, bool night)
     {
         var mark = _session.State == SessionStates.Question ? Mark.Question : Mark.None;
         bool working = _session.State == SessionStates.Working;
-        var frame = PetAnimator.Frame(mood, working && _motion == Motion.Idle, false, t, _motion, _direction);
-        _image.Source = Sprite.Render(frame with { Mark = mark, Outfit = _outfit });
+        var frame = PetAnimator.Frame(mood, working && _motion == Motion.Idle, false, t, _motion, _direction, night: night);
+        _image.Source = Sprite.Render(frame with { Mark = mark, Outfit = _outfit, Accessory = accessory });
     }
 
     private void UpdateToolTip() => ToolTip = Strings.SessionTip(_session.Folder, _session.State);

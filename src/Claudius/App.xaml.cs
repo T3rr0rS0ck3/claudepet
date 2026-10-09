@@ -33,6 +33,7 @@ public partial class App : Application
     private SettingsWindow? _settingsWindow;
     private UsageState _state = UsageState.Compute(null, new MoodThresholds(), DateTimeOffset.Now);
     private PetMood? _lastMood;
+    private bool? _wasNight;
     private DateTime _settingsWrite;
 
     public AppSettings Settings { get; private set; } = null!;
@@ -209,6 +210,7 @@ public partial class App : Application
         _lastMood = mood;
         _pet.SetMood(mood, Working);
         _pet.SetOutfit(Settings.ModelOutfits ? Sprite.OutfitFor(_state.Snapshot?.Model) : Outfit.None);
+        ApplyOccasion(initial);
 
         var snapshot = _state.Snapshot;
         CheckWarning(true, snapshot?.FiveHour, _state.Session, Settings.SessionWarnThresholds, _sessionWarn, initial, now);
@@ -219,6 +221,17 @@ public partial class App : Application
             : Strings.TrayUsage(Strings.Percent(PercentText(_state.Session)), Strings.Percent(PercentText(_state.Week))));
 
         _overlay?.Update(_state, _monitor.History, Settings, AssistantSetup.GetStatus(), now);
+    }
+
+    /// <summary>Seasonal or night headwear and sleepiness; says good night when the night starts, not on start-up.</summary>
+    private void ApplyOccasion(bool initial)
+    {
+        var time = Occasions.Now;
+        bool night = Occasions.IsNight(time, Settings);
+        _pet.SetAccessory(Occasions.For(time, Settings));
+        _pet.SetNight(night);
+        if (night && _wasNight == false && !initial) Say("GoodNight");
+        _wasNight = night;
     }
 
     private sealed class WarnState

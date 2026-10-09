@@ -68,6 +68,17 @@ public sealed class PetWalker
     /// <summary>Walk and hop over to neighbouring monitors.</summary>
     public bool CrossMonitors { get; set; }
 
+    /// <summary>Night: in calm moods the pet walks slower, pauses longer and does not jump.</summary>
+    public bool Sleepy { get; set; }
+
+    private Gait GaitFor(PetMood mood)
+    {
+        var gait = GaitFor(mood);
+        return Sleepy && mood is PetMood.Relaxed or PetMood.Normal or PetMood.Attentive
+            ? gait with { Speed = gait.Speed * 0.6, IdleMin = gait.IdleMin * 1.5, IdleMax = gait.IdleMax * 1.5, JumpChance = 0 }
+            : gait;
+    }
+
     public double X { get; private set; }
     public double Y { get; private set; }
     public int Direction { get; private set; } = 1;
@@ -105,12 +116,12 @@ public sealed class PetWalker
         }
         if (_hanging)
         {
-            Hang(dt, surfaces, For(mood), canWalk, petWidth, petHeight);
+            Hang(dt, surfaces, GaitFor(mood), canWalk, petWidth, petHeight);
             return;
         }
         if (_climbing)
         {
-            Climb(dt, surfaces, For(mood), canWalk, petWidth, petHeight);
+            Climb(dt, surfaces, GaitFor(mood), canWalk, petWidth, petHeight);
             return;
         }
         if (!KeepFooting(surfaces)) return;
@@ -121,7 +132,7 @@ public sealed class PetWalker
             return;
         }
 
-        var gait = For(mood);
+        var gait = GaitFor(mood);
         _timer -= dt;
         if (Motion == Motion.Idle)
         {

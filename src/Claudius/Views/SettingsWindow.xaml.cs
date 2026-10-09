@@ -35,6 +35,11 @@ public partial class SettingsWindow : Window
         CrossMonitorsBox.IsChecked = settings.CrossMonitors;
         EmotesBox.IsChecked = settings.Emotes;
         ModelOutfitsBox.IsChecked = settings.ModelOutfits;
+        SeasonalBox.IsChecked = settings.SeasonalAccessories;
+        ShowBirthday(settings.Birthday);
+        NightModeBox.IsChecked = settings.NightMode;
+        ShowTime(NightStartBox, settings.NightStart);
+        ShowTime(NightEndBox, settings.NightEnd);
         UpdatesBox.IsChecked = settings.CheckForUpdates;
         VersionText.Text = Strings.InstalledVersion(Updater.Format(Updater.CurrentVersion))
             + (Updater.IsDevBuild ? Strings.DevBuildSuffix : Updater.IsInstalled ? "" : Strings.PortableSuffix);
@@ -241,6 +246,8 @@ public partial class SettingsWindow : Window
             for (int i = 1; i < moods.Count; i++)
                 if (moods[i] < moods[i - 1]) throw new FormatException(Strings.MoodOrderError);
 
+            string? birthday = ReadBirthday();
+
             if (LanguageBox.SelectedValue is string language) _settings.SetLanguage(language);
             _settings.PetScale = ScaleSlider.Value;
             _settings.PetColor = Sprite.ToHex(petColor);
@@ -251,6 +258,11 @@ public partial class SettingsWindow : Window
             _settings.CrossMonitors = CrossMonitorsBox.IsChecked == true;
             _settings.Emotes = EmotesBox.IsChecked == true;
             _settings.ModelOutfits = ModelOutfitsBox.IsChecked == true;
+            _settings.SeasonalAccessories = SeasonalBox.IsChecked == true;
+            _settings.Birthday = birthday;
+            _settings.NightMode = NightModeBox.IsChecked == true;
+            _settings.NightStart = (string)NightStartBox.SelectedItem;
+            _settings.NightEnd = (string)NightEndBox.SelectedItem;
             _settings.CheckForUpdates = UpdatesBox.IsChecked == true;
             _settings.SessionMarks = SessionMarksBox.IsChecked == true;
             _settings.SessionPets = SessionPetsBox.IsChecked == true;
@@ -303,4 +315,33 @@ public partial class SettingsWindow : Window
         text.Split([',', ';', ' '], StringSplitOptions.RemoveEmptyEntries)
             .Select(part => Math.Clamp(ParseInt(part, field), 0, 100))
             .ToList();
+
+    private const string NoChoice = "–";
+
+    /// <summary>Full hours to choose from, plus a time entered by hand in settings.json (e.g. 22:30).</summary>
+    private static void ShowTime(ComboBox box, string time)
+    {
+        var times = Enumerable.Range(0, 24).Select(h => $"{h:00}:00").ToList();
+        if (!times.Contains(time)) times = times.Append(time).Order().ToList();
+        box.ItemsSource = times;
+        box.SelectedItem = time;
+    }
+
+    private void ShowBirthday(string? birthday)
+    {
+        BirthdayDayBox.ItemsSource = new[] { NoChoice }.Concat(Enumerable.Range(1, 31).Select(d => d.ToString(CultureInfo.InvariantCulture))).ToList();
+        BirthdayMonthBox.ItemsSource = new[] { NoChoice }.Concat(Strings.Culture.DateTimeFormat.MonthNames.Take(12)).ToList();
+        bool set = Occasions.TryParseDay(birthday, out var day);
+        BirthdayDayBox.SelectedIndex = set ? day.Day : 0;
+        BirthdayMonthBox.SelectedIndex = set ? day.Month : 0;
+    }
+
+    /// <summary>"MM-dd", or null while day or month is left empty.</summary>
+    private string? ReadBirthday()
+    {
+        int day = BirthdayDayBox.SelectedIndex, month = BirthdayMonthBox.SelectedIndex;
+        if (day <= 0 || month <= 0) return null;
+        string birthday = $"{month:00}-{day:00}";
+        return Occasions.TryParseDay(birthday, out _) ? birthday : throw new FormatException(Strings.BirthdayInvalid);
+    }
 }

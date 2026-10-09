@@ -151,6 +151,21 @@
                 <CheckBox x:Name="EmotesBox" Content="{x:Static core:Strings.Emotes}" />
                 <CheckBox x:Name="ModelOutfitsBox" Content="{x:Static core:Strings.ModelOutfits}"
                           ToolTip="{x:Static core:Strings.ModelOutfitsTip}" />
+                <CheckBox x:Name="SeasonalBox" Content="{x:Static core:Strings.SeasonalAccessories}"
+                          ToolTip="{x:Static core:Strings.SeasonalAccessoriesTip}" />
+                <StackPanel Orientation="Horizontal" Margin="22,0,0,4" IsEnabled="{Binding IsChecked, ElementName=SeasonalBox}">
+                    <TextBlock Text="{x:Static core:Strings.Birthday}" VerticalAlignment="Center" Margin="0,0,6,0" />
+                    <ComboBox x:Name="BirthdayDayBox" Width="56" />
+                    <ComboBox x:Name="BirthdayMonthBox" Width="120" Margin="6,0,0,0" />
+                </StackPanel>
+                <CheckBox x:Name="NightModeBox" Content="{x:Static core:Strings.NightMode}"
+                          ToolTip="{x:Static core:Strings.NightModeTip}" />
+                <StackPanel Orientation="Horizontal" Margin="22,0,0,4" IsEnabled="{Binding IsChecked, ElementName=NightModeBox}">
+                    <TextBlock Text="{x:Static core:Strings.NightFrom}" VerticalAlignment="Center" Margin="0,0,6,0" />
+                    <ComboBox x:Name="NightStartBox" Width="72" />
+                    <TextBlock Text="{x:Static core:Strings.NightTo}" VerticalAlignment="Center" Margin="6,0" />
+                    <ComboBox x:Name="NightEndBox" Width="72" />
+                </StackPanel>
                 <CheckBox x:Name="AutostartBox" Content="{x:Static core:Strings.StartWithWindows}" />
                 <StackPanel x:Name="AutostartBlockedPanel" Orientation="Horizontal" Margin="22,0,0,4" Visibility="Collapsed">
                     <TextBlock Text="{x:Static core:Strings.AutostartBlocked}" VerticalAlignment="Center" Margin="0,0,6,0" />

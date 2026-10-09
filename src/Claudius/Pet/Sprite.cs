@@ -15,6 +15,8 @@ public enum Mark
 public enum Tint { Normal, Hot, Pale, Ghost }
 /// <summary>Something the pet wears, drawn over the body: so far one per AI model (Opus, Sonnet, Haiku).</summary>
 public enum Outfit { None, Crown, Sunglasses, Flower, WizardHat }
+/// <summary>Headwear for the season or the night; it replaces the outfit's headwear (not its sunglasses).</summary>
+public enum Accessory { None, WitchHat, SantaHat, PartyHat, BunnyEars, Nightcap }
 
 /// <summary>Everything that describes one rendered frame of the pet.</summary>
 public readonly record struct SpriteFrame(
@@ -28,7 +30,8 @@ public readonly record struct SpriteFrame(
     int Sweat = 0,
     bool Blush = false,
     Tint Tint = Tint.Normal,
-    Outfit Outfit = Outfit.None);
+    Outfit Outfit = Outfit.None,
+    Accessory Accessory = Accessory.None);
 
 /// <summary>
 /// Procedural pixel-art renderer for the pet: a chunky orange block
@@ -61,6 +64,13 @@ public static class Sprite
     private const uint LeafColor = 0xFF5FAE4E;
     private const uint HatColor = 0xFF7B5CC4;
     private const uint HatShade = 0xFF5A3F9A;
+    private const uint WitchColor = 0xFF3B2A4F;
+    private const uint PumpkinColor = 0xFFE8862E;
+    private const uint SantaRed = 0xFFD8343C;
+    private const uint FurWhite = 0xFFF4F1EA;
+    private const uint EarPink = 0xFFF2A2B4;
+    private const uint NightcapBlue = 0xFF4F6FC4;
+    private const uint NightcapShade = 0xFF3A55A0;
 
     /// <summary>Warm orange, the default body color.</summary>
     public const uint DefaultBodyColor = 0xFFD97757;
@@ -92,7 +102,7 @@ public static class Sprite
     }
 
     /// <summary>
-    /// The outfit for a AI model, by name ("Opus 4.1") or id ("…-sonnet-4-5"): Opus wears a crown,
+    /// The outfit for an AI model, by name ("Opus 4.1") or id ("…-sonnet-4-5"): Opus wears a crown,
     /// Sonnet sunglasses, Haiku a flower, Fable a wizard's hat; unknown models nothing.
     /// </summary>
     public static Outfit OutfitFor(string? model) =>
@@ -241,8 +251,10 @@ public static class Sprite
             Set(c0 + 11, by + 4, BlushColor); Set(c0 + 12, by + 4, BlushColor);
         }
 
-        // Outfit; headwear sits on the left half of the head, out of the way of the marks above its middle and right
-        switch (f.Outfit)
+        // Outfit; headwear sits on the left half of the head, out of the way of the marks above its middle and right.
+        // A seasonal or night accessory takes the head, so only the sunglasses stay with it.
+        var outfit = f.Accessory != Accessory.None && f.Outfit != Outfit.Sunglasses ? Outfit.None : f.Outfit;
+        switch (outfit)
         {
             // Opus: a golden crown with a red jewel, sitting on the head
             case Outfit.Crown:
@@ -267,6 +279,41 @@ public static class Sprite
                 Glyph(c0 - 1, HatColor, by - 5, "....X.", "...XX.", "..XXX.", ".XXXX.");
                 Glyph(c0 - 1, HatShade, by - 1, "XXXXXX");
                 Set(c0 + 2, by - 3, GoldColor);
+                break;
+        }
+
+        // Accessory, in the same place as the outfit's headwear
+        switch (f.Accessory)
+        {
+            // Halloween: a crooked witch's hat with an orange band, and a little pumpkin on the ground
+            case Accessory.WitchHat:
+                Glyph(c0 - 2, WitchColor, by - 5, "....X...", "...XX...", "..XXX...", "..XXXX..", "XXXXXXXX");
+                Glyph(c0 - 2, PumpkinColor, by - 2, "..XXXX..");
+                Glyph(0, LeafColor, Height - 4, "..X.");
+                Glyph(0, PumpkinColor, Height - 3, ".XXX", "XXXX", ".XXX");
+                Set(1, Height - 2, EyeColor); Set(3, Height - 2, EyeColor);
+                break;
+            // Christmas: a red cap with a white brim, its tip and bobble flopping to the left
+            case Accessory.SantaHat:
+                Glyph(c0 - 2, SantaRed, by - 4, ".XX....", ".XXXX..", ".XXXXX.");
+                Glyph(c0 - 2, FurWhite, by - 4, "X......", ".......", ".......", "XXXXXXX");
+                break;
+            // New Year's Eve and birthdays: a striped party cone with a golden pompom
+            case Accessory.PartyHat:
+                Glyph(c0, HeartColor, by - 3, "..X..", ".X.X.", "X.X.X");
+                Glyph(c0, BallColor, by - 2, "..X..", ".X.X.");
+                Glyph(c0, GoldColor, by - 4, "..X..");
+                break;
+            // Easter: two bunny ears with pink insides
+            case Accessory.BunnyEars:
+                Glyph(c0, FurWhite, by - 5, "XX.XX", "X..X.", "X..X.", "X..X.", "XX.XX");
+                Glyph(c0, EarPink, by - 4, ".X..X", ".X..X", ".X..X");
+                break;
+            // Night: a long blue nightcap, its tip hanging down beside the head with a white bobble
+            case Accessory.Nightcap:
+                Glyph(c0 - 2, NightcapBlue, by - 4, "..XXX..", ".XXXXX.", "X.XXXXX");
+                Glyph(c0 - 2, NightcapShade, by - 1, "XXXXXXX");
+                Set(c0 - 2, by, FurWhite);
                 break;
         }
 

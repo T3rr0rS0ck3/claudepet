@@ -44,9 +44,9 @@ public static class PetAnimator
     };
 
     public static SpriteFrame Frame(PetMood mood, bool working, bool cheering, long t,
-        Motion motion = Motion.Idle, int direction = 1, bool listening = false)
+        Motion motion = Motion.Idle, int direction = 1, bool listening = false, bool night = false)
     {
-        var frame = MoodFrame(mood, working, cheering, t);
+        var frame = MoodFrame(mood, working, cheering, t, night);
         // Dictating to the assistant: stands still and talks into the microphone in its hand, sound waves rising
         if (listening && motion is Motion.Idle or Motion.Walk or Motion.Run)
         {
@@ -115,10 +115,14 @@ public static class PetAnimator
         return frame with { Eyes = eyes, Arms = arms, Legs = step + 1, Bob = step };
     }
 
-    private static SpriteFrame MoodFrame(PetMood mood, bool working, bool cheering, long t)
+    /// <summary>
+    /// At <paramref name="night"/> the calm moods are sleepy: they blink more, breathe slower and yawn and
+    /// stretch instead of waving or looking around.
+    /// </summary>
+    private static SpriteFrame MoodFrame(PetMood mood, bool working, bool cheering, long t, bool night)
     {
-        bool blink = t % 36 == 0 || t % 108 == 3;
-        int breathe = (int)(t / 8 % 2);
+        bool blink = t % 36 == 0 || t % 108 == 3 || night && t % 20 == 0;
+        int breathe = (int)(night ? t / 12 % 2 : t / 8 % 2);
         Eyes Open(Eyes eyes) => blink ? Eyes.Blink : eyes;
 
         if (cheering)
@@ -132,6 +136,10 @@ public static class PetAnimator
             {
                 if (working) return Working(t, blink);
                 long cycle = t % 200;
+                if (night)
+                    return cycle is >= 120 and < 136
+                        ? new SpriteFrame(Eyes.Closed, Mouth.Open, Arms.Up)
+                        : new SpriteFrame(Open(Eyes.Normal), Bob: breathe);
                 if (mood == PetMood.Relaxed && cycle is >= 120 and < 145)
                     return new SpriteFrame(Eyes.Happy, Mouth.Smile, t / 3 % 2 == 0 ? Arms.Wave : Arms.Down,
                         Bob: breathe, Blush: true);
