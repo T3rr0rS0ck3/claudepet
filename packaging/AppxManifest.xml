@@ -12,13 +12,13 @@
   IgnorableNamespaces="uap uap3 desktop rescap">
 
   <Identity
-    Name="T3rr0rS0ck3.Claudius-ClaudeUsageApp"
+    Name="T3rr0rS0ck3.Claudius-KIUsagePet"
     Publisher="CN=5F1DB1A2-9D29-497D-AE3A-2DDDF788C6E5"
     Version="{VERSION}"
     ProcessorArchitecture="x64" />
 
   <Properties>
-    <DisplayName>Claudius - Claude Usage App</DisplayName>
+    <DisplayName>Claudius - KI Usage Pet</DisplayName>
     <PublisherDisplayName>T3rr0rS0ck3</PublisherDisplayName>
     <Logo>Assets\StoreLogo.png</Logo>
   </Properties>
@@ -35,7 +35,7 @@
   <Applications>
     <Application Id="ClaudePet" Executable="ClaudePet.exe" EntryPoint="Windows.FullTrustApplication">
       <uap:VisualElements
-        DisplayName="Claudius - Claude Usage App"
+        DisplayName="Claudius - KI Usage Pet"
         Description="Desktop pet that shows your Claude Code usage"
         BackgroundColor="transparent"
         Square150x150Logo="Assets\Square150x150Logo.png"
@@ -45,7 +45,7 @@
       <Extensions>
         <!-- "Mit Windows starten": switched on and off by the app (Core/Autostart.cs). -->
         <desktop:Extension Category="windows.startupTask" Executable="ClaudePet.exe" EntryPoint="Windows.FullTrustApplication">
-          <desktop:StartupTask TaskId="ClaudePetStartup" Enabled="false" DisplayName="Claudius - Claude Usage App" />
+          <desktop:StartupTask TaskId="ClaudePetStartup" Enabled="false" DisplayName="Claudius - KI Usage Pet" />
         </desktop:Extension>
         <!--
           Claude Code runs the bridge for its statusLine and hooks. The install folder changes with every
