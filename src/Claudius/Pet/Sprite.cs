@@ -65,7 +65,10 @@ public static class Sprite
     private const uint HatColor = 0xFF7B5CC4;
     private const uint HatShade = 0xFF5A3F9A;
     private const uint WitchColor = 0xFF3B2A4F;
-    private const uint PumpkinColor = 0xFFE8862E;
+    private const uint BandOrange = 0xFFE8862E;
+    private const uint StickColor = 0xFF7A5230;
+    private const uint StrawColor = 0xFFD9B45A;
+    private const uint BindingColor = 0xFF8C3A2E;
     private const uint SantaRed = 0xFFD8343C;
     private const uint FurWhite = 0xFFF4F1EA;
     private const uint EarPink = 0xFFF2A2B4;
@@ -285,24 +288,28 @@ public static class Sprite
         // Accessory, in the same place as the outfit's headwear
         switch (f.Accessory)
         {
-            // Halloween: a crooked witch's hat with an orange band, and a little pumpkin on the ground
+            // Halloween: a crooked witch's hat with an orange band, and a broom in the right hand
+            // (put away while the hand holds the microphone)
             case Accessory.WitchHat:
                 Glyph(c0 - 2, WitchColor, by - 5, "....X...", "...XX...", "..XXX...", "..XXXX..", "XXXXXXXX");
-                Glyph(c0 - 2, PumpkinColor, by - 2, "..XXXX..");
-                Glyph(0, LeafColor, Height - 4, "..X.");
-                Glyph(0, PumpkinColor, Height - 3, ".XXX", "XXXX", ".XXX");
-                Set(1, Height - 2, EyeColor); Set(3, Height - 2, EyeColor);
+                Glyph(c0 - 2, BandOrange, by - 2, "..XXXX..");
+                if (f.Arms != Arms.Mic)
+                {
+                    for (int y = by + 1; y <= by + 6; y++) Set(c0 + 16, y, StickColor);
+                    Glyph(c0 + 15, BindingColor, by + 7, "XXX");
+                    Glyph(c0 + 15, StrawColor, by + 8, "XXX", "XXX", "X.X");
+                }
                 break;
             // Christmas: a red cap with a white brim, its tip and bobble flopping to the left
             case Accessory.SantaHat:
                 Glyph(c0 - 2, SantaRed, by - 4, ".XX....", ".XXXX..", ".XXXXX.");
                 Glyph(c0 - 2, FurWhite, by - 4, "X......", ".......", ".......", "XXXXXXX");
                 break;
-            // New Year's Eve and birthdays: a striped party cone with a golden pompom
+            // New Year's Eve and birthdays: a striped party cone leaning to the left, a golden pompom on its tip
             case Accessory.PartyHat:
-                Glyph(c0, HeartColor, by - 3, "..X..", ".X.X.", "X.X.X");
-                Glyph(c0, BallColor, by - 2, "..X..", ".X.X.");
-                Glyph(c0, GoldColor, by - 4, "..X..");
+                Glyph(c0 - 2, GoldColor, by - 5, "X");
+                Glyph(c0 - 2, HeartColor, by - 4, ".X.....", "..X.X..", "..X.X.X", "....X.X");
+                Glyph(c0 - 2, BallColor, by - 4, "..X....", ".X.X...", "...X.X.", "...X.X.");
                 break;
             // Easter: two bunny ears with pink insides
             case Accessory.BunnyEars:
@@ -312,7 +319,7 @@ public static class Sprite
             // Night: a long blue nightcap, its tip hanging down beside the head with a white bobble
             case Accessory.Nightcap:
                 Glyph(c0 - 2, NightcapBlue, by - 4, "..XXX..", ".XXXXX.", "X.XXXXX");
-                Glyph(c0 - 2, NightcapShade, by - 1, "XXXXXXX");
+                Glyph(c0 - 2, NightcapShade, by - 1, "X.XXXXX"); // the gap keeps the hanging tip apart
                 Set(c0 - 2, by, FurWhite);
                 break;
         }

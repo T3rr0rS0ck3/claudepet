@@ -28,7 +28,7 @@ Panik → schläft bis zum Reset.
   passend zur Monitoranordnung in Windows
 - 🎨 **Deine Farbe**: das Pet in beliebiger Farbe; Usage-Fenster, Menüs und Sprechblasen übernehmen sie als Akzentfarbe
 - 👑 **Passend zum Modell gekleidet**: eine Krone bei Opus, eine Sonnenbrille bei Sonnet, eine kleine Blume bei Haiku, ein Zauberhut bei Fable (abschaltbar)
-- 🎃 **Saisonale Kopfbedeckung**: Hexenhut und Kürbis im Oktober, Weihnachtsmütze bis Weihnachten, Hasenohren an Ostern und ein Partyhut
+- 🎃 **Saisonale Kopfbedeckung**: Hexenhut und Besen im Oktober, Weihnachtsmütze bis Weihnachten, Hasenohren an Ostern und ein Partyhut
   an Silvester und deinem Geburtstag; sie ersetzen die Kopfbedeckung des Modells (abschaltbar)
 - 🌙 **Nachtmodus**: zwischen 23 und 6 Uhr (einstellbar) trägt das Pet eine Schlafmütze, läuft langsamer, gähnt und sagt gute Nacht
 - 📊 **Usage-Fenster**: Klick aufs Pet zeigt Session- und Wochenverbrauch, Reset-Zeiten und Prognose
