@@ -17,6 +17,8 @@ public enum Tint { Normal, Hot, Pale, Ghost }
 public enum Outfit { None, Crown, Sunglasses, Flower, WizardHat }
 /// <summary>Headwear for the season or the night; it replaces the outfit's headwear (not its sunglasses).</summary>
 public enum Accessory { None, WitchHat, SantaHat, PartyHat, BunnyEars, Nightcap }
+/// <summary>The bed's parts: behind the pet (head and foot ends, pillow) and in front of it (blanket), or all.</summary>
+public enum BedLayer { Back, Front, Whole }
 
 /// <summary>Everything that describes one rendered frame of the pet.</summary>
 public readonly record struct SpriteFrame(
@@ -74,6 +76,10 @@ public static class Sprite
     private const uint EarPink = 0xFFF2A2B4;
     private const uint NightcapBlue = 0xFF4F6FC4;
     private const uint NightcapShade = 0xFF3A55A0;
+    private const uint BedWood = 0xFF9A6644;
+    private const uint BedWoodShade = 0xFF6E4630;
+    private const uint BlanketColor = 0xFF6C7FD6;
+    private const uint BlanketShade = 0xFF5162B8;
 
     /// <summary>Warm orange, the default body color.</summary>
     public const uint DefaultBodyColor = 0xFFD97757;
@@ -428,6 +434,47 @@ public static class Sprite
         bitmap.WritePixels(new Int32Rect(0, 0, width, Height), px, width * 4, 0);
         bitmap.Freeze();
         TearCache[(phase, bob)] = bitmap;
+        return bitmap;
+    }
+
+    private static readonly Dictionary<BedLayer, BitmapSource> BedCache = new();
+
+    /// <summary>The blanket's top row in the bed: grabbing the pet below it takes the bed along.</summary>
+    public const int BlanketTop = 10;
+
+    /// <summary>
+    /// A wooden bed in the pet's own 22x16 grid, the pet standing in it with its feet on the floor: head end on
+    /// the left, foot end on the right, a pillow behind the head and a striped blanket up to its chest.
+    /// </summary>
+    public static BitmapSource RenderBed(BedLayer layer)
+    {
+        if (BedCache.TryGetValue(layer, out var cached)) return cached;
+        var px = new uint[Width * Height];
+        void Glyph(int x, uint color, int top, params string[] rows)
+        {
+            for (int y = 0; y < rows.Length; y++)
+                for (int i = 0; i < rows[y].Length; i++)
+                    if (rows[y][i] == 'X' && x + i < Width && top + y < Height) px[(top + y) * Width + x + i] = color;
+        }
+        if (layer != BedLayer.Front)
+        {
+            // Head end with a rounded top, foot end lower; the pillow peeks out behind the head.
+            Glyph(0, BedWood, 6, ".XX", "XXX", "XXX", "XXX", "XXX", "XXX", "XXX", "XXX", "XXX", ".X.");
+            Glyph(0, BedWoodShade, 6, ".X.", ".X.", ".X.", ".X.", ".X.", ".X.", ".X.", ".X.", ".X.");
+            Glyph(3, White, 8, "XXX", "XXX");
+        }
+        if (layer != BedLayer.Back)
+        {
+            Glyph(3, White, BlanketTop, "XXXXXXXXXXXXXXXX");
+            for (int y = 11; y <= 14; y++) Glyph(3, y % 2 == 0 ? BlanketShade : BlanketColor, y, "XXXXXXXXXXXXXXXX");
+            Glyph(3, BedWoodShade, 15, "XXXXXXXXXXXXXXXX"); // the side rail hides the pet's feet
+            Glyph(19, BedWood, 9, "XXX", "XXX", "XXX", "XXX", "XXX", "XXX", ".X.");
+            Glyph(19, BedWoodShade, 9, ".X.", ".X.", ".X.", ".X.", ".X.", ".X.");
+        }
+        var bitmap = new WriteableBitmap(Width, Height, 96, 96, PixelFormats.Bgra32, null);
+        bitmap.WritePixels(new Int32Rect(0, 0, Width, Height), px, Width * 4, 0);
+        bitmap.Freeze();
+        BedCache[layer] = bitmap;
         return bitmap;
     }
 

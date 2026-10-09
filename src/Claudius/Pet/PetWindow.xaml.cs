@@ -69,6 +69,16 @@ public partial class PetWindow : Window
     private Eyes? _lookAt;
     private Eyes? _gaze;
     private bool _sad;
+    /// <summary>Night: the pet goes to bed (on the taskbar, or right where it is if it does not walk around).</summary>
+    private bool _bedtime;
+    private bool _shownInBed;
+    private BedWindow? _bedWindow;
+    private double _lastPetWidth;
+    /// <summary>Picked up while asleep: by the blanket the bed comes along, by the head the pet comes out.</summary>
+    private bool _carryingBed, _pulledOut;
+    private DateTime _groggyUntil, _wakeUntil;
+    private readonly DispatcherTimer _wakeTimer = new() { Interval = TimeSpan.FromSeconds(1.6) };
+    private readonly Random _bedRandom = new();
     private bool _emotesEnabled = true;
     private Emote? _emote;
     private DateTime _emoteStart;
@@ -103,11 +113,29 @@ public partial class PetWindow : Window
         };
         _walkTimer.Tick += (_, _) => Walk();
         _babyTimer.Tick += (_, _) => FollowWithBabies();
-        Closed += (_, _) => { foreach (var baby in _babies.Values) baby.Close(); };
+        Closed += (_, _) =>
+        {
+            foreach (var baby in _babies.Values) baby.Close();
+            CloseBed();
+        };
+        IsVisibleChanged += (_, _) => { if (!IsVisible) _bedWindow?.Hide(); };
+        BedBackImage.Source = Sprite.RenderBed(BedLayer.Back);
+        BedFrontImage.Source = Sprite.RenderBed(BedLayer.Front);
+        _wakeTimer.Tick += (_, _) =>
+        {
+            _wakeTimer.Stop();
+            EndBedtime();
+        };
         _ghostTimer.Tick += (_, _) => UpdateGhost();
         _clickTimer.Tick += (_, _) =>
         {
             _clickTimer.Stop();
+            if (InBed)
+            {
+                // Woken up for a moment: a sleepy blink, then back to sleep.
+                _groggyUntil = DateTime.Now.AddSeconds(2);
+                Render();
+            }
             Clicked?.Invoke(_clickedAt);
         };
         SourceInitialized += (_, _) => HideFromAltTab();
@@ -164,6 +192,8 @@ public partial class PetWindow : Window
         PetImage.Height = petHeight;
         TearsImage.Width = tearsWidth;
         TearsImage.Height = petHeight;
+        BedBackImage.Width = BedFrontImage.Width = petWidth;
+        BedBackImage.Height = BedFrontImage.Height = petHeight;
         if (_petOnTop) SetPetOnTop(true); // the bubble below the pet moves with its size
 
         if (_animations) _animationTimer.Start();
@@ -219,8 +249,97 @@ public partial class PetWindow : Window
         if (night == _night) return;
         _night = night;
         _walker.Sleepy = night;
+        if (night)
+        {
+            _bedtime = true;
+            _wakeTimer.Stop();
+            _wakeUntil = default;
+        }
+        else if (_bedtime)
+        {
+            // Morning: a stretch in bed first, then the bed goes; out of bed it just goes.
+            if (InBed)
+            {
+                _wakeUntil = DateTime.Now + _wakeTimer.Interval;
+                _wakeTimer.Start();
+            }
+            else EndBedtime();
+        }
         Render();
         RenderBabies();
+    }
+
+    /// <summary>Lying in its bed: once it got there, or right away where it is while it does not walk around.</summary>
+    private bool InBed => _bedtime && (_dragging ? _carryingBed : !_walking || _walker.InBed || _carryingBed);
+
+    private void EndBedtime()
+    {
+        _bedtime = false;
+        _carryingBed = false;
+        _walker.BedX = null;
+        CloseBed();
+        Render();
+    }
+
+    private void CloseBed()
+    {
+        _bedWindow?.Close();
+        _bedWindow = null;
+    }
+
+    /// <summary>
+    /// At night: picks a spot for the bed on the taskbar and shows the bed there until the pet lies in it,
+    /// e.g. while it walks over or after it was carried off.
+    /// </summary>
+    private void UpdateBed(double petWidth)
+    {
+        if (!_bedtime) return;
+        if (_walking && _walker.BedX == null) _walker.BedX = BedSpot(petWidth);
+        if (_carryingBed && !_dragging && _walker.InBed) _carryingBed = false; // landed in it
+        bool inBed = InBed;
+        if (inBed != _shownInBed)
+        {
+            _shownInBed = inBed;
+            Render();
+        }
+        if (inBed || !_walking || !IsVisible || _walker.BedX is not { } x)
+        {
+            _bedWindow?.Hide();
+            return;
+        }
+        if (_surfaces.Platforms.Where(p => p.IsFloor && p.Contains(x)).Select(p => (double?)p.Y).FirstOrDefault() is not { } floor)
+            return;
+        if (_bedWindow == null || _bedWindow.Scale != _scale)
+        {
+            CloseBed();
+            _bedWindow = new BedWindow(_scale, _topmost);
+        }
+        if (!_bedWindow.IsVisible) _bedWindow.Show();
+        _bedWindow.PlaceAt(x, floor, new WindowInteropHelper(this).Handle);
+    }
+
+    /// <summary>A random spot on the taskbar of the pet's monitor, not too far from it.</summary>
+    private double BedSpot(double petWidth)
+    {
+        double x = _walker.X;
+        var area = _surfaces.WorkAreas.FirstOrDefault(a => x >= a.Left && x <= a.Right);
+        var floors = _surfaces.Platforms
+            .Where(p => p.IsFloor && p.X2 - p.X1 > 3 * petWidth && p.X1 < area.Right && p.X2 > area.Left)
+            .ToList();
+        if (floors.Count == 0) return x;
+        var floor = floors[_bedRandom.Next(floors.Count)];
+        double lo = Math.Max(floor.X1 + petWidth, x - 15 * petWidth), hi = Math.Min(floor.X2 - petWidth, x + 15 * petWidth);
+        return lo < hi ? lo + _bedRandom.NextDouble() * (hi - lo) : (floor.X1 + floor.X2) / 2;
+    }
+
+    /// <summary>In bed: asleep, a sleepy blink after a click, a stretch when it wakes up in the morning.</summary>
+    private SpriteFrame BedFrame(long t)
+    {
+        var now = DateTime.Now;
+        if (now < _wakeUntil) return new SpriteFrame(Eyes.Happy, Mouth.Open, Arms.Up);
+        if (now < _groggyUntil) return new SpriteFrame(t % 12 < 9 ? Eyes.Blink : Eyes.Closed);
+        var z = (t / 8 % 3) switch { 0 => Mark.Zzz1, 1 => Mark.Zzz2, _ => Mark.Zzz3 };
+        return new SpriteFrame(Eyes.Closed, Bob: (int)(t / 12 % 2), Mark: z);
     }
 
     /// <summary>Short happy animation, e.g. after a reset.</summary>
@@ -387,6 +506,9 @@ public partial class PetWindow : Window
         bool cheering = DateTime.Now < _cheerUntil;
         long t = _animations ? _tick : 1;
         var frame = PetAnimator.Frame(_mood, _working, cheering, t, _pose.Motion, _pose.Direction, _listening, _night);
+        bool inBed = InBed;
+        BedBackImage.Visibility = BedFrontImage.Visibility = inBed ? Visibility.Visible : Visibility.Collapsed;
+        if (inBed) frame = BedFrame(t);
         // Eyes on the ghost being dragged, or on the pointer it is about to chase or chasing.
         if ((_lookAt ?? _gaze) is { } eyes) frame = frame with { Eyes = eyes };
         // Could not grab the pointer: eyes squeezed shut, wailing with tears spurting out to the sides.
@@ -415,6 +537,11 @@ public partial class PetWindow : Window
         PetImage.VerticalAlignment = onTop ? VerticalAlignment.Top : VerticalAlignment.Stretch;
         Grid.SetRow(TearsImage, onTop ? 0 : 1);
         TearsImage.VerticalAlignment = PetImage.VerticalAlignment;
+        foreach (var bed in new[] { BedBackImage, BedFrontImage })
+        {
+            Grid.SetRow(bed, onTop ? 0 : 1);
+            bed.VerticalAlignment = PetImage.VerticalAlignment;
+        }
         LayoutOverlays();
     }
 
@@ -501,13 +628,18 @@ public partial class PetWindow : Window
         double width = rect.Right - rect.Left, height = rect.Bottom - rect.Top;
         if (_needsPlace)
         {
-            _walker.Place(rect.Left + width / 2, _petOnTop ? rect.Top + petHeight : rect.Bottom);
+            // Carried in its bed, or set down again for another reason while in it: it lands in it.
+            _walker.Place(rect.Left + width / 2, _petOnTop ? rect.Top + petHeight : rect.Bottom,
+                _carryingBed || _walker.InBed && !_pulledOut);
+            _pulledOut = false; // _carryingBed lasts until it has landed, so the bed falls with it
             _needsPlace = false;
         }
 
         bool canWalk = !_listening && !_surfaces.IsFullscreen(_walker.X, _walker.Y);
         GetCursorPos(out var cursor);
         _walker.Step(dt, _surfaces, _mood, canWalk, petWidth, petHeight, (cursor.X, cursor.Y));
+        _lastPetWidth = petWidth;
+        UpdateBed(petWidth);
         if (_walker.Gaze != _gaze || _walker.Sad != _sad)
         {
             _gaze = _walker.Gaze;
@@ -689,7 +821,16 @@ public partial class PetWindow : Window
         _suppressContextMenu = true;
         _clickTimer.Stop();
         _moveOffset = new POINT { X = cursor.X - rect.Left, Y = cursor.Y - rect.Top };
+        // Picked up asleep, it wakes a little. Grabbed by the blanket, the bed comes along to wherever it is put
+        // down; grabbed by the head, the pet comes out and walks back to bed afterwards.
+        if (InBed)
+        {
+            _carryingBed = Mouse.GetPosition(PetImage).Y >= PetImage.ActualHeight * Sprite.BlanketTop / Sprite.Height;
+            _pulledOut = !_carryingBed;
+            _groggyUntil = DateTime.Now.AddSeconds(2);
+        }
         _dragging = true;
+        UpdateBed(_lastPetWidth);
         PetImage.CaptureMouse();
         PetImage.RenderTransform = Transform.Identity; // picked up while squashed flat
         _pose = (Motion.Carried, _pose.Direction);
