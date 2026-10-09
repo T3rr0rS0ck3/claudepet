@@ -32,7 +32,9 @@ Panik → schläft bis zum Reset.
 - 👑 **Passend zum Modell gekleidet**: eine Krone bei Opus, eine Sonnenbrille bei Sonnet, eine kleine Blume bei Haiku, ein Zauberhut bei Fable (abschaltbar)
 - 🎃 **Saisonale Kopfbedeckung**: Hexenhut und Besen im Oktober, Weihnachtsmütze bis Weihnachten, Hasenohren an Ostern und ein Partyhut
   an Silvester und deinem Geburtstag; sie ersetzen die Kopfbedeckung des Modells (abschaltbar)
-- 🌙 **Nachtmodus**: zwischen 23 und 6 Uhr (einstellbar) trägt das Pet eine Schlafmütze, läuft langsamer, gähnt und sagt gute Nacht
+- 🌙 **Nachtmodus**: zwischen 23 und 6 Uhr (einstellbar) trägt das Pet eine Schlafmütze und sagt gute Nacht; auf der Taskleiste
+  erscheint ein Bett, es läuft hin und schläft darin. Ein Klick weckt es kurz; am Kopf gegriffen holt man es heraus (es läuft
+  zurück), an der Decke gegriffen zieht man es samt Bett um. Morgens streckt es sich, sagt guten Morgen und das Bett verschwindet
 - 📊 **Usage-Fenster**: Klick aufs Pet zeigt Session- und Wochenverbrauch, Reset-Zeiten und Prognose
 - 🎭 **7 Stimmungen** mit eigenen Animationen, abhängig vom höheren der beiden Werte
 - 💬 **Sprechblasen** beim Überschreiten von Schwellen, z. B. *„90 %! 😰“*, ohne Dauergequatsche
@@ -215,7 +217,7 @@ sie auf die Standardtexte der neuen Sprache zurück. Pro Ereignis kann es mehrer
 
 Ereignisse: `Greeting`, `NoData`, `Normal`, `Attentive`, `Nervous`, `Worried`, `Panic`, `Exhausted`, `Reset`, `Poke`,
 `Launch` (Assistent geöffnet), `NoFolder` (Geist dort losgelassen, wo kein Ordner ist), `Voice` (Sprachchat gestartet),
-`GoodNight` (die Nacht beginnt).
+`GoodNight` (die Nacht beginnt), `GoodMorning` (die Nacht endet).
 Platzhalter: `{name}`, `{NAME}` (Großbuchstaben), `{percent}` (höherer Wert), `{session}`, `{week}`,
 `{folder}` (Name des geöffneten Ordners, bei `Launch` und `Voice`).
 

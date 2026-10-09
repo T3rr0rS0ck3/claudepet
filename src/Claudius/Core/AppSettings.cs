@@ -147,6 +147,7 @@ public sealed class AppSettings
         ["Updating"] = ["Downloading the update… see you soon!"],
         ["Tickle"] = ["Hehehe! Stop it! 😆", "Not there, I'm ticklish!", "Hahaha… mercy!"],
         ["GoodNight"] = ["Good night, {name}… 🌙", "*yawn* Getting late."],
+        ["GoodMorning"] = ["Good morning, {name}! ☀️", "*stretch* Rested and ready."],
     };
 
     private static Dictionary<string, List<string>> GermanTexts() => new()
@@ -175,6 +176,7 @@ public sealed class AppSettings
         ["Updating"] = ["Lade das Update… bis gleich!"],
         ["Tickle"] = ["Hihihi! Aufhören! 😆", "Nicht da, da bin ich kitzlig!", "Hahaha… Gnade!"],
         ["GoodNight"] = ["Gute Nacht, {name}… 🌙", "*gähn* Schon spät."],
+        ["GoodMorning"] = ["Guten Morgen, {name}! ☀️", "*streck* Ausgeschlafen."],
     };
 
     public static AppSettings Load()

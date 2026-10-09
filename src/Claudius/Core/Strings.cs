@@ -113,8 +113,8 @@ public static class Strings
     public static string BirthdayInvalid => L("This birthday does not exist.", "Diesen Geburtstag gibt es nicht.");
     public static string NightMode => L("Night mode: nightcap and a sleepy pet", "Nachtmodus: Schlafmütze und müdes Pet");
     public static string NightModeTip => L(
-        "Between these times the pet wears a nightcap, walks slower, yawns and says good night.",
-        "Zwischen diesen Uhrzeiten trägt das Pet eine Schlafmütze, läuft langsamer, gähnt und sagt gute Nacht.");
+        "Between these times the pet wears a nightcap and sleeps in a bed on the taskbar (or where it is, if it does not walk around).",
+        "Zwischen diesen Uhrzeiten trägt das Pet eine Schlafmütze und schläft in einem Bett auf der Taskleiste (oder wo es steht, wenn es nicht herumläuft).");
     public static string NightFrom => L("from", "von");
     public static string NightTo => L("to", "bis");
     public static string StartWithWindows => L("Start with Windows", "Mit Windows starten");
