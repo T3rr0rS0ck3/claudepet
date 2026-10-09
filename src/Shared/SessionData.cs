@@ -48,7 +48,7 @@ public sealed class SessionInfo
     [JsonPropertyName("title")] public string? Title { get; set; }
 
     [JsonIgnore] public bool IsDesktop => Origin?.Contains("desktop", StringComparison.OrdinalIgnoreCase) == true;
-    [JsonIgnore] public string Folder => Cwd is { Length: > 0 } cwd ? Path.GetFileName(cwd.TrimEnd('\\', '/')) : "Claude";
+    [JsonIgnore] public string Folder => Cwd is { Length: > 0 } cwd ? Path.GetFileName(cwd.TrimEnd('\\', '/')) : "Session";
 }
 
 /// <summary>sessions.json: session id → state. Several sessions write it, so changes are serialized.</summary>

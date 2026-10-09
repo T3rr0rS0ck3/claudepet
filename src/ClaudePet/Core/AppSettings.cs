@@ -111,7 +111,7 @@ public sealed class AppSettings
     private static Dictionary<string, List<string>> EnglishTexts() => new()
     {
         ["Greeting"] = ["Hi {name}! Session {session}%, week {week}%."],
-        ["NoData"] = ["Waiting for data from Claude Code…\n(Right-click → Connect Claude Code)"],
+        ["NoData"] = ["Waiting for data from your AI assistant…\n(Right-click → Connect AI assistant)"],
         ["Normal"] = ["All relaxed so far."],
         ["Attentive"] = ["We're getting busy..."],
         ["Nervous"] = ["Uhm... we should start being careful."],
@@ -122,10 +122,10 @@ public sealed class AppSettings
         ["Poke"] = ["Hey!", "I'm keeping watch, promise.", "Session {session}%, week {week}%."],
         ["Launch"] = ["Have fun in {folder}!", "Off we go: {folder}"],
         ["NoFolder"] = ["There's no folder here I can open…"],
-        ["Voice"] = ["Hold the space bar and talk to Claude 🎤"],
-        // Relayed from Claude Code: Claude is the one asking or done, the pet only passes it on.
-        ["Question"] = ["{folder}: Claude has a question.", "Psst, Claude is waiting for you in {folder}."],
-        ["Done"] = ["{folder}: Claude is done!", "Claude is done in {folder}."],
+        ["Voice"] = ["Hold the space bar and talk to your AI assistant 🎤"],
+        // Relayed from the AI assistant: it is the one asking or done, the pet only passes it on.
+        ["Question"] = ["{folder}: The assistant has a question.", "Psst, the assistant is waiting for you in {folder}."],
+        ["Done"] = ["{folder}: The assistant is done!", "The assistant is done in {folder}."],
         ["NoWindow"] = ["I can't find the window of {folder}…"],
         ["Feed"] = ["Mmm, yummy! 🍪", "Cookies are the best token food.", "*munch munch*"],
         ["Pat"] = ["Aww, that's nice ❤", "More of that!", "You're the best, {name}."],
@@ -138,7 +138,7 @@ public sealed class AppSettings
     private static Dictionary<string, List<string>> GermanTexts() => new()
     {
         ["Greeting"] = ["Hi {name}! Session {session} %, Woche {week} %."],
-        ["NoData"] = ["Ich warte auf Daten von Claude Code…\n(Rechtsklick → Claude Code verbinden)"],
+        ["NoData"] = ["Ich warte auf Daten vom KI-Assistenten…\n(Rechtsklick → KI-Assistent verbinden)"],
         ["Normal"] = ["Alles noch entspannt."],
         ["Attentive"] = ["Wir werden langsam fleißig..."],
         ["Nervous"] = ["Ähm... wir sollten langsam aufpassen."],
@@ -149,10 +149,10 @@ public sealed class AppSettings
         ["Poke"] = ["Hey!", "Ich pass auf, versprochen.", "Session {session} %, Woche {week} %."],
         ["Launch"] = ["Viel Spaß in {folder}!", "Auf geht's: {folder}"],
         ["NoFolder"] = ["Da ist kein Ordner, den ich öffnen kann…"],
-        ["Voice"] = ["Halte die Leertaste gedrückt und sprich mit Claude 🎤"],
-        // Relayed from Claude Code: Claude is the one asking or done, the pet only passes it on.
-        ["Question"] = ["{folder}: Claude hat eine Frage.", "Psst, Claude wartet in {folder} auf dich."],
-        ["Done"] = ["{folder}: Claude ist fertig!", "Claude ist fertig in {folder}."],
+        ["Voice"] = ["Halte die Leertaste gedrückt und sprich mit dem KI-Assistenten 🎤"],
+        // Relayed from the AI assistant: it is the one asking or done, the pet only passes it on.
+        ["Question"] = ["{folder}: Der Assistent hat eine Frage.", "Psst, der Assistent wartet in {folder} auf dich."],
+        ["Done"] = ["{folder}: Der Assistent ist fertig!", "Der Assistent ist fertig in {folder}."],
         ["NoWindow"] = ["Ich finde das Fenster von {folder} nicht…"],
         ["Feed"] = ["Mmmh, lecker! 🍪", "Kekse sind das beste Token-Futter.", "*mampf mampf*"],
         ["Pat"] = ["Hach, das ist schön ❤", "Mehr davon!", "Du bist der Beste, {name}."],
@@ -228,6 +228,7 @@ public sealed class AppSettings
     private static readonly (int Version, string[] Keys)[] RewordedTexts =
     [
         (1, ["Question", "Done"]), // Claude asks and finishes, not the pet
+        (2, ["NoData", "Voice", "Question", "Done"]), // no third-party brand names in the texts
     ];
 
     private static string Capitalize(string s) => s.Length == 0 ? s : char.ToUpper(s[0]) + s[1..];

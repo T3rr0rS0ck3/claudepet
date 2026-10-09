@@ -41,14 +41,15 @@ public static class Strings
     public static string GroupGeneral => L("GENERAL", "ALLGEMEIN");
     public static string Language => L("Language", "Sprache");
 
-    public static string ConnectButton => L("Connect Claude Code", "Claude Code verbinden");
+    public static string GroupAssistant => L("AI ASSISTANT", "KI-ASSISTENT");
+    public static string ConnectButton =>L("Connect AI assistant", "KI-Assistent verbinden");
     public static string Disconnect => L("Disconnect", "Trennen");
-    public static string SessionMarks => L("“?” on questions and a speech bubble when Claude is done",
-        "„?“ bei Fragen und Sprechblase wenn Claude fertig ist");
+    public static string SessionMarks => L("“?” on questions and a speech bubble when the assistant is done",
+        "„?“ bei Fragen und Sprechblase wenn der Assistent fertig ist");
     public static string SessionMarksTip => L(
-        "Adds hooks to Claude Code's settings (only when connected). Switching it off removes them again.",
-        "Trägt Hooks in die Claude-Code-Einstellungen ein (nur wenn verbunden). Ausschalten entfernt sie wieder.");
-    public static string SessionPets => L("A baby pet for each Claude session", "Baby-Pet für jede Claude-Session");
+        "Adds hooks to the AI assistant's settings (only when connected). Switching it off removes them again.",
+        "Trägt Hooks in die Einstellungen des KI-Assistenten ein (nur wenn verbunden). Ausschalten entfernt sie wieder.");
+    public static string SessionPets => L("A baby pet for each assistant session", "Baby-Pet für jede Assistenten-Session");
     public static string SessionPetsTip => L("A small pet per running session follows the pet and shows its “?”.",
         "Ein kleines Pet pro laufender Session folgt dem Pet und zeigt deren „?“.");
     public static string SetupConnected => L("✔ Connected – ClaudePetBridge is set as statusLine.",
@@ -59,35 +60,35 @@ public static class Strings
         "ClaudePetBridge.exe wurde nicht gefunden (muss neben ClaudePet.exe liegen).");
     public static string SetupNotConnected => L("Not connected.", "Nicht verbunden.");
 
-    public static string GroupLaunch => L("LAUNCH CLAUDE", "CLAUDE STARTEN");
+    public static string GroupLaunch => L("LAUNCH ASSISTANT", "ASSISTENT STARTEN");
     public static string ReposFolder => L("Repo folder", "Repo-Ordner");
     public static string ReposFolderTip => L("Folder containing all your projects", "Ordner, in dem alle Projekte liegen");
-    public static string OpenClaudeIn => L("Open Claude in", "Claude öffnen in");
+    public static string OpenClaudeIn => L("Open assistant in", "Assistent öffnen in");
     public static string TerminalAuto(bool windowsTerminal) => windowsTerminal
         ? L("Automatic (Windows Terminal)", "Automatisch (Windows Terminal)")
         : L("Automatic (cmd)", "Automatisch (cmd)");
     public static string TerminalCmd => L("Command Prompt (cmd)", "Eingabeaufforderung (cmd)");
-    public static string TerminalDesktop => L("Claude Desktop (Code tab)", "Claude Desktop (Code-Tab)");
-    public static string GhostDrag => L("Dragging the pet onto Explorer with the left mouse button opens Claude there",
-        "Pet mit linker Maustaste auf Explorer ziehen öffnet Claude dort");
+    public static string TerminalDesktop => L("Desktop app (Code tab)", "Desktop-App (Code-Tab)");
+    public static string GhostDrag => L("Dragging the pet onto Explorer with the left mouse button opens the assistant there",
+        "Pet mit linker Maustaste auf Explorer ziehen öffnet den Assistenten dort");
     public static string VoiceOffer => L("Offer voice chat (menu item “Start voice chat…”)",
         "Sprachchat anbieten (Menüeintrag „Sprachchat starten…“)");
     public static string VoiceOfferTip => L(
-        "Uses Claude Code's voice dictation. Needs a claude.ai account and a microphone. Switching it off also turns dictation in Claude Code off again.",
-        "Nutzt das Sprachdiktat von Claude Code. Benötigt ein claude.ai-Konto und ein Mikrofon. Ausschalten schaltet auch das Diktat in Claude Code wieder ab.");
-    public static string ClaudeFound(string path) => L("Claude Code found: ", "Claude Code gefunden: ") + path;
-    public static string ClaudeNotFound => L("Claude Code was not found (claude is not in the PATH).",
-        "Claude Code wurde nicht gefunden (claude ist nicht im PATH).");
+        "Uses the AI assistant's voice dictation. Needs a signed-in account and a microphone. Switching it off also turns dictation in the assistant off again.",
+        "Nutzt das Sprachdiktat des KI-Assistenten. Benötigt ein angemeldetes Konto und ein Mikrofon. Ausschalten schaltet auch das Diktat im Assistenten wieder ab.");
+    public static string ClaudeFound(string path) => L("AI assistant found: ", "KI-Assistent gefunden: ") + path;
+    public static string ClaudeNotFound => L("The AI assistant was not found (its command is not in the PATH).",
+        "Der KI-Assistent wurde nicht gefunden (sein Befehl ist nicht im PATH).");
 
     public static string Size => L("Size", "Größe");
     public static string Color => L("Color", "Farbe");
     public static string PickColor => L("Pick…", "Wählen…");
     public static string DefaultColor => L("Default", "Standard");
-    public static string MascotColor => L("Claude mascot in the terminal in the pet's color",
-        "Claude-Maskottchen im Terminal in Pet-Farbe");
+    public static string MascotColor => L("Assistant mascot in the terminal in the pet's color",
+        "Assistenten-Maskottchen im Terminal in Pet-Farbe");
     public static string MascotColorTip => L(
-        "Creates a Claude Code theme of its own (themes\\claudepet.json) and selects it. Switching it off restores the previous theme.",
-        "Legt ein eigenes Claude-Code-Theme an (themes\\claudepet.json) und wählt es aus. Beim Ausschalten wird das vorherige Theme wiederhergestellt.");
+        "Creates a theme of its own for the AI assistant (themes\\claudepet.json) and selects it. Switching it off restores the previous theme.",
+        "Legt ein eigenes Theme für den KI-Assistenten an (themes\\claudepet.json) und wählt es aus. Beim Ausschalten wird das vorherige Theme wiederhergestellt.");
     public static string AlwaysOnTop => L("Always on top", "Immer im Vordergrund");
     public static string Animations => L("Animations", "Animationen");
     public static string WalkAroundDesktop => L("Walk around the desktop", "Auf dem Desktop herumlaufen");
@@ -96,7 +97,7 @@ public static class Strings
         "Walks or hops over to the neighbouring monitor where the monitors touch in the Windows arrangement.",
         "Läuft oder hüpft dort zum Nachbarmonitor, wo sich die Monitore laut Windows-Anordnung berühren.");
     public static string Emotes => L("Emotes on hover (feed, pat, …)", "Emotes beim Drüberfahren (Füttern, Streicheln, …)");
-    public static string ModelOutfits => L("Outfit for the Claude model", "Outfit passend zum Claude-Modell");
+    public static string ModelOutfits => L("Outfit for the AI model", "Outfit passend zum KI-Modell");
     public static string ModelOutfitsTip => L(
         "Opus wears a crown, Sonnet sunglasses, Haiku a flower, Fable a wizard's hat. Baby pets dress for their own session's model.",
         "Opus trägt eine Krone, Sonnet eine Sonnenbrille, Haiku eine Blume, Fable einen Zauberhut. Baby-Pets ziehen sich für das Modell ihrer Session an.");
@@ -151,11 +152,12 @@ public static class Strings
     public static string ColorError => L("Color: please give it as #RRGGBB, e.g. #D97757.",
         "Farbe: bitte als #RRGGBB angeben, z. B. #D97757.");
     public static string ReposFolderMissing => L("The repo folder does not exist.", "Repo-Ordner existiert nicht.");
-    public static string ClaudeSettingsNotWritten => L("Claude Code's settings could not be written: ",
-        "Claude-Code-Einstellungen konnten nicht geschrieben werden: ");
+    public static string ClaudeSettingsNotWritten => L("The AI assistant's settings could not be written: ",
+        "Einstellungen des KI-Assistenten konnten nicht geschrieben werden: ");
 
     // ---------------------------------------------------------------- usage overlay
 
+    public static string OverlayHeading => L("USAGE", "VERBRAUCH");
     public static string SessionHeading => L("SESSION (5 HOURS)", "SESSION (5 STUNDEN)");
     public static string WeekHeading => L("WEEK (7 DAYS)", "WOCHE (7 TAGE)");
     public static string ResetWaiting => L("Reset – waiting for new data", "Zurückgesetzt – warte auf neue Daten");
@@ -170,15 +172,15 @@ public static class Strings
     public static string UpdatedJustNow => L("Updated just now", "Aktualisiert gerade eben");
     public static string UpdatedAgo(string duration) => L($"Updated {duration} ago", $"Aktualisiert vor {duration}");
     public static string HintNotConnected => L(
-        "Claude Code isn't connected yet. Right-click the pet → “Connect Claude Code”.",
-        "Claude Code ist noch nicht verbunden. Rechtsklick auf das Pet → „Claude Code verbinden“.");
+        "The AI assistant isn't connected yet. Right-click the pet → “Connect AI assistant”.",
+        "Der KI-Assistent ist noch nicht verbunden. Rechtsklick auf das Pet → „KI-Assistent verbinden“.");
     public static string HintBridgeMissing => L("ClaudePetBridge.exe is missing next to ClaudePet.exe.",
         "ClaudePetBridge.exe fehlt neben ClaudePet.exe.");
     public static string HintFirstReply => L(
-        "Connected. The values appear after the first reply in Claude Code (Pro/Max only).",
-        "Verbunden. Die Werte erscheinen nach der ersten Antwort in Claude Code (nur Pro/Max).");
-    public static string HintStale => L("The data is older than 5 hours – open Claude Code to refresh it.",
-        "Daten sind älter als 5 Stunden – öffne Claude Code, um sie zu aktualisieren.");
+        "Connected. The values appear after the first reply in the AI assistant (subscription plans only).",
+        "Verbunden. Die Werte erscheinen nach der ersten Antwort im KI-Assistenten (nur mit Abo).");
+    public static string HintStale => L("The data is older than 5 hours – open the AI assistant to refresh it.",
+        "Daten sind älter als 5 Stunden – öffne den KI-Assistenten, um sie zu aktualisieren.");
 
     /// <summary>The pet's own state, shown in the usage overlay.</summary>
     public static string MoodLabel(PetMood mood) => mood switch
@@ -196,13 +198,13 @@ public static class Strings
     // ---------------------------------------------------------------- menus and tray
 
     public static string ShowUsage => L("Show usage", "Usage anzeigen");
-    public static string OpenClaude => L("Open Claude…", "Claude öffnen…");
+    public static string OpenClaude => L("Open assistant…", "Assistent öffnen…");
     public static string StartVoiceChat => L("Start voice chat…", "Sprachchat starten…");
     public static string SayHello => L("Say hello", "Hallo sagen");
     public static string ShowPet => L("Show pet", "Pet anzeigen");
     public static string WalkAround => L("Walk around", "Herumlaufen");
     public static string MinimizeToTray => L("Minimize to tray", "In den Tray minimieren");
-    public static string ConnectMenu => L("Connect Claude Code…", "Claude Code verbinden…");
+    public static string ConnectMenu => L("Connect AI assistant…", "KI-Assistent verbinden…");
     public static string SettingsMenu => L("Settings…", "Einstellungen…");
     public static string Quit => L("Quit", "Beenden");
     public static string InstallUpdateMenu(string version) => L($"Install update to {version}…", $"Update auf {version} installieren…");
@@ -215,7 +217,7 @@ public static class Strings
     public static string ChooseOtherFolder => L("Choose another folder…", "Anderen Ordner wählen…");
     public static string SetReposFolder => L("Set repo folder…", "Repo-Ordner festlegen…");
     public static string ChooseReposFolder => L("Choose the folder with your projects", "Ordner mit deinen Projekten wählen");
-    public static string ChooseLaunchFolder => L("Which folder should Claude start in?", "In welchem Ordner soll Claude starten?");
+    public static string ChooseLaunchFolder => L("Which folder should the assistant start in?", "In welchem Ordner soll der Assistent starten?");
 
     public static string EmoteName(Emote emote) => emote switch
     {
@@ -231,9 +233,9 @@ public static class Strings
 
     private static string SessionState(string folder, string state) => state switch
     {
-        Shared.SessionStates.Question => L($"{folder}: Claude is waiting for you", $"{folder}: Claude wartet auf dich"),
-        Shared.SessionStates.Done => L($"{folder}: Claude is done", $"{folder}: Claude ist fertig"),
-        Shared.SessionStates.Working => L($"{folder}: Claude is working", $"{folder}: Claude arbeitet"),
+        Shared.SessionStates.Question => L($"{folder}: The assistant is waiting for you", $"{folder}: Der Assistent wartet auf dich"),
+        Shared.SessionStates.Done => L($"{folder}: The assistant is done", $"{folder}: Der Assistent ist fertig"),
+        Shared.SessionStates.Working => L($"{folder}: The assistant is working", $"{folder}: Der Assistent arbeitet"),
         _ => folder,
     };
 
@@ -245,24 +247,24 @@ public static class Strings
     public static string LimitReached(bool session, string percent) => session
         ? L($"Your session limit is at {percent}.", $"Dein Session-Limit ist bei {percent}.")
         : L($"Your weekly limit is at {percent}.", $"Dein Wochenlimit ist bei {percent}.");
-    public static string ThemeNotWritten => L("The Claude Code theme could not be written: ",
-        "Claude-Code-Theme konnte nicht geschrieben werden: ");
+    public static string ThemeNotWritten => L("The AI assistant's theme could not be written: ",
+        "Theme des KI-Assistenten konnte nicht geschrieben werden: ");
     public static string VoiceEnableQuestion(string path) => L(
-        $"Voice chat switches on Claude Code's voice dictation (voice.enabled in {path}, a backup is made).\n\n" +
-        "Requirements: signed in with a claude.ai account and microphone access for the console " +
+        $"Voice chat switches on the AI assistant's voice dictation (voice.enabled in {path}, a backup is made).\n\n" +
+        "Requirements: signed in with an account and microphone access for the console " +
         "(Windows Settings → Privacy → Microphone).\n\nSwitch it on?",
-        $"Für den Sprachchat wird das Sprachdiktat von Claude Code eingeschaltet (voice.enabled in {path}, eine Sicherung wird angelegt).\n\n" +
-        "Voraussetzungen: Anmeldung mit einem claude.ai-Konto und Mikrofonzugriff für die Konsole " +
+        $"Für den Sprachchat wird das Sprachdiktat des KI-Assistenten eingeschaltet (voice.enabled in {path}, eine Sicherung wird angelegt).\n\n" +
+        "Voraussetzungen: Anmeldung mit einem Konto und Mikrofonzugriff für die Konsole " +
         "(Windows-Einstellungen → Datenschutz → Mikrofon).\n\nEinschalten?");
-    public static string ClaudeSettingsError => L("Error writing Claude Code's settings:\n",
-        "Fehler beim Schreiben der Claude-Code-Einstellungen:\n");
+    public static string ClaudeSettingsError => L("Error writing the AI assistant's settings:\n",
+        "Fehler beim Schreiben der Einstellungen des KI-Assistenten:\n");
     public static string DesktopFailed => L(
-        "Claude Desktop could not be opened. Is the desktop app installed and Claude Code up to date (claude update)?",
-        "Claude Desktop konnte nicht geöffnet werden. Ist die Desktop-App installiert und Claude Code aktuell (claude update)?");
-    public static string DesktopOpenFailed => L("Claude Desktop could not be opened: ", "Claude Desktop konnte nicht geöffnet werden: ");
+        "The desktop app could not be opened. Is it installed and is the AI assistant up to date?",
+        "Die Desktop-App konnte nicht geöffnet werden. Ist sie installiert und der KI-Assistent aktuell?");
+    public static string DesktopOpenFailed => L("The desktop app could not be opened: ", "Die Desktop-App konnte nicht geöffnet werden: ");
     public static string ConsoleStartFailed => L("The console could not be started: ", "Konsole konnte nicht gestartet werden: ");
-    public static string AlreadyConnected => L("Claude Code is already connected to Claudius.",
-        "Claude Code ist bereits mit Claudius verbunden.");
+    public static string AlreadyConnected => L("The AI assistant is already connected to Claudius.",
+        "Der KI-Assistent ist bereits mit Claudius verbunden.");
     public static string BridgeNotFound(string path) => L("ClaudePetBridge.exe was not found:\n", "ClaudePetBridge.exe wurde nicht gefunden:\n") + path;
     public static string ReplaceStatusLine(string path, string? command) => L(
         $"A statusLine is already set in {path}:\n\n{command}\n\nReplace it with Claudius? (A backup is made.)",
@@ -271,8 +273,8 @@ public static class Strings
         $"Claudius adds itself as statusLine to\n{path}\nContinue?",
         $"Claudius trägt sich als statusLine in\n{path}\nein. Fortfahren?");
     public static string Connected => L(
-        "Connected! The usage values appear after the next reply in Claude Code (running sessions pick up the change automatically).",
-        "Verbunden! Die Usage-Werte erscheinen nach der nächsten Antwort in Claude Code (laufende Sessions übernehmen die Änderung automatisch).");
+        "Connected! The usage values appear after the next reply in the AI assistant (running sessions pick up the change automatically).",
+        "Verbunden! Die Usage-Werte erscheinen nach der nächsten Antwort im KI-Assistenten (laufende Sessions übernehmen die Änderung automatisch).");
     public static string UpdateNotification(string version) => L(
         $"Version {version} is available (right-click the pet).", $"Version {version} ist verfügbar (Rechtsklick aufs Pet).");
     public static string InstallUpdateQuestion(string version) => L(

@@ -48,7 +48,7 @@ public static class ClaudeLauncher
             {
                 ArgumentList =
                 {
-                    "new-tab", "-d", folder, "--title", "Claude – " + FolderName(folder).Replace(';', ','),
+                    "new-tab", "-d", folder, "--title", "Claudius – " + FolderName(folder).Replace(';', ','),
                     "cmd.exe", "/k", claude,
                 },
             },
