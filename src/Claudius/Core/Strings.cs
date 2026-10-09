@@ -103,8 +103,8 @@ public static class Strings
         "Opus trägt eine Krone, Sonnet eine Sonnenbrille, Haiku eine Blume, Fable einen Zauberhut. Baby-Pets ziehen sich für das Modell ihrer Session an.");
     public static string SeasonalAccessories => L("Seasonal headwear", "Saisonale Kopfbedeckung");
     public static string SeasonalAccessoriesTip => L(
-        "A witch's hat in October, a Santa hat until Christmas, bunny ears at Easter and a party hat on New Year's Eve and your birthday. It takes the place of the model's headwear.",
-        "Hexenhut im Oktober, Weihnachtsmütze bis Weihnachten, Hasenohren an Ostern und Partyhut an Silvester und deinem Geburtstag. Ersetzt die Kopfbedeckung des Modells.");
+        "A witch's hat and a broom in October, a Santa hat until Christmas, bunny ears at Easter and a party hat on New Year's Eve and your birthday. It takes the place of the model's headwear.",
+        "Hexenhut und Besen im Oktober, Weihnachtsmütze bis Weihnachten, Hasenohren an Ostern und Partyhut an Silvester und deinem Geburtstag. Ersetzt die Kopfbedeckung des Modells.");
     public static string Birthday => L("Birthday", "Geburtstag");
     public static string BirthdayInvalid => L("This birthday does not exist.", "Diesen Geburtstag gibt es nicht.");
     public static string NightMode => L("Night mode: nightcap and a sleepy pet", "Nachtmodus: Schlafmütze und müdes Pet");

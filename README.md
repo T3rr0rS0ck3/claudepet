@@ -28,7 +28,7 @@ until the limit resets.
   monitors are arranged in Windows
 - 🎨 **Your color** — pick any color for the pet; the usage overlay, menus and speech bubbles use it as accent color
 - 👑 **Dressed for the model** — a crown for Opus, sunglasses for Sonnet, a little flower for Haiku, a wizard's hat for Fable (can be turned off)
-- 🎃 **Seasonal headwear** — a witch's hat and a pumpkin in October, a Santa hat until Christmas, bunny ears at Easter and a party hat
+- 🎃 **Seasonal headwear** — a witch's hat and a broom in October, a Santa hat until Christmas, bunny ears at Easter and a party hat
   on New Year's Eve and your birthday; they take the place of the model's headwear (can be turned off)
 - 🌙 **Night mode** — between 23:00 and 06:00 (adjustable) the pet wears a nightcap, walks slower, yawns and says good night
 - 📊 **Usage overlay** — click the pet to see session and weekly usage, reset times and a forecast
