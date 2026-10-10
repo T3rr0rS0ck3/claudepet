@@ -71,6 +71,9 @@ public sealed class PetWalker
     /// <summary>Night: in calm moods the pet walks slower, pauses longer and does not jump.</summary>
     public bool Sleepy { get; set; }
 
+    /// <summary>A session's context window is nearly full: too weak to climb, jump or chase, and slower on its feet.</summary>
+    public bool Weak { get; set; }
+
     /// <summary>Now and then, in calm moods, the pet eyes the mouse pointer and then runs after it.</summary>
     public bool ChaseCursor { get; set; }
 
@@ -121,9 +124,10 @@ public sealed class PetWalker
     private Gait GaitFor(PetMood mood)
     {
         var gait = For(mood);
-        return Sleepy && mood is PetMood.Relaxed or PetMood.Normal or PetMood.Attentive
-            ? gait with { Speed = gait.Speed * 0.6, IdleMin = gait.IdleMin * 1.5, IdleMax = gait.IdleMax * 1.5, JumpChance = 0 }
-            : gait;
+        if (Sleepy && mood is PetMood.Relaxed or PetMood.Normal or PetMood.Attentive)
+            gait = gait with { Speed = gait.Speed * 0.6, IdleMin = gait.IdleMin * 1.5, IdleMax = gait.IdleMax * 1.5, JumpChance = 0 };
+        if (Weak) gait = gait with { Speed = gait.Speed * 0.7, JumpChance = 0 };
+        return gait;
     }
 
     public double X { get; private set; }
@@ -316,7 +320,7 @@ public sealed class PetWalker
                     return;
                 }
             }
-            else if (_random.NextDouble() < ClimbChance) StartClimb(wall, petWidth);
+            else if (!Weak && _random.NextDouble() < ClimbChance) StartClimb(wall, petWidth);
             else Direction = -Direction;
         }
         else if (Supports(surfaces, _ground, nx))
@@ -664,7 +668,7 @@ public sealed class PetWalker
 
     /// <summary>Calm, awake, and the pointer near enough at about the pet's level.</summary>
     private bool CanChase((double X, double Y)? cursor, PetMood mood, double petWidth, double petHeight) =>
-        ChaseCursor && !Sleepy && cursor is { } c
+        ChaseCursor && !Sleepy && !Weak && cursor is { } c
         && mood is PetMood.Relaxed or PetMood.Normal or PetMood.Attentive
         && Math.Abs(c.X - X) <= ChaseReach * petWidth
         && c.Y > Y - 4 * petHeight && c.Y < Y + petHeight;
@@ -738,7 +742,7 @@ public sealed class PetWalker
     /// </summary>
     private double? GrabHeight((double X, double Y)? cursor, PetMood mood, double petWidth, double petHeight)
     {
-        if (!ChaseCursor || Sleepy || cursor is not { } c || mood is not (PetMood.Relaxed or PetMood.Normal or PetMood.Attentive))
+        if (!ChaseCursor || Sleepy || Weak || cursor is not { } c || mood is not (PetMood.Relaxed or PetMood.Normal or PetMood.Attentive))
             return null;
         // The gap between the top of the pet's picture and the pointer.
         double gap = Y - petHeight - c.Y;

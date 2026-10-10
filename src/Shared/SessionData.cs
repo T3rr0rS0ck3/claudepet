@@ -19,6 +19,21 @@ public static class SessionStates
     public const string Question = "question";
     /// <summary>The assistant finished its turn.</summary>
     public const string Done = "done";
+    /// <summary>Ended by /clear: kept a moment so the session started next in its folder can take over its context.</summary>
+    public const string Ended = "ended";
+}
+
+/// <summary>How full a session's context window is, as the pet shows it by looking sick.</summary>
+public static class ContextLevels
+{
+    public static readonly int[] DefaultThresholds = [60, 75, 90];
+
+    /// <summary>Used percentages from which the pet looks sick at level 1, 2 and 3 (the app's settings).</summary>
+    public static IReadOnlyList<int> Thresholds { get; set; } = DefaultThresholds;
+
+    /// <summary>0 (healthy) to 3 (the grim reaper turns up) for the used percentage; from 2 on the pet suggests /compact.</summary>
+    public static int Of(double? percent) =>
+        percent is not { } p ? 0 : Thresholds.Count(threshold => p >= threshold);
 }
 
 /// <summary>One the assistant session, written by the bridge's hook mode and read by the app.</summary>
@@ -36,8 +51,6 @@ public sealed class SessionInfo
     [JsonPropertyName("transcript_length")] public long TranscriptLength { get; set; }
     /// <summary>The assistant's <see cref="AssistantCli.EntrypointVariable"/>: "cli" in a terminal, something else in the desktop app.</summary>
     [JsonPropertyName("origin")] public string? Origin { get; set; }
-    /// <summary>The session's model as the status line reports it (e.g. "Opus 4.1"), for its baby pet's outfit.</summary>
-    [JsonPropertyName("model")] public string? Model { get; set; }
     /// <summary>
     /// Window that shows the session (console, Windows Terminal or Desktop app) and the process it belonged
     /// to, so a reused handle is not mistaken for it; 0 if unknown (e.g. saved by an older bridge).
@@ -46,6 +59,12 @@ public sealed class SessionInfo
     [JsonPropertyName("window_pid")] public int WindowPid { get; set; }
     /// <summary>The session's console title when it last asked something: finds its tab in Windows Terminal.</summary>
     [JsonPropertyName("title")] public string? Title { get; set; }
+    /// <summary>How full the session's context window is in percent, as the status line reports it.</summary>
+    [JsonPropertyName("context")] public double? ContextPercent { get; set; }
+    /// <summary>The context before the last /compact or /clear, its time (Unix epoch seconds) and which of the two it was.</summary>
+    [JsonPropertyName("context_before")] public double? ContextBefore { get; set; }
+    [JsonPropertyName("context_reset_at")] public long ContextResetAt { get; set; }
+    [JsonPropertyName("context_reset")] public string? ContextReset { get; set; }
 
     [JsonIgnore] public bool IsDesktop => Origin?.Contains("desktop", StringComparison.OrdinalIgnoreCase) == true;
     [JsonIgnore] public string Folder => Cwd is { Length: > 0 } cwd ? Path.GetFileName(cwd.TrimEnd('\\', '/')) : "Session";
@@ -56,6 +75,8 @@ public static class SessionStore
 {
     /// <summary>Sessions without a hook call for this long are dropped (closed terminal without SessionEnd).</summary>
     public static readonly TimeSpan MaxAge = TimeSpan.FromHours(12);
+    /// <summary>Sessions ended by /clear are dropped after this long if no new session took them over.</summary>
+    public static readonly TimeSpan EndedMaxAge = TimeSpan.FromMinutes(1);
 
     private const string MutexName = "Claudius.Sessions.v1";
 
@@ -88,8 +109,11 @@ public static class SessionStore
 
             var sessions = Read();
             change(sessions);
-            long cutoff = DateTimeOffset.UtcNow.Add(-MaxAge).ToUnixTimeSeconds();
-            foreach (var id in sessions.Where(s => s.Value.UpdatedAt < cutoff).Select(s => s.Key).ToList())
+            var now = DateTimeOffset.UtcNow;
+            long cutoff = now.Add(-MaxAge).ToUnixTimeSeconds(), endedCutoff = now.Add(-EndedMaxAge).ToUnixTimeSeconds();
+            foreach (var id in sessions
+                         .Where(s => s.Value.UpdatedAt < (s.Value.State == SessionStates.Ended ? endedCutoff : cutoff))
+                         .Select(s => s.Key).ToList())
                 sessions.Remove(id);
 
             Directory.CreateDirectory(DataPaths.DataDir);

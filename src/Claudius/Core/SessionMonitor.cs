@@ -8,6 +8,9 @@ public sealed record SessionView(string Id, string Folder, string State, bool De
 {
     /// <summary>The folder, marked when the session runs in the desktop app.</summary>
     public string Label => Desktop ? Folder + " (Desktop)" : Folder;
+
+    /// <summary>How sick the pet looks for this session's context window, 0..3.</summary>
+    public int ContextLevel => ContextLevels.Of(Info.ContextPercent);
 }
 
 /// <summary>Reads sessions.json (written by the bridge's hooks) and reports state changes.</summary>
@@ -15,14 +18,18 @@ public sealed class SessionMonitor
 {
     private DateTime _lastWrite;
     private Dictionary<string, SessionInfo> _stored = new();
-    private Dictionary<string, (string State, string? Model)> _shown = new();
+    private Dictionary<string, (string State, int Context, long ContextResetAt)> _shown = new();
     private bool _loaded;
 
     public IReadOnlyList<SessionView> Sessions { get; private set; } = [];
 
     /// <summary>A session just started asking (state = question) or finished (state = done).</summary>
     public event Action<SessionView>? Attention;
-    /// <summary>The list, a state or a model changed.</summary>
+    /// <summary>A session's context window just got full enough for sick level 2 (suggest /compact) or 3 (the grim reaper).</summary>
+    public event Action<SessionView, int>? ContextRose;
+    /// <summary>/compact or /clear (the kind) just emptied a session's context; the int is the sick level before.</summary>
+    public event Action<SessionView, int, string>? ContextReset;
+    /// <summary>The list, a state or a context level changed.</summary>
     public event Action? Changed;
 
     /// <summary>Called once a second; cheap when nothing changed.</summary>
@@ -42,12 +49,12 @@ public sealed class SessionMonitor
 
         long cutoff = DateTimeOffset.UtcNow.Add(-SessionStore.MaxAge).ToUnixTimeSeconds();
         var sessions = _stored
-            .Where(s => s.Value.UpdatedAt >= cutoff)
+            .Where(s => s.Value.UpdatedAt >= cutoff && s.Value.State != SessionStates.Ended)
             .OrderBy(s => s.Value.UpdatedAt)
             .Select(s => new SessionView(s.Key, s.Value.Folder, EffectiveState(s.Value), s.Value.IsDesktop, s.Value))
             .ToList();
 
-        var shown = sessions.ToDictionary(s => s.Id, s => (s.State, s.Info.Model));
+        var shown = sessions.ToDictionary(s => s.Id, s => (s.State, s.ContextLevel, s.Info.ContextResetAt));
         bool changed = shown.Count != _shown.Count || shown.Any(s => !_shown.TryGetValue(s.Key, out var old) || old != s.Value);
         if (!changed) return;
 
@@ -55,8 +62,18 @@ public sealed class SessionMonitor
         {
             foreach (var session in sessions)
             {
-                bool entered = !_shown.TryGetValue(session.Id, out var old) || old.State != session.State;
+                bool known = _shown.TryGetValue(session.Id, out var old);
+                bool entered = !known || old.State != session.State;
                 if (entered && session.State is SessionStates.Question or SessionStates.Done) Attention?.Invoke(session);
+
+                if (session.ContextLevel >= 2 && session.ContextLevel > (known ? old.Context : 0))
+                    ContextRose?.Invoke(session, session.ContextLevel);
+                // Only fresh resets: a session showing up long after its /compact gets no show.
+                long resetAt = session.Info.ContextResetAt;
+                int before = ContextLevels.Of(session.Info.ContextBefore);
+                if (resetAt > (known ? old.ContextResetAt : 0) && resetAt >= DateTimeOffset.UtcNow.ToUnixTimeSeconds() - 60
+                    && before >= 1 && session.Info.ContextReset is { } kind)
+                    ContextReset?.Invoke(session, before, kind);
             }
         }
         _loaded = true;

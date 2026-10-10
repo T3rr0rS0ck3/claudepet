@@ -64,8 +64,6 @@ public sealed class AppSettings
     public string? NotifiedUpdate { get; set; }
     /// <summary>"?" when an assistant session asks something, a bubble when it is done (via the assistant's hooks).</summary>
     public bool SessionMarks { get; set; } = true;
-    /// <summary>A small pet per running assistant session, showing that session's "?".</summary>
-    public bool SessionPets { get; set; }
     public bool StartWithWindows { get; set; }
     /// <summary>Body color as "#RRGGBB"; shade and mood tints are derived from it.</summary>
     public string PetColor { get; set; } = DefaultPetColor;
@@ -81,6 +79,8 @@ public sealed class AppSettings
     public MoodThresholds Thresholds { get; set; } = new();
     public List<int> SessionWarnThresholds { get; set; } = [90, 95, 100];
     public List<int> WeekWarnThresholds { get; set; } = [75, 90, 100];
+    /// <summary>How full a session's context window gets (%) before the pet looks sick at level 1, 2 and 3.</summary>
+    public List<int> ContextThresholds { get; set; } = [.. ContextLevels.DefaultThresholds];
 
     // Speech bubbles
     public bool SpeechBubbles { get; set; } = true;
@@ -141,6 +141,11 @@ public sealed class AppSettings
         ["Done"] = ["{folder}: The assistant is done!", "The assistant is done in {folder}."],
         ["NoWindow"] = ["I can't find the window of {folder}…"],
         ["Feed"] = ["Mmm, yummy! 🍪", "Cookies are the best token food.", "*munch munch*"],
+        ["FeedSick"] = ["I don't feel like cookies right now…", "Ugh, not now.", "Maybe after a /compact?"],
+        ["ContextFull"] = ["{folder}: I don't feel so good… /compact?", "{folder} is getting really full. /compact or /clear?"],
+        ["ContextCritical"] = ["{folder}: Someone's standing behind me… /compact!", "I can feel a cold breath. /compact or /clear, quick!"],
+        ["ContextCompacted"] = ["Phew, much better!", "Feeling better already. Thanks for the /compact!"],
+        ["ContextCleared"] = ["Good as new!", "All fresh in {folder}. Let's go!"],
         ["Pat"] = ["Aww, that's nice ❤", "More of that!", "You're the best, {name}."],
         ["Play"] = ["Catch! ⚽", "Again, again!", "I'm a pro juggler."],
         ["Update"] = ["Version {version} is out! Right-click → Install update.", "Psst, {name}: there's a new version ({version})."],
@@ -170,6 +175,11 @@ public sealed class AppSettings
         ["Done"] = ["{folder}: Der Assistent ist fertig!", "Der Assistent ist fertig in {folder}."],
         ["NoWindow"] = ["Ich finde das Fenster von {folder} nicht…"],
         ["Feed"] = ["Mmmh, lecker! 🍪", "Kekse sind das beste Token-Futter.", "*mampf mampf*"],
+        ["FeedSick"] = ["Mir ist gerade gar nicht nach Keksen…", "Uff, jetzt nicht.", "Vielleicht nach einem /compact?"],
+        ["ContextFull"] = ["{folder}: Mir geht's nicht so gut… /compact?", "{folder} wird ganz schön voll. /compact oder /clear?"],
+        ["ContextCritical"] = ["{folder}: Da steht wer hinter mir… /compact!", "Mir wird ganz kalt. Schnell, /compact oder /clear!"],
+        ["ContextCompacted"] = ["Puh, schon viel besser!", "Geht schon wieder. Danke fürs /compact!"],
+        ["ContextCleared"] = ["Wie neugeboren!", "Alles frisch in {folder}. Auf geht's!"],
         ["Pat"] = ["Hach, das ist schön ❤", "Mehr davon!", "Du bist der Beste, {name}."],
         ["Play"] = ["Fang! ⚽", "Nochmal, nochmal!", "Ich bin ein Profi-Jongleur."],
         ["Update"] = ["Version {version} ist da! Rechtsklick → Update installieren.", "Psst, {name}: Es gibt eine neue Version ({version})."],
@@ -220,6 +230,8 @@ public sealed class AppSettings
         Thresholds ??= new();
         SessionWarnThresholds ??= [];
         WeekWarnThresholds ??= [];
+        if (ContextThresholds is not { Count: 3 } || ContextThresholds[0] > ContextThresholds[1] || ContextThresholds[1] > ContextThresholds[2])
+            ContextThresholds = [.. ContextLevels.DefaultThresholds];
         UserName ??= "";
         Texts ??= [];
         RecentProjects ??= [];

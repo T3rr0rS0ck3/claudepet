@@ -75,9 +75,6 @@
                 </StackPanel>
                 <CheckBox x:Name="SessionMarksBox" Content="{x:Static core:Strings.SessionMarks}" Margin="0,8,0,4"
                           ToolTip="{x:Static core:Strings.SessionMarksTip}" />
-                <CheckBox x:Name="SessionPetsBox" Content="{x:Static core:Strings.SessionPets}"
-                          IsEnabled="{Binding IsChecked, ElementName=SessionMarksBox}"
-                          ToolTip="{x:Static core:Strings.SessionPetsTip}" />
             </StackPanel>
         </GroupBox>
 
@@ -214,6 +211,18 @@
                              ToolTip="{x:Static core:Strings.MoodOrder}" />
                 </Grid>
                 <TextBlock Text="{x:Static core:Strings.MoodOrderHint}"
+                           Style="{StaticResource Hint}" Margin="0,0,0,4" />
+                <Grid Style="{StaticResource Row}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="210" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="{x:Static core:Strings.ContextLabelText}" VerticalAlignment="Center"
+                               ToolTip="{x:Static core:Strings.ContextOrder}" />
+                    <TextBox x:Name="ContextThresholdsBox" Grid.Column="1"
+                             ToolTip="{x:Static core:Strings.ContextOrder}" />
+                </Grid>
+                <TextBlock Text="{x:Static core:Strings.ContextOrderHint}"
                            Style="{StaticResource Hint}" Margin="0,0,0,4" />
                 <CheckBox x:Name="ForecastBox" Content="{x:Static core:Strings.ShowForecast}" />
             </StackPanel>

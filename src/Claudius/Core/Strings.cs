@@ -49,9 +49,6 @@ public static class Strings
     public static string SessionMarksTip => L(
         "Adds hooks to the AI assistant's settings (only when connected). Switching it off removes them again.",
         "Trägt Hooks in die Einstellungen des KI-Assistenten ein (nur wenn verbunden). Ausschalten entfernt sie wieder.");
-    public static string SessionPets => L("A baby pet for each assistant session", "Baby-Pet für jede Assistenten-Session");
-    public static string SessionPetsTip => L("A small pet per running session follows the pet and shows its “?”.",
-        "Ein kleines Pet pro laufender Session folgt dem Pet und zeigt deren „?“.");
     public static string SetupConnected => L("✔ Connected – ClaudiusBridge is set as statusLine.",
         "✔ Verbunden – ClaudiusBridge ist als statusLine eingetragen.");
     public static string SetupOtherStatusLine => L("Another statusLine is already set:\n",
@@ -103,8 +100,8 @@ public static class Strings
     public static string Emotes => L("Emotes on hover (feed, pat, …)", "Emotes beim Drüberfahren (Füttern, Streicheln, …)");
     public static string ModelOutfits => L("Outfit for the AI model", "Outfit passend zum KI-Modell");
     public static string ModelOutfitsTip => L(
-        "Opus wears a crown, Sonnet sunglasses, Haiku a flower, Fable a wizard's hat. Baby pets dress for their own session's model.",
-        "Opus trägt eine Krone, Sonnet eine Sonnenbrille, Haiku eine Blume, Fable einen Zauberhut. Baby-Pets ziehen sich für das Modell ihrer Session an.");
+        "Opus wears a crown, Sonnet sunglasses, Haiku a flower, Fable a wizard's hat.",
+        "Opus trägt eine Krone, Sonnet eine Sonnenbrille, Haiku eine Blume, Fable einen Zauberhut.");
     public static string SeasonalAccessories => L("Seasonal headwear", "Saisonale Kopfbedeckung");
     public static string SeasonalAccessoriesTip => L(
         "A witch's hat and a broom in October, a Santa hat until Christmas, bunny ears at Easter and a party hat on New Year's Eve and your birthday. It takes the place of the model's headwear.",
@@ -125,6 +122,10 @@ public static class Strings
     public static string SessionWarnField => L("Session warning thresholds", "Session-Warnschwellen");
     public static string WeekWarnField => L("Weekly warning thresholds", "Wochen-Warnschwellen");
     public static string MoodField => L("Mood thresholds", "Zustandsgrenzen");
+    public static string ContextField => L("Feeling sick (context)", "Kränklich (Kontext)");
+    public static string ContextLabelText => ContextField + " (%)";
+    public static string ContextOrder => L("a bit pale, suggests /compact, grim reaper", "etwas blass, schlägt /compact vor, Sensenmann");
+    public static string ContextOrderHint => L("Order: ", "Reihenfolge: ") + ContextOrder;
     public static string IntervalLabel => IntervalField + " (s)";
     public static string SessionWarnLabel => SessionWarnField + " (%)";
     public static string WeekWarnLabel => WeekWarnField + " (%)";
@@ -165,6 +166,7 @@ public static class Strings
     public static string InvalidNumber(string field) => L($"{field}: invalid number.", $"{field}: ungültige Zahl.");
     public static string MoodCountError => L("Mood thresholds: give exactly 6 values.", "Zustandsgrenzen: genau 6 Werte angeben.");
     public static string MoodOrderError => L("Mood thresholds must be ascending.", "Zustandsgrenzen müssen aufsteigend sein.");
+    public static string ContextError => L("Feeling sick: give 3 ascending values.", "Kränklich: 3 aufsteigende Werte angeben.");
     public static string ColorError => L("Color: please give it as #RRGGBB, e.g. #D97757.",
         "Farbe: bitte als #RRGGBB angeben, z. B. #D97757.");
     public static string ReposFolderMissing => L("The repo folder does not exist.", "Repo-Ordner existiert nicht.");
@@ -241,18 +243,6 @@ public static class Strings
         Emote.Pat => L("Pat", "Streicheln"),
         Emote.Play => L("Play", "Spielen"),
         _ => L("Tickle", "Kitzeln"),
-    };
-
-    /// <summary>Tooltip of a baby pet: what the assistant is doing in that session, and that a click shows it.</summary>
-    public static string SessionTip(string folder, string state) => SessionState(folder, state) + "\n"
-        + L("Click: bring its window to the front", "Klick: holt ihr Fenster nach vorn");
-
-    private static string SessionState(string folder, string state) => state switch
-    {
-        Shared.SessionStates.Question => L($"{folder}: The assistant is waiting for you", $"{folder}: Der Assistent wartet auf dich"),
-        Shared.SessionStates.Done => L($"{folder}: The assistant is done", $"{folder}: Der Assistent ist fertig"),
-        Shared.SessionStates.Working => L($"{folder}: The assistant is working", $"{folder}: Der Assistent arbeitet"),
-        _ => folder,
     };
 
     // ---------------------------------------------------------------- notifications and dialogs

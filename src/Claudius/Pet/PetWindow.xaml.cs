@@ -60,10 +60,9 @@ public partial class PetWindow : Window
     private Accessory _accessory = Accessory.None;
     private bool _night;
     private IReadOnlyList<SessionView> _sessions = [];
-    private readonly Dictionary<string, BabyPetWindow> _babies = new();
-    private readonly DispatcherTimer _babyTimer = new() { Interval = TimeSpan.FromMilliseconds(1000.0 / 30) };
-    private readonly Stopwatch _babyClock = Stopwatch.StartNew();
-    private TimeSpan _lastBabyTick;
+    private readonly DispatcherTimer _reaperTimer = new() { Interval = TimeSpan.FromMilliseconds(1000.0 / 30) };
+    private readonly Stopwatch _reaperClock = Stopwatch.StartNew();
+    private TimeSpan _lastReaperTick;
     private bool _topmost = true;
     private (Motion Motion, int Direction) _pose = (Motion.Idle, 1);
     private Eyes? _lookAt;
@@ -84,6 +83,14 @@ public partial class PetWindow : Window
     private bool _emotesEnabled = true;
     private Emote? _emote;
     private DateTime _emoteStart;
+    /// <summary>Fed while sick: the current Feed emote is a polite no.</summary>
+    private bool _refusing;
+    /// <summary>How sick the fullest session's context window makes the pet, 0..3.</summary>
+    private int _sick;
+    /// <summary>Recovering after /compact or /clear: since when and from which sick level.</summary>
+    private (DateTime Start, int From)? _recovery;
+    /// <summary>The grim reaper floating behind the pet while a context window is at the top sick level.</summary>
+    private ReaperWindow? _reaper;
     // Leaving the pet towards the emote buttons (or back) must not hide them on the way.
     private readonly DispatcherTimer _emoteHideTimer = new() { Interval = TimeSpan.FromMilliseconds(400) };
 
@@ -96,7 +103,7 @@ public partial class PetWindow : Window
     /// or the desktop at all.
     /// </summary>
     public event Action<string?, bool>? GhostDropped;
-    /// <summary>The "?" or a baby pet was clicked: bring that session's window to the front.</summary>
+    /// <summary>The "?" was clicked: bring that session's window to the front.</summary>
     public event Action<SessionView>? SessionClicked;
     /// <summary>The pet was dragged to a new position.</summary>
     public event Action? Moved;
@@ -106,7 +113,7 @@ public partial class PetWindow : Window
     public PetWindow()
     {
         InitializeComponent();
-        _animationTimer.Tick += (_, _) => { _tick++; Render(); RenderBabies(); };
+        _animationTimer.Tick += (_, _) => { _tick++; Render(); RenderReaper(); };
         _bubbleTimer.Tick += (_, _) => HideBubble();
         _emoteHideTimer.Tick += (_, _) =>
         {
@@ -114,10 +121,10 @@ public partial class PetWindow : Window
             if (!PetImage.IsMouseOver && !EmoteBar.IsMouseOver) HideEmotes();
         };
         _walkTimer.Tick += (_, _) => Walk();
-        _babyTimer.Tick += (_, _) => FollowWithBabies();
+        _reaperTimer.Tick += (_, _) => FollowWithReaper();
         Closed += (_, _) =>
         {
-            foreach (var baby in _babies.Values) baby.Close();
+            _reaper?.Close();
             CloseBed();
         };
         IsVisibleChanged += (_, _) => { if (!IsVisible) _bedWindow?.Hide(); };
@@ -154,10 +161,10 @@ public partial class PetWindow : Window
     public void ApplySettings(AppSettings settings, bool initial = false)
     {
         Topmost = _topmost = settings.AlwaysOnTop;
-        foreach (var baby in _babies.Values)
+        if (_reaper != null)
         {
-            baby.Topmost = _topmost;
-            baby.SetScale(settings.PetScale);
+            _reaper.Topmost = _topmost;
+            _reaper.SetScale(settings.PetScale);
         }
         _animations = settings.Animations;
         _ghostDrag = settings.GhostDrag;
@@ -239,13 +246,12 @@ public partial class PetWindow : Window
         Render();
     }
 
-    /// <summary>Headwear for the season or the night; the babies wear it too.</summary>
+    /// <summary>Headwear for the season or the night.</summary>
     public void SetAccessory(Accessory accessory)
     {
         if (accessory == _accessory) return;
         _accessory = accessory;
         Render();
-        RenderBabies();
     }
 
     /// <summary>Night: calm moods get sleepy and walk slower.</summary>
@@ -271,7 +277,6 @@ public partial class PetWindow : Window
             else EndBedtime();
         }
         Render();
-        RenderBabies();
     }
 
     /// <summary>Lying in its bed: once it got there, or right away where it is while it does not walk around.</summary>
@@ -382,62 +387,47 @@ public partial class PetWindow : Window
     // ---------------------------------------------------------------- the assistant sessions
 
     /// <summary>
-    /// Shows "?" while a session waits for an answer and, if enabled, a baby pet per session that
-    /// trots after the pet, with <paramref name="outfits"/> dressed for its session's model.
+    /// Shows "?" while a session waits for an answer, makes the pet look sick for the fullest session's context
+    /// window and, at the top sick level, brings in the grim reaper.
     /// </summary>
-    public void SetSessions(IReadOnlyList<SessionView> sessions, string? overall, bool marks, bool babies, bool outfits)
+    public void SetSessions(IReadOnlyList<SessionView> sessions, string? overall, bool marks)
     {
         _sessions = sessions;
         var mark = marks && overall == SessionStates.Question ? Mark.Question : Mark.None;
-        if (mark != _sessionMark)
+        int sick = sessions.Count > 0 ? sessions.Max(s => s.ContextLevel) : 0;
+        if (mark != _sessionMark || sick != _sick)
         {
             _sessionMark = mark;
+            _sick = sick;
+            _walker.Weak = sick >= 3;
             Render();
         }
-
-        var wanted = marks && babies ? sessions : [];
-        foreach (var id in _babies.Keys.Where(id => wanted.All(s => s.Id != id)).ToList())
+        if (sick >= 3 && _reaper == null)
         {
-            _babies[id].Close();
-            _babies.Remove(id);
+            _reaper = new ReaperWindow(_scale, _topmost);
+            if (IsVisible) _reaper.Show();
+            _lastReaperTick = _reaperClock.Elapsed;
+            _reaperTimer.Start();
+            RenderReaper();
         }
-        foreach (var session in wanted)
+        else if (sick < 3 && _reaper != null)
         {
-            var outfit = outfits ? Sprite.OutfitFor(session.Info.Model) : Outfit.None;
-            if (_babies.TryGetValue(session.Id, out var baby))
-            {
-                baby.SetSession(session, outfit);
-                continue;
-            }
-            _babies[session.Id] = baby = new BabyPetWindow(session, outfit, _scale, _topmost);
-            baby.Clicked += s => SessionClicked?.Invoke(s);
-            if (IsVisible) baby.Show();
+            _reaperTimer.Stop();
+            _reaper.Leave();
+            _reaper = null;
         }
-
-        if (_babies.Count > 0 && !_babyTimer.IsEnabled)
-        {
-            _lastBabyTick = _babyClock.Elapsed;
-            _babyTimer.Start();
-        }
-        else if (_babies.Count == 0)
-        {
-            _babyTimer.Stop();
-        }
-        RenderBabies();
     }
 
-    /// <summary>Babies line up behind the pet, on the same ground, and catch up when it moves.</summary>
-    private void FollowWithBabies()
+    /// <summary>The grim reaper floats right behind the pet and drifts after it when it moves.</summary>
+    private void FollowWithReaper()
     {
-        var now = _babyClock.Elapsed;
-        double dt = Math.Clamp((now - _lastBabyTick).TotalSeconds, 0, 0.1);
-        _lastBabyTick = now;
+        var now = _reaperClock.Elapsed;
+        double dt = Math.Clamp((now - _lastReaperTick).TotalSeconds, 0, 0.1);
+        _lastReaperTick = now;
+        if (_reaper == null) return;
 
-        foreach (var baby in _babies.Values)
-        {
-            if (IsVisible && !baby.IsVisible) baby.Show();
-            else if (!IsVisible && baby.IsVisible) baby.Hide();
-        }
+        if (IsVisible && !_reaper.IsVisible) _reaper.Show();
+        else if (!IsVisible && _reaper.IsVisible) _reaper.Hide();
         var hwnd = new WindowInteropHelper(this).Handle;
         if (!IsVisible || hwnd == IntPtr.Zero || !GetWindowRect(hwnd, out var rect)) return;
 
@@ -445,29 +435,27 @@ public partial class PetWindow : Window
         double petWidth = PetImage.Width * dpi.DpiScaleX, petHeight = PetImage.Height * dpi.DpiScaleY;
         double feetX = (rect.Left + rect.Right) / 2.0;
         double feetY = _petOnTop ? rect.Top + petHeight : rect.Bottom;
-        double babyWidth = petWidth * BabyPetWindow.SizeFactor;
-        int behind = -_pose.Direction;
-        int i = 0;
-        foreach (var baby in _babies.Values)
-        {
-            double x = feetX + behind * (petWidth * 0.45 + babyWidth * (0.6 + i * 0.95));
-            baby.Follow(x, feetY, dt);
-            i++;
-        }
+        _reaper.Follow(feetX - _pose.Direction * petWidth * 0.95, feetY, -_pose.Direction, dt);
     }
 
-    /// <summary>Draws the pet and its babies again, e.g. after the body color changed.</summary>
-    public void Redraw()
+    /// <summary>Draws the pet again, e.g. after the body color changed.</summary>
+    public void Redraw() => Render();
+
+    /// <summary>Whether the pet feels too sick for a cookie (see <see cref="PlayEmote"/>).</summary>
+    public bool Unwell => _sick >= 2;
+
+    /// <summary>
+    /// /compact or /clear emptied a session's context window that made the pet sick at level
+    /// <paramref name="from"/>: it recovers, unless another session keeps it as sick.
+    /// </summary>
+    public void PlayRecovery(int from)
     {
-        Render();
-        RenderBabies();
+        // Shown from the next tick on: by then the sessions, and with them the sick level, are up to date.
+        _recovery = (DateTime.Now, from);
+        _animationTimer.Start();
     }
 
-    private void RenderBabies()
-    {
-        long t = _animations ? _tick : 1;
-        foreach (var baby in _babies.Values) baby.Render(_mood, t, _accessory, _night);
-    }
+    private void RenderReaper() => _reaper?.Render(_animations ? _tick : 1);
 
     /// <summary>The user is dictating to the assistant: stand still and listen.</summary>
     public void SetListening(bool listening)
@@ -502,15 +490,31 @@ public partial class PetWindow : Window
             long et = (long)((DateTime.Now - _emoteStart).TotalSeconds * PetAnimator.TicksPerSecond);
             if (et < PetAnimator.EmoteTicks(emote))
             {
-                PetImage.Source = Sprite.Render(PetAnimator.EmoteFrame(emote, et) with { Outfit = _outfit, Accessory = _accessory });
+                var emoteFrame = _refusing ? PetAnimator.RefuseFrame(et, _sick) : PetAnimator.EmoteFrame(emote, et) with { Sick = _sick };
+                PetImage.Source = Sprite.Render(emoteFrame with { Outfit = _outfit, Accessory = _accessory });
                 return;
             }
             _emote = null;
             if (!_animations) _animationTimer.Stop();
         }
+        if (_recovery is { } stale && _sick >= stale.From) _recovery = null; // another session keeps it as sick
+        if (_recovery is { } recovery && !InBed && _pose.Motion is Motion.Idle or Motion.Walk or Motion.Run)
+        {
+            // Like emotes, on its own clock
+            long rt = (long)((DateTime.Now - recovery.Start).TotalSeconds * PetAnimator.TicksPerSecond);
+            if (rt < PetAnimator.RecoveryTicks(recovery.From))
+            {
+                var recoveryFrame = PetAnimator.RecoveryFrame(rt, recovery.From);
+                if (recoveryFrame.Sick < _sick) recoveryFrame = recoveryFrame with { Sick = _sick };
+                PetImage.Source = Sprite.Render(recoveryFrame with { Outfit = _outfit, Accessory = _accessory });
+                return;
+            }
+            _recovery = null;
+            if (!_animations) _animationTimer.Stop();
+        }
         bool cheering = DateTime.Now < _cheerUntil;
         long t = _animations ? _tick : 1;
-        var frame = PetAnimator.Frame(_mood, _working, cheering, t, _pose.Motion, _pose.Direction, _listening, _night);
+        var frame = PetAnimator.Frame(_mood, _working, cheering, t, _pose.Motion, _pose.Direction, _listening, _night, _sick);
         bool inBed = InBed;
         BedBackImage.Visibility = BedFrontImage.Visibility = inBed ? Visibility.Visible : Visibility.Collapsed;
         if (inBed) frame = BedFrame(t);
@@ -958,6 +962,7 @@ public partial class PetWindow : Window
     {
         _emote = emote;
         _emoteStart = DateTime.Now;
+        _refusing = emote == Emote.Feed && Unwell;
         _animationTimer.Start();
         if (emote == Emote.Play && !_petOnTop)
         {

@@ -43,10 +43,36 @@ public static class PetAnimator
             t / 2 % 2 == 0 ? Arms.Up : Arms.Down, Shake: t % 2 == 0 ? 1 : -1, Legs: (int)(t % 2) + 1, Blush: true),
     };
 
+    /// <summary>
+    /// Fed while feeling sick (see <see cref="SpriteFrame.Sick"/>): looks at the cookie, then turns away
+    /// shaking its head. As long as <see cref="EmoteTicks"/> of <see cref="Emote.Feed"/>.
+    /// </summary>
+    public static SpriteFrame RefuseFrame(long t, int sick) => t < 8
+        ? new SpriteFrame(Eyes.LookUp, Mouth.Small, Mark: Mark.Cookie, Sick: sick)
+        : new SpriteFrame(Eyes.Closed, Mouth.Wavy, Arms.Wave, Shake: t / 2 % 2 == 0 ? 1 : -1, Sick: sick);
+
+    /// <summary>Length of <see cref="RecoveryFrame"/> in ticks, for a pet that was sick at level <paramref name="from"/>.</summary>
+    public static int RecoveryTicks(int from) => from * 4 + 12;
+
+    /// <summary>
+    /// After /compact or /clear: the color comes back a level every half second while the pet blinks itself
+    /// awake, then it hops for joy.
+    /// </summary>
+    public static SpriteFrame RecoveryFrame(long t, int from)
+    {
+        long healing = from * 4;
+        if (t < healing)
+            return new SpriteFrame(t % 4 < 2 ? Eyes.Blink : Eyes.Normal, Mouth.Small, Sick: from - (int)(t / 4));
+        long u = t - healing;
+        return new SpriteFrame(Eyes.Happy, Mouth.Smile, Arms.Up, Bob: u / 2 % 2 == 0 ? 1 : 0,
+            Mark: u < 6 ? Mark.Heart1 : Mark.Heart2, Blush: true);
+    }
+
     public static SpriteFrame Frame(PetMood mood, bool working, bool cheering, long t,
-        Motion motion = Motion.Idle, int direction = 1, bool listening = false, bool night = false)
+        Motion motion = Motion.Idle, int direction = 1, bool listening = false, bool night = false, int sick = 0)
     {
         var frame = MoodFrame(mood, working, cheering, t, night);
+        if (sick > 0) frame = Sick(frame, mood, working, cheering, t, sick) with { Sick = sick };
         // Dictating to the assistant: stands still and talks into the microphone in its hand, sound waves rising
         if (listening && motion is Motion.Idle or Motion.Walk or Motion.Run)
         {
@@ -98,6 +124,31 @@ public static class PetAnimator
                 Bob = 0, Shake = 0, Mark = Mark.None,
             },
             _ => frame,
+        };
+    }
+
+    /// <summary>
+    /// A full context window: the pet looks unwell, the worse the fuller. Level 1 frowns a little, level 2 has
+    /// heavy eyelids and a queasy mouth, level 3 hardly keeps its eyes open, sweats and shivers. Only in the calm
+    /// moods; working, worrying or cheering keep their own face and just turn green.
+    /// </summary>
+    private static SpriteFrame Sick(SpriteFrame frame, PetMood mood, bool working, bool cheering, long t, int sick)
+    {
+        if (working || cheering || mood is not (PetMood.Relaxed or PetMood.Normal or PetMood.Unknown)) return frame;
+        return sick switch
+        {
+            1 => frame with { Mouth = Mouth.Small, Arms = Arms.Down, Blush = false },
+            2 => frame with
+            {
+                Eyes = t % 40 < 30 ? Eyes.Blink : frame.Eyes, Mouth = Mouth.Wavy, Arms = Arms.Down,
+                Sweat = 1, Blush = false, Mark = Mark.None,
+            },
+            _ => frame with
+            {
+                Eyes = t % 60 < 50 ? Eyes.Closed : Eyes.Blink, Mouth = Mouth.Wavy, Arms = Arms.Down,
+                Sweat = 2, Blush = false, Mark = Mark.None, Bob = 0,
+                Shake = t % 16 < 4 ? (t % 2 == 0 ? 1 : -1) : 0,
+            },
         };
     }
 
