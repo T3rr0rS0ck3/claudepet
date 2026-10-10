@@ -128,5 +128,7 @@ jobs:
         run: |
           msstore reconfigure --tenantId $env:TENANT_ID --sellerId $env:SELLER_ID --clientId $env:CLIENT_ID --clientSecret $env:CLIENT_SECRET
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          msstore publish dist -i dist/Claudius-${{ steps.version.outputs.version }}.msix -id $env:PRODUCT_ID
+          # The package goes in as the path argument itself: only then does the CLI pick its MSIX publisher
+          # (-i would want a directory, not a file).
+          msstore publish dist/Claudius-${{ steps.version.outputs.version }}.msix -id $env:PRODUCT_ID
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
