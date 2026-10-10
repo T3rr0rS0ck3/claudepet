@@ -1,0 +1,51 @@
+name: Store
+
+# Submits the MSIX of an existing GitHub release to the Microsoft Store. Deliberately manual:
+# Actions → Store → Run workflow. The release workflow only builds and attaches the package.
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Released tag whose MSIX goes to the Store, e.g. v0.1.0'
+        required: true
+
+permissions:
+  contents: read
+
+env:
+  TAG: ${{ inputs.tag }}
+
+jobs:
+  submit:
+    runs-on: windows-latest
+    steps:
+      - name: Download Store package
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $version = '${{ env.TAG }}'.TrimStart('v')
+          gh release download '${{ env.TAG }}' --repo '${{ github.repository }}' --pattern "Claudius-$version.msix" --dir dist
+          if ($LASTEXITCODE -ne 0) { throw "No Claudius-$version.msix on release ${{ env.TAG }} (pre-releases have none)" }
+          "MSIX=dist/Claudius-$version.msix" >> $env:GITHUB_ENV
+
+      - uses: microsoft/setup-msstore-cli@v1.4
+
+      # Uploads the package as a new submission and commits it; the Store certifies, signs and publishes it.
+      # Needs the Partner Center secrets and the Store ID variable (see README → Releases).
+      - name: Submit to Microsoft Store
+        shell: pwsh
+        env:
+          TENANT_ID: ${{ secrets.PARTNER_CENTER_TENANT_ID }}
+          SELLER_ID: ${{ secrets.PARTNER_CENTER_SELLER_ID }}
+          CLIENT_ID: ${{ secrets.PARTNER_CENTER_CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.PARTNER_CENTER_CLIENT_SECRET }}
+          PRODUCT_ID: ${{ vars.MSSTORE_PRODUCT_ID }}
+        run: |
+          if (-not $env:CLIENT_SECRET -or -not $env:PRODUCT_ID) { throw 'Partner Center secrets or MSSTORE_PRODUCT_ID are not set' }
+          msstore reconfigure --tenantId $env:TENANT_ID --sellerId $env:SELLER_ID --clientId $env:CLIENT_ID --clientSecret $env:CLIENT_SECRET
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          # The package goes in as the path argument itself: only then does the CLI pick its MSIX publisher
+          # (-i would want a directory, not a file).
+          msstore publish $env:MSIX -id $env:PRODUCT_ID
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }

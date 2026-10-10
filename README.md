@@ -281,8 +281,9 @@ attaches it to the run and the release (it is not installable as is). Upload it 
 (Developer Mode on): `.\build.ps1 -SelfContained -Version 1.2.3; .\packaging\build-msix.ps1 -Version 1.2.3 -Register`.
 Privacy policy for the listing: [PRIVACY.md](PRIVACY.md).
 
-After the first submission was done by hand in Partner Center, the workflow can submit new versions itself
-(Microsoft Store CLI). It does so as soon as these are set in the repository (*Settings → Secrets and variables → Actions*):
+Tagging never submits to the Store by itself. After the first submission was done by hand in Partner Center, a
+release's package can be sent to the Store with *Actions → Store → Run workflow* (enter the tag, e.g. `v1.2.3`;
+Microsoft Store CLI). It needs these in the repository (*Settings → Secrets and variables → Actions*):
 
 | Name | Kind | Value |
 |---|---|---|
