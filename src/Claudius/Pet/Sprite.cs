@@ -34,7 +34,8 @@ public readonly record struct SpriteFrame(
     Tint Tint = Tint.Normal,
     Outfit Outfit = Outfit.None,
     Accessory Accessory = Accessory.None,
-    int Squash = 0);
+    int Squash = 0,
+    int Sick = 0);
 
 /// <summary>
 /// Procedural pixel-art renderer for the pet: a chunky orange block
@@ -81,6 +82,18 @@ public static class Sprite
     private const uint BedWoodShade = 0xFF6E4630;
     private const uint BlanketColor = 0xFF6C7FD6;
     private const uint BlanketShade = 0xFF5162B8;
+    private const uint SickColor = 0xFF96AF6E;
+    private const uint SickShade = 0xFF6E8550;
+    private const uint RobeColor = 0xFF34303C;
+    private const uint RobeShade = 0xFF221F28;
+    private const uint HoodDark = 0xFF0E0C10;
+    private const uint SkullGlow = 0xFFE8F0FF;
+    private const uint BladeColor = 0xFFD6DAE2;
+    private const uint BladeShade = 0xFF9AA0AC;
+    private const uint ScytheHandle = 0xFF6B4A2E;
+    private const uint BoneColor = 0xFFE6E0D0;
+    private const uint SmokeColor = 0xFFC4BCD4;
+    private const uint SmokeShade = 0xFF8F87A3;
 
     /// <summary>Warm orange, the default body color.</summary>
     public const uint DefaultBodyColor = 0xFFD97757;
@@ -150,6 +163,12 @@ public static class Sprite
             Tint.Ghost => (0xFFE4ECF8u, 0xFFB3C2DBu),
             _ => _normal,
         };
+        // A full context window: the pet turns greener and greener
+        if (f.Sick > 0 && f.Tint != Tint.Ghost)
+        {
+            double k = f.Sick switch { 1 => 0.25, 2 => 0.5, _ => 0.7 };
+            (body, shade) = (Blend(body, SickColor, k), Blend(shade, SickShade, k));
+        }
 
         int bx = 2 + f.Shake;   // left edge incl. arms
         int by = 5 + f.Bob;     // top edge of the body
@@ -446,6 +465,97 @@ public static class Sprite
         }
 
         return px;
+    }
+
+    private static readonly Dictionary<(int Phase, bool Left, int Poof), BitmapSource> ReaperCache = new();
+
+    /// <summary>Steps of the smoke cloud the grim reaper vanishes and reappears in (<see cref="RenderReaper"/>).</summary>
+    public const int PoofSteps = 3;
+
+    /// <summary>
+    /// The grim reaper that turns up next to the pet when a session's context window is nearly full: a dark
+    /// hooded robe floating above the ground, two glowing eyes in the hood and a scythe, in the pet's 22x16 grid.
+    /// It looks right, the scythe held out ahead; <paramref name="left"/> mirrors it to look left.
+    /// <paramref name="phase"/> 0..3 bobs it up and down and flutters the hem. <paramref name="poof"/> 1..
+    /// <see cref="PoofSteps"/> wraps it in a growing cloud of smoke, at the last step nothing but smoke is left.
+    /// </summary>
+    public static BitmapSource RenderReaper(int phase, bool left, int poof = 0) =>
+        ReaperCache.TryGetValue((phase, left, poof), out var cached)
+            ? cached
+            : ReaperCache[(phase, left, poof)] = ToBitmap(ReaperPixels(phase, left, poof));
+
+    /// <summary>BGRA pixels of <see cref="RenderReaper"/>, row-major, Width x Height.</summary>
+    public static uint[] ReaperPixels(int phase, bool left, int poof = 0)
+    {
+        var px = new uint[Width * Height];
+        if (poof >= PoofSteps)
+        {
+            Smoke(px, 3, 3, "....XXX..XX....", "..X.......XXX..", ".XX.X........X.", "X.....X.X.....X",
+                "..X..........X.", "X......X.....X.", ".X..X.....X..X.", "..XX..X...XX...", "....X....X.....");
+            return px;
+        }
+        int bob = phase is 1 or 2 ? 1 : 0;
+        void Set(int x, int y, uint c)
+        {
+            y += bob;
+            if (left) x = Width - 1 - x;
+            if (x >= 0 && x < Width && y >= 0 && y < Height) px[y * Width + x] = c;
+        }
+        void Span(int y, int from, int to, uint c) { for (int x = from; x <= to; x++) Set(x, y, c); }
+
+        // The robe, widening from the hood down to a ragged hem
+        (int From, int To)[] robe = [(9, 13), (8, 14), (7, 15), (7, 15), (7, 15), (7, 15), (6, 15), (6, 15), (5, 15), (5, 15), (4, 15), (4, 15)];
+        for (int i = 0; i < robe.Length; i++) Span(i + 2, robe[i].From, robe[i].To, RobeColor);
+        Set(4, 13, RobeShade); Set(15, 13, RobeShade);
+        for (int x = 4; x <= 15; x++)
+            if ((x + phase / 2) % 3 != 0) Set(x, 14, RobeShade);
+        // The dark hood with two glowing eyes
+        Span(4, 9, 13, HoodDark); Span(5, 9, 13, HoodDark); Span(6, 9, 13, HoodDark); Span(7, 10, 12, HoodDark);
+        Set(11, 5, SkullGlow); Set(13, 5, SkullGlow); // looking ahead
+        // The scythe: a long handle held by a bony hand, the blade curving over the head
+        for (int y = 0; y <= 14; y++) Set(17, y, ScytheHandle);
+        Set(16, 8, BoneColor); Set(16, 9, BoneColor);
+        Span(0, 9, 16, BladeColor);
+        Set(7, 1, BladeColor); Set(8, 1, BladeColor); Set(9, 1, BladeShade);
+        Set(6, 2, BladeShade);
+
+        if (poof == 1)
+            Smoke(px, 7, 6, "..XXX..", ".XXXXX.", "XXXXXXX", ".XXXXX.", "..XXX..");
+        else if (poof == 2)
+            Smoke(px, 3, 3, "....XXX..XX....", "..XXXXXXXXXXX..", ".XXXXXXXXXXXXX.", "XXXXXXXXXXXXXXX", "XXXXXXXXXXXXXXX",
+                "XXXXXXXXXXXXXXX", ".XXXXXXXXXXXXX.", "..XXXXXXXXXXX..", "....XX..XXX....");
+        return px;
+    }
+
+    /// <summary>A puff of smoke from rows of X, shaded where its underside shows.</summary>
+    private static void Smoke(uint[] px, int left, int top, params string[] rows)
+    {
+        for (int y = 0; y < rows.Length; y++)
+            for (int i = 0; i < rows[y].Length; i++)
+            {
+                if (rows[y][i] != 'X') continue;
+                bool underside = y == rows.Length - 1 || i >= rows[y + 1].Length || rows[y + 1][i] != 'X';
+                int x = left + i, row = top + y;
+                if (x >= 0 && x < Width && row >= 0 && row < Height) px[row * Width + x] = underside ? SmokeShade : SmokeColor;
+            }
+    }
+
+    private static BitmapSource ToBitmap(uint[] px)
+    {
+        var bitmap = new WriteableBitmap(Width, Height, 96, 96, PixelFormats.Bgra32, null);
+        bitmap.WritePixels(new Int32Rect(0, 0, Width, Height), px, Width * 4, 0);
+        bitmap.Freeze();
+        return bitmap;
+    }
+
+    private static uint Blend(uint from, uint to, double k)
+    {
+        uint Channel(int shift)
+        {
+            double a = from >> shift & 0xFF, b = to >> shift & 0xFF;
+            return (uint)Math.Round(a + (b - a) * k) << shift;
+        }
+        return 0xFF000000 | Channel(16) | Channel(8) | Channel(0);
     }
 
     /// <summary>Extra pixels on each side of the splat layer, for the puddle and the drops splashing off it.</summary>

@@ -43,6 +43,7 @@ static string Run()
 
     RateWindow? fiveHour = null, sevenDay = null;
     string? model = null, sessionId = null;
+    double? context = null;
 
     if (!string.IsNullOrWhiteSpace(input))
     {
@@ -52,6 +53,9 @@ static string Run()
         model = ModelName(root);
         if (root.TryGetProperty("session_id", out var id) && id.ValueKind == JsonValueKind.String)
             sessionId = id.GetString();
+        if (root.TryGetProperty("context_window", out var window) && window.ValueKind == JsonValueKind.Object
+            && TryNumber(window, "used_percentage", out double used))
+            context = used;
 
         if (root.TryGetProperty("rate_limits", out var limits) && limits.ValueKind == JsonValueKind.Object)
         {
@@ -60,7 +64,7 @@ static string Run()
         }
     }
 
-    RememberModel(sessionId, model);
+    RememberContext(sessionId, context);
 
     if (fiveHour != null || sevenDay != null)
     {
@@ -108,17 +112,19 @@ static string? ModelName(JsonElement root)
     return null;
 }
 
-// Stores the session's model for its baby pet's outfit. The status line runs often, so sessions.json is
-// only written when the model changed; sessions the hooks do not know (yet) are left alone.
-static void RememberModel(string? id, string? model)
+// Stores how full the session's context window is, which makes the pet look sick. The status line runs often,
+// so sessions.json is only written when the context changed by a whole percent (the sick levels are the app's
+// settings); sessions the hooks do not know (yet) are left alone.
+static void RememberContext(string? id, double? context)
 {
-    if (id is not { Length: > 0 } || model == null) return;
+    if (id is not { Length: > 0 } || context is not { } percent) return;
     try
     {
-        if (!SessionStore.Read().TryGetValue(id, out var known) || known.Model == model) return;
+        if (!SessionStore.Read().TryGetValue(id, out var known)
+            || known.ContextPercent is { } stored && Math.Abs(stored - percent) < 1) return;
         SessionStore.Update(sessions =>
         {
-            if (sessions.TryGetValue(id, out var info)) info.Model = model;
+            if (sessions.TryGetValue(id, out var info)) info.ContextPercent = percent;
         });
     }
     catch (Exception ex)
@@ -161,13 +167,24 @@ static void RunHook()
     string hookEvent = Text("hook_event_name") ?? "";
     if (hookEvent == "SessionEnd")
     {
-        SessionStore.Update(sessions => sessions.Remove(id));
+        // After /clear the assistant may carry on under a new id: keep the session a moment for it to take over.
+        if (Text("reason") == "clear")
+            SessionStore.Update(sessions =>
+            {
+                if (!sessions.TryGetValue(id, out var ended)) return;
+                ended.State = SessionStates.Ended;
+                ended.UpdatedAt = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+            });
+        else
+            SessionStore.Update(sessions => sessions.Remove(id));
         return;
     }
+    // /compact and /clear empty the context; the pet recovers.
+    string? reset = hookEvent == "SessionStart" && Text("source") is "compact" or "clear" ? Text("source") : null;
 
     string? state = hookEvent switch
     {
-        "SessionStart" => SessionStates.Idle,
+        "SessionStart" => reset == "compact" ? null : SessionStates.Idle,
         "UserPromptSubmit" => SessionStates.Working,
         "Stop" => SessionStates.Done,
         "PermissionRequest" => SessionStates.Question,
@@ -178,7 +195,7 @@ static void RunHook()
             or "elicitation_url_dialog" or "agent_needs_input" ? SessionStates.Question : null,
         _ => null,
     };
-    if (state == null) return;
+    if (state == null && reset == null) return;
 
     string? transcript = Text("transcript_path");
     long length = 0;
@@ -188,20 +205,49 @@ static void RunHook()
     // The assistant tells its child processes where it runs: "cli" in a terminal, something else in the Desktop app.
     string? origin = Environment.GetEnvironmentVariable(AssistantCli.EntrypointVariable);
 
-    // The window to bring up when the pet's "?" or baby pet is clicked; looked for when the session starts
+    // The window to bring up when the pet's "?" is clicked; looked for when the session starts
     // and again when it asks, which also picks up the current title for finding the Windows Terminal tab.
     var host = hookEvent == "SessionStart" || state == SessionStates.Question ? SessionHost.Find() : default;
+    string? cwd = Text("cwd");
 
     SessionStore.Update(sessions =>
     {
-        if (!sessions.TryGetValue(id, out var info)) sessions[id] = info = new SessionInfo();
-        info.Cwd = Text("cwd") ?? info.Cwd;
+        long now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+        if (!sessions.TryGetValue(id, out var info))
+        {
+            sessions[id] = info = new SessionInfo { State = SessionStates.Idle };
+            // A new id after /clear: the session it replaces is the one /clear just ended in the same folder.
+            if (reset == "clear" && cwd != null)
+            {
+                var previous = sessions
+                    .Where(s => s.Value.State == SessionStates.Ended && s.Value.UpdatedAt >= now - 30
+                                && string.Equals(s.Value.Cwd, cwd, StringComparison.OrdinalIgnoreCase))
+                    .OrderByDescending(s => s.Value.UpdatedAt)
+                    .FirstOrDefault();
+                if (previous.Value is { } old)
+                {
+                    sessions.Remove(previous.Key);
+                    info.ContextPercent = old.ContextPercent;
+                    info.Origin = old.Origin;
+                    info.Window = old.Window;
+                    info.WindowPid = old.WindowPid;
+                    info.Title = old.Title;
+                }
+            }
+        }
+        info.Cwd = cwd ?? info.Cwd;
         if (!string.IsNullOrEmpty(origin)) info.Origin = origin;
-        info.State = state;
-        info.UpdatedAt = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+        if (reset != null)
+        {
+            info.ContextBefore = info.ContextPercent;
+            info.ContextPercent = 0;
+            info.ContextResetAt = now;
+            info.ContextReset = reset;
+        }
+        if (state != null) info.State = state;
+        info.UpdatedAt = now;
         info.Transcript = transcript ?? info.Transcript;
         info.TranscriptLength = length;
-        info.Model = ModelName(root) ?? info.Model;
         if (host.Window != IntPtr.Zero)
         {
             info.Window = (long)host.Window;

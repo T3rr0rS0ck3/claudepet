@@ -52,7 +52,6 @@ public partial class SettingsWindow : Window
             UpdatesBox.Visibility = UpdateButtons.Visibility = UpdateStatusText.Visibility = Visibility.Collapsed;
         }
         SessionMarksBox.IsChecked = settings.SessionMarks;
-        SessionPetsBox.IsChecked = settings.SessionPets;
         AutostartBox.IsChecked = settings.StartWithWindows;
         // Store version: switched off under Settings → Apps → Startup, only the user can switch it on there.
         if (Autostart.BlockedByUser) AutostartBlockedPanel.Visibility = Visibility.Visible;
@@ -61,6 +60,7 @@ public partial class SettingsWindow : Window
         WeekWarnBox.Text = string.Join(", ", settings.WeekWarnThresholds);
         var t = settings.Thresholds;
         MoodThresholdsBox.Text = string.Join(", ", t.Normal, t.Attentive, t.Nervous, t.Worried, t.Panic, t.Exhausted);
+        ContextThresholdsBox.Text = string.Join(", ", settings.ContextThresholds);
         ForecastBox.IsChecked = settings.ShowForecast;
         BubblesBox.IsChecked = settings.SpeechBubbles;
         BubbleDurationBox.Text = settings.BubbleDurationSeconds.ToString(CultureInfo.InvariantCulture);
@@ -224,6 +224,9 @@ public partial class SettingsWindow : Window
             var weekWarn = ParseList(WeekWarnBox.Text, Strings.WeekWarnField);
             var moods = ParseList(MoodThresholdsBox.Text, Strings.MoodField);
             if (moods.Count != 6) throw new FormatException(Strings.MoodCountError);
+            var context = ParseList(ContextThresholdsBox.Text, Strings.ContextField);
+            if (context.Count != 3 || context[0] > context[1] || context[1] > context[2])
+                throw new FormatException(Strings.ContextError);
             if (!Sprite.TryParseColor(ColorBox.Text, out uint petColor))
                 throw new FormatException(Strings.ColorError);
             string reposPath = ReposPathBox.Text.Trim().Trim('"');
@@ -267,11 +270,11 @@ public partial class SettingsWindow : Window
             _settings.NightEnd = (string)NightEndBox.SelectedItem;
             _settings.CheckForUpdates = UpdatesBox.IsChecked == true;
             _settings.SessionMarks = SessionMarksBox.IsChecked == true;
-            _settings.SessionPets = SessionPetsBox.IsChecked == true;
             _settings.StartWithWindows = AutostartBox.IsChecked == true;
             _settings.PollIntervalSeconds = Math.Clamp(interval, 1, 300);
             _settings.SessionWarnThresholds = sessionWarn;
             _settings.WeekWarnThresholds = weekWarn;
+            _settings.ContextThresholds = context;
             _settings.Thresholds = new MoodThresholds
             {
                 Normal = moods[0], Attentive = moods[1], Nervous = moods[2],

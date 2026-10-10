@@ -45,7 +45,10 @@ until the limit resets.
 - 📂 **Project launcher** — double-click the pet to pick a project from your repo folder and open the assistant there
 - 🎤 **Voice chat** (optional) — opens the assistant with its voice dictation switched on; the pet listens while you talk
 - ❓ **Session status** — a yellow "?" when a session asks something, a bubble when it is done;
-  optionally a baby pet per session that trots after the pet; click the "?" or a baby to jump to that session's window
+  click the "?" to jump to that session's window
+- 🤒 **Feeling sick** — as a session's context window fills up (60 / 75 / 90 %, adjustable) the pet turns greener and more
+  tired, turns down cookies and suggests `/compact`; at the top level a grim reaper floats along behind it. After `/compact`
+  or `/clear` it recovers and the reaper fades away
 - ⚙️ **Configurable** thresholds, texts, size, update interval, console and more
 - 🔒 **Local only** — the pet itself makes no network requests, needs no login and reads no tokens; it only reads what the assistant already hands to its status line
 
@@ -172,11 +175,11 @@ saved; your own hooks are kept). Then:
   like *"my-project: The assistant has a question."*
 - When a session finished its turn, a bubble like *"my-project: The assistant is done!"* pops up; no mark stays on the pet.
 - With several sessions the "?" stays as long as any of them waits for an answer.
-- *A baby pet for each assistant session* (settings): a small pet per running session follows the pet and shows that
-  session's "?" and wears the outfit for that session's model; its tooltip names the folder and whether the
-  session works, waits or is done.
-- **Jump to a session**: clicking the "?" brings the window of the session that asked to the front, clicking a baby pet
-  that of its session: the console window, the Windows Terminal window with the right tab selected, or the desktop app.
+- **Feeling sick**: the status line also reports how full each session's context window is. With several sessions the
+  fullest one counts: from 60 % the pet looks unwell, from 75 % a bubble suggests `/compact`, from 90 % it shivers, is
+  too weak to climb, jump or chase the pointer, and a grim reaper turns up behind it. `/compact` or `/clear` makes it well again.
+- **Jump to a session**: clicking the "?" brings the window of the session that asked to the front:
+  the console window, the Windows Terminal window with the right tab selected, or the desktop app.
   The hook notes the window when the session starts and asks; sessions from before that are looked for by folder name.
 
 Only rare events are hooked (prompt sent, turn finished, permission/question, session start/end), so the assistant is
@@ -187,7 +190,7 @@ grows again. Switching *“?” on questions …* off in the settings removes th
 ### Desktop app
 
 The Code tab of the assistant's desktop app reads the same `settings.json` and runs the same hooks, so its
-sessions get "?", bubbles and baby pets too, side by side with terminal sessions; bubbles mark them with *(Desktop)*.
+sessions get "?" and bubbles too, side by side with terminal sessions; bubbles mark them with *(Desktop)*.
 While any session works the pet types, even if no status line data arrives. Mood and limits still come from the status
 line, which the desktop app may not run; then they only update from terminal sessions. Dictation is noticed in the
 desktop app as well. The normal desktop chat offers no hooks and is not supported.

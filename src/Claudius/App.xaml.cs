@@ -79,6 +79,7 @@ public partial class App : Application
         Legacy.MigrateTheme(Settings);
 
         ApplyPetColor();
+        ContextLevels.Thresholds = Settings.ContextThresholds;
         _pet = new PetWindow();
         _pet.ApplySettings(Settings, initial: true);
         _pet.Clicked += OnPetClicked;
@@ -86,7 +87,7 @@ public partial class App : Application
         _pet.SessionClicked += GoToSession;
         _pet.GhostDropped += OnGhostDropped;
         _pet.Moved += SavePosition;
-        _pet.Emoted += emote => Say(emote.ToString());
+        _pet.Emoted += emote => Say(emote == Emote.Feed && _pet.Unwell ? "FeedSick" : emote.ToString());
         _pet.PetImage.ContextMenu = BuildContextMenu();
         _pet.Show();
 
@@ -109,6 +110,13 @@ public partial class App : Application
         _sessions.Attention += session =>
         {
             if (Settings.SessionMarks) Say(session.State == SessionStates.Question ? "Question" : "Done", session.Label);
+        };
+        // A nearly full context window makes the pet sick; it recovers once /compact or /clear emptied it
+        _sessions.ContextRose += (session, level) => Say(level >= 3 ? "ContextCritical" : "ContextFull", session.Label);
+        _sessions.ContextReset += (session, from, kind) =>
+        {
+            _pet.PlayRecovery(from);
+            Say(kind == "clear" ? "ContextCleared" : "ContextCompacted", session.Label);
         };
 
         Say(_state.Mood == PetMood.Unknown ? "NoData" : "Greeting");
@@ -374,8 +382,7 @@ public partial class App : Application
 
     private void ApplySessions()
     {
-        _pet.SetSessions(_sessions.Sessions, _sessions.Overall, Settings.SessionMarks, Settings.SessionPets,
-            Settings.ModelOutfits);
+        _pet.SetSessions(_sessions.Sessions, _sessions.Overall, Settings.SessionMarks);
         _pet.SetMood(_state.Mood, Working);
     }
 
@@ -408,6 +415,7 @@ public partial class App : Application
         if (save) SaveSettings();
         if (Settings.Language != Strings.Current) ApplyLanguage();
         SyncSessionHooks();
+        ContextLevels.Thresholds = Settings.ContextThresholds;
         ApplySessions();
         ApplyPetColor();
         SyncMascotTheme();

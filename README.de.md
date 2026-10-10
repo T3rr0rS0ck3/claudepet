@@ -45,7 +45,10 @@ Panik → schläft bis zum Reset.
 - 📂 **Projektliste**: Doppelklick aufs Pet, Projekt aus deinem Repo-Ordner wählen, der Assistent startet dort
 - 🎤 **Sprachchat** (optional): öffnet den Assistenten mit eingeschaltetem Sprachdiktat; das Pet hört zu, während du sprichst
 - ❓ **Session-Status**: ein gelbes „?“, wenn eine Session etwas fragt, eine Sprechblase, wenn sie fertig ist;
-  optional ein Baby-Pet pro Session, das dem Pet hinterherläuft; Klick aufs „?“ oder ein Baby springt zum Fenster der Session
+  Klick aufs „?“ springt zum Fenster der Session
+- 🤒 **Kränklich**: füllt sich das Kontextfenster einer Session (60 / 75 / 90 %, einstellbar), wird das Pet immer grüner und
+  müder, lehnt Kekse ab und schlägt `/compact` vor; auf der höchsten Stufe schwebt ein Sensenmann hinter ihm her. Nach
+  `/compact` oder `/clear` erholt es sich und der Sensenmann verschwindet
 - ⚙️ **Konfigurierbar**: Schwellen, Texte, Größe, Aktualisierungsintervall, Konsole und mehr
 - 🔒 **Rein lokal**: das Pet selbst greift nicht aufs Netzwerk zu, braucht keinen Login und liest keine Tokens; es liest nur, was der Assistent ohnehin an seine Statuszeile übergibt
 
@@ -175,11 +178,12 @@ eigene Hooks bleiben erhalten). Dann gilt:
 - Ist eine Session mit ihrer Antwort fertig, erscheint eine Sprechblase wie *„mein-projekt: Der Assistent ist fertig!“*; am
   Pet bleibt kein Zeichen stehen.
 - Bei mehreren Sessions bleibt das „?“, solange irgendeine davon auf eine Antwort wartet.
-- *Baby-Pet für jede Assistenten-Session* (Einstellungen): ein kleines Pet pro laufender Session folgt dem Pet, zeigt
-  deren „?“ und trägt das Outfit für das Modell der Session; der Tooltip nennt den Ordner und ob die
-  Session arbeitet, wartet oder fertig ist.
-- **Zur Session springen**: Ein Klick aufs „?“ holt das Fenster der fragenden Session nach vorn, ein Klick auf ein Baby-Pet
-  das seiner Session: das Konsolenfenster, das Windows-Terminal-Fenster mit dem richtigen Tab oder die Desktop-App. Der
+- **Kränklich**: Die Statuszeile meldet auch, wie voll das Kontextfenster jeder Session ist. Bei mehreren Sessions zählt
+  die vollste: ab 60 % sieht das Pet kränklich aus, ab 75 % schlägt eine Sprechblase `/compact` vor, ab 90 %
+  zittert es, ist zu schwach zum Klettern, Springen und Mausjagen, und ein Sensenmann taucht hinter ihm auf. `/compact`
+  oder `/clear` machen es wieder gesund.
+- **Zur Session springen**: Ein Klick aufs „?“ holt das Fenster der fragenden Session nach vorn:
+  das Konsolenfenster, das Windows-Terminal-Fenster mit dem richtigen Tab oder die Desktop-App. Der
   Hook merkt sich das Fenster beim Start der Session und wenn sie fragt; ältere Sessions werden über den Ordnernamen gesucht.
 
 Es hängen nur seltene Ereignisse dran (Prompt abgeschickt, Antwort fertig, Berechtigung/Frage, Session-Start/-Ende),
@@ -190,7 +194,7 @@ Hooks wieder. Sprechblasentexte: `Question`, `Done`, `NoWindow` (mit `{folder}`)
 ### Desktop-App
 
 Der Code-Tab der Desktop-App des Assistenten liest dieselbe `settings.json` und führt dieselben Hooks aus, deshalb
-bekommen seine Sessions ebenfalls „?“, Sprechblasen und Baby-Pets, neben den Terminal-Sessions; Sprechblasen markieren
+bekommen seine Sessions ebenfalls „?“ und Sprechblasen, neben den Terminal-Sessions; Sprechblasen markieren
 sie mit *(Desktop)*. Solange irgendeine Session arbeitet, tippt das Pet, auch wenn keine Statuszeilen-Daten kommen.
 Stimmung und Limits kommen weiterhin aus der Statuszeile, die die Desktop-App eventuell nicht ausführt; dann
 aktualisieren sie sich nur über Terminal-Sessions. Das Diktat wird auch in der Desktop-App erkannt. Der normale
